@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/sys/lib_.rs`."><title>lib_.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/sys/lib_.rs`."><title>lib_.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -666,11 +667,11 @@
 };
 
 <span class="kw">pub fn </span>generate(env: <span class="kw-2">&amp;</span>Env) {
-    <span class="macro">info!</span>(<span class="string">&quot;Generating sys for {}&quot;</span>, env.config.library_name);
+    <span class="macro">info!</span>(<span class="string">"Generating sys for {}"</span>, env.config.library_name);
 
-    <span class="kw">let </span>path = env.config.auto_path.join(file_name_sys(<span class="string">&quot;lib&quot;</span>));
+    <span class="kw">let </span>path = env.config.auto_path.join(file_name_sys(<span class="string">"lib"</span>));
 
-    <span class="macro">info!</span>(<span class="string">&quot;Generating file {:?}&quot;</span>, path);
+    <span class="macro">info!</span>(<span class="string">"Generating file {:?}"</span>, path);
     save_to_file(<span class="kw-2">&amp;</span>path, env.config.make_backup, |w| generate_lib(w, env));
 }
 
@@ -678,7 +679,7 @@
     <span class="kw">for </span>it <span class="kw">in </span>shared_libs {
         <span class="macro">writeln!</span>(
             w,
-            <span class="string">&quot;#[link(name = \&quot;{}\&quot;)]&quot;</span>,
+            <span class="string">"#[link(name = \"{}\")]"</span>,
             shared_lib_name_to_link_name(it)
         )<span class="question-mark">?</span>;
     }
@@ -694,13 +695,13 @@
     include_custom_modules(w, env)<span class="question-mark">?</span>;
     statics::after_extern_crates(w)<span class="question-mark">?</span>;
 
-    <span class="kw">if </span>env.config.library_name != <span class="string">&quot;GLib&quot; </span>{
+    <span class="kw">if </span>env.config.library_name != <span class="string">"GLib" </span>{
         statics::use_glib(w)<span class="question-mark">?</span>;
     }
     <span class="kw">match </span><span class="kw-2">&amp;*</span>env.config.library_name {
-        <span class="string">&quot;GLib&quot; </span>=&gt; statics::only_for_glib(w)<span class="question-mark">?</span>,
-        <span class="string">&quot;GObject&quot; </span>=&gt; statics::only_for_gobject(w)<span class="question-mark">?</span>,
-        <span class="string">&quot;Gtk&quot; </span>=&gt; statics::only_for_gtk(w)<span class="question-mark">?</span>,
+        <span class="string">"GLib" </span>=&gt; statics::only_for_glib(w)<span class="question-mark">?</span>,
+        <span class="string">"GObject" </span>=&gt; statics::only_for_gobject(w)<span class="question-mark">?</span>,
+        <span class="string">"Gtk" </span>=&gt; statics::only_for_gtk(w)<span class="question-mark">?</span>,
         <span class="kw">_ </span>=&gt; (),
     }
     <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
@@ -733,13 +734,13 @@
     {
         <span class="kw">return </span><span class="prelude-val">Err</span>(Error::new(
             ErrorKind::Other,
-            <span class="string">&quot;No shared library found, but functions were found&quot;</span>,
+            <span class="string">"No shared library found, but functions were found"</span>,
         ));
     }
 
     <span class="kw">if </span>!env.namespaces.main().shared_libs.is_empty() {
         write_link_attr(w, <span class="kw-2">&amp;</span>env.namespaces.main().shared_libs)<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;extern \&quot;C\&quot; {{&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"extern \"C\" {{"</span>)<span class="question-mark">?</span>;
         functions::generate_enums_funcs(w, env, <span class="kw-2">&amp;</span>enums)<span class="question-mark">?</span>;
         functions::generate_bitfields_funcs(w, env, <span class="kw-2">&amp;</span>bitfields)<span class="question-mark">?</span>;
         functions::generate_unions_funcs(w, env, <span class="kw-2">&amp;</span>unions)<span class="question-mark">?</span>;
@@ -748,7 +749,7 @@
         functions::generate_interfaces_funcs(w, env, <span class="kw-2">&amp;</span>interfaces)<span class="question-mark">?</span>;
         functions::generate_other_funcs(w, env, <span class="kw-2">&amp;</span>ns.functions)<span class="question-mark">?</span>;
 
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;\n}}&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"\n}}"</span>)<span class="question-mark">?</span>;
     }
 
     <span class="prelude-val">Ok</span>(())
@@ -758,8 +759,8 @@
     <span class="kw">for </span>library <span class="kw">in </span><span class="kw-2">&amp;</span>env.config.external_libraries {
         w.write_all(
             <span class="macro">format!</span>(
-                <span class="string">&quot;use {}_sys as {};\n&quot;</span>,
-                library.crate_name.replace(<span class="string">&#39;-&#39;</span>, <span class="string">&quot;_&quot;</span>),
+                <span class="string">"use {}_sys as {};\n"</span>,
+                library.crate_name.replace(<span class="string">'-'</span>, <span class="string">"_"</span>),
                 crate_name(<span class="kw-2">&amp;</span>library.namespace)
             )
             .as_bytes(),
@@ -774,11 +775,11 @@
     <span class="kw">if </span>!modules.is_empty() {
         <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
         <span class="kw">for </span>module <span class="kw">in </span><span class="kw-2">&amp;</span>modules {
-            <span class="macro">writeln!</span>(w, <span class="string">&quot;mod {module};&quot;</span>)<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(w, <span class="string">"mod {module};"</span>)<span class="question-mark">?</span>;
         }
         <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
         <span class="kw">for </span>module <span class="kw">in </span><span class="kw-2">&amp;</span>modules {
-            <span class="macro">writeln!</span>(w, <span class="string">&quot;pub use {module}::*;&quot;</span>)<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(w, <span class="string">"pub use {module}::*;"</span>)<span class="question-mark">?</span>;
         }
     }
 
@@ -792,16 +793,16 @@
         <span class="kw">let </span><span class="prelude-val">Some</span>(ext) = path.extension() <span class="kw">else </span>{
             <span class="kw">continue</span>;
         };
-        <span class="kw">if </span>ext != <span class="string">&quot;rs&quot; </span>{
+        <span class="kw">if </span>ext != <span class="string">"rs" </span>{
             <span class="kw">continue</span>;
         }
-        <span class="kw">let </span>file_stem = path.file_stem().expect(<span class="string">&quot;No file name&quot;</span>);
-        <span class="kw">if </span>file_stem == <span class="string">&quot;lib&quot; </span>{
+        <span class="kw">let </span>file_stem = path.file_stem().expect(<span class="string">"No file name"</span>);
+        <span class="kw">if </span>file_stem == <span class="string">"lib" </span>{
             <span class="kw">continue</span>;
         }
         <span class="kw">let </span>file_stem = file_stem
             .to_str()
-            .expect(<span class="string">&quot;Can&#39;t convert file name to string&quot;</span>)
+            .expect(<span class="string">"Can't convert file name to string"</span>)
             .to_owned();
         vec.push(file_stem);
     }
@@ -826,17 +827,17 @@
 
 <span class="kw">fn </span>generate_aliases(w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write, env: <span class="kw-2">&amp;</span>Env, items: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>Alias]) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">if </span>!items.is_empty() {
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;// Aliases&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"// Aliases"</span>)<span class="question-mark">?</span>;
     }
     <span class="kw">for </span>item <span class="kw">in </span>items {
         <span class="kw">let </span>ns = env.namespaces.main();
-        <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, ns.name, item.name);
+        <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">"{}.{}"</span>, ns.name, item.name);
         <span class="kw">if </span>!env.type_status_sys(<span class="kw-2">&amp;</span>full_name).need_generate() {
             <span class="kw">continue</span>;
         }
         <span class="kw">let </span>(comment, c_type) = <span class="kw">match </span>ffi_type(env, item.typ, <span class="kw-2">&amp;</span>item.target_c_type) {
-            <span class="prelude-val">Ok</span>(x) =&gt; (<span class="string">&quot;&quot;</span>, x.into_string()),
-            x @ <span class="prelude-val">Err</span>(..) =&gt; (<span class="string">&quot;//&quot;</span>, x.into_string()),
+            <span class="prelude-val">Ok</span>(x) =&gt; (<span class="string">""</span>, x.into_string()),
+            x @ <span class="prelude-val">Err</span>(..) =&gt; (<span class="string">"//"</span>, x.into_string()),
         };
         <span class="kw">let </span>cfg_condition_ = env
             .config
@@ -853,7 +854,7 @@
                 update_cfgs::get_object_cfg_condition(<span class="kw-2">&amp;</span>item.name, <span class="kw-2">&amp;</span><span class="prelude-val">None</span>, <span class="kw-2">&amp;</span>ns.identifier_prefixes)
             });
         cfg_condition(w, cfg_condition_.as_ref(), <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;{}pub type {} = {};&quot;</span>, comment, item.c_identifier, c_type)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"{}pub type {} = {};"</span>, comment, item.c_identifier, c_type)<span class="question-mark">?</span>;
     }
     <span class="kw">if </span>!items.is_empty() {
         <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
@@ -864,15 +865,15 @@
 
 <span class="kw">fn </span>generate_bitfields(w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write, env: <span class="kw-2">&amp;</span>Env, items: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>Bitfield]) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">if </span>!items.is_empty() {
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;// Flags&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"// Flags"</span>)<span class="question-mark">?</span>;
     }
     <span class="kw">for </span>item <span class="kw">in </span>items {
-        <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, env.namespaces.main().name, item.name);
+        <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">"{}.{}"</span>, env.namespaces.main().name, item.name);
         <span class="kw">let </span>config = env.config.objects.get(<span class="kw-2">&amp;</span>full_name);
         <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="bool-val">false</span>) = config.map(|c| c.status.need_generate()) {
             <span class="kw">continue</span>;
         }
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;pub type {} = c_uint;&quot;</span>, item.c_type)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"pub type {} = c_uint;"</span>, item.c_type)<span class="question-mark">?</span>;
         <span class="kw">for </span>member <span class="kw">in </span><span class="kw-2">&amp;</span>item.members {
             <span class="kw">let </span>member_config = config
                 .as_ref()
@@ -887,7 +888,7 @@
             version_condition(w, env, <span class="prelude-val">None</span>, version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
             <span class="macro">writeln!</span>(
                 w,
-                <span class="string">&quot;pub const {}: {} = {};&quot;</span>,
+                <span class="string">"pub const {}: {} = {};"</span>,
                 member.c_identifier, item.c_type, val <span class="kw">as </span>u32,
             )<span class="question-mark">?</span>;
         }
@@ -913,27 +914,27 @@
 
 <span class="kw">fn </span>generate_constants(w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write, env: <span class="kw-2">&amp;</span>Env, constants: <span class="kw-2">&amp;</span>[Constant]) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">if </span>!constants.is_empty() {
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;// Constants&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"// Constants"</span>)<span class="question-mark">?</span>;
     }
     <span class="kw">for </span>constant <span class="kw">in </span>constants {
-        <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, env.namespaces.main().name, constant.name);
+        <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">"{}.{}"</span>, env.namespaces.main().name, constant.name);
         <span class="kw">let </span>config = env.config.objects.get(<span class="kw-2">&amp;</span>full_name);
         <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="bool-val">false</span>) = config.map(|c| c.status.need_generate()) {
             <span class="kw">continue</span>;
         }
         <span class="kw">let </span>(comment, <span class="kw-2">mut </span>type_) = <span class="kw">match </span>ffi_type(env, constant.typ, <span class="kw-2">&amp;</span>constant.c_type) {
-            <span class="prelude-val">Ok</span>(x) =&gt; (<span class="string">&quot;&quot;</span>, x.into_string()),
-            x @ <span class="prelude-val">Err</span>(..) =&gt; (<span class="string">&quot;//&quot;</span>, x.into_string()),
+            <span class="prelude-val">Ok</span>(x) =&gt; (<span class="string">""</span>, x.into_string()),
+            x @ <span class="prelude-val">Err</span>(..) =&gt; (<span class="string">"//"</span>, x.into_string()),
         };
         <span class="kw">let </span><span class="kw-2">mut </span>value = constant.value.clone();
-        <span class="kw">if </span>type_ == <span class="string">&quot;*mut c_char&quot; </span>{
-            type_ = <span class="string">&quot;&amp;[u8]&quot;</span>.into();
-            value = <span class="macro">format!</span>(<span class="string">&quot;b\&quot;{}\\0\&quot;&quot;</span>, general::escape_string(<span class="kw-2">&amp;</span>value));
-        } <span class="kw">else if </span>type_ == <span class="string">&quot;gboolean&quot; </span>{
-            value = <span class="kw">if </span>value == <span class="string">&quot;true&quot; </span>{
-                use_glib_if_needed(env, <span class="string">&quot;GTRUE&quot;</span>)
+        <span class="kw">if </span>type_ == <span class="string">"*mut c_char" </span>{
+            type_ = <span class="string">"&amp;[u8]"</span>.into();
+            value = <span class="macro">format!</span>(<span class="string">"b\"{}\\0\""</span>, general::escape_string(<span class="kw-2">&amp;</span>value));
+        } <span class="kw">else if </span>type_ == <span class="string">"gboolean" </span>{
+            value = <span class="kw">if </span>value == <span class="string">"true" </span>{
+                use_glib_if_needed(env, <span class="string">"GTRUE"</span>)
             } <span class="kw">else </span>{
-                use_glib_if_needed(env, <span class="string">&quot;GFALSE&quot;</span>)
+                use_glib_if_needed(env, <span class="string">"GFALSE"</span>)
             };
         } <span class="kw">else if </span>env
             .library
@@ -957,7 +958,7 @@
 
         <span class="macro">writeln!</span>(
             w,
-            <span class="string">&quot;{}pub const {}: {} = {};&quot;</span>,
+            <span class="string">"{}pub const {}: {} = {};"</span>,
             comment, constant.c_identifier, type_, value
         )<span class="question-mark">?</span>;
     }
@@ -970,11 +971,11 @@
 
 <span class="kw">fn </span>generate_enums(w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write, env: <span class="kw-2">&amp;</span>Env, items: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>Enumeration]) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">if </span>!items.is_empty() {
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;// Enums&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"// Enums"</span>)<span class="question-mark">?</span>;
     }
     <span class="kw">for </span>item <span class="kw">in </span>items {
         <span class="kw">let </span>ns = env.namespaces.main();
-        <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, ns.name, item.name);
+        <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">"{}.{}"</span>, ns.name, item.name);
         <span class="kw">let </span>config = env.config.objects.get(<span class="kw-2">&amp;</span>full_name);
         <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="bool-val">false</span>) = config.map(|c| c.status.need_generate()) {
             <span class="kw">continue</span>;
@@ -994,7 +995,7 @@
                 update_cfgs::get_object_cfg_condition(<span class="kw-2">&amp;</span>item.name, <span class="kw-2">&amp;</span><span class="prelude-val">None</span>, <span class="kw-2">&amp;</span>ns.identifier_prefixes)
             });
         cfg_condition(w, cfg_condition_.as_ref(), <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;pub type {} = c_int;&quot;</span>, item.c_type)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"pub type {} = c_int;"</span>, item.c_type)<span class="question-mark">?</span>;
         <span class="kw">for </span>member <span class="kw">in </span><span class="kw-2">&amp;</span>item.members {
             <span class="kw">let </span>member_config = config
                 .as_ref()
@@ -1013,7 +1014,7 @@
             version_condition(w, env, <span class="prelude-val">None</span>, version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
             <span class="macro">writeln!</span>(
                 w,
-                <span class="string">&quot;pub const {}: {} = {};&quot;</span>,
+                <span class="string">"pub const {}: {} = {};"</span>,
                 member.c_identifier, item.c_type, member.value,
             )<span class="question-mark">?</span>;
         }
@@ -1025,13 +1026,13 @@
 
 <span class="kw">fn </span>generate_unions(w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write, env: <span class="kw-2">&amp;</span>Env, unions: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>Union]) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">if </span>!unions.is_empty() {
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;// Unions&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"// Unions"</span>)<span class="question-mark">?</span>;
     }
     <span class="kw">for union in </span>unions {
         <span class="kw">if </span>union.c_type.is_none() {
             <span class="kw">continue</span>;
         }
-        <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, env.namespaces.main().name, union.name);
+        <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">"{}.{}"</span>, env.namespaces.main().name, union.name);
         <span class="kw">let </span>config = env.config.objects.get(<span class="kw-2">&amp;</span>full_name);
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="bool-val">false</span>) = config.map(|c| c.status.need_generate()) {
@@ -1048,20 +1049,20 @@
 <span class="kw">fn </span>generate_debug_impl(w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write, name: <span class="kw-2">&amp;</span>str, impl_content: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="macro">writeln!</span>(
         w,
-        <span class="string">&quot;impl ::std::fmt::Debug for {name} {{\n\
+        <span class="string">"impl ::std::fmt::Debug for {name} {{\n\
          \tfn fmt(&amp;self, f: &amp;mut ::std::fmt::Formatter) -&gt; ::std::fmt::Result {{\n\
          \t\t{impl_content}\n\
          \t}}\n\
-         }}\n&quot;
+         }}\n"
     </span>)
 }
 
 <span class="kw">fn </span>generate_classes_structs(w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write, env: <span class="kw-2">&amp;</span>Env, classes: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>Class]) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">if </span>!classes.is_empty() {
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;// Classes&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"// Classes"</span>)<span class="question-mark">?</span>;
     }
     <span class="kw">for </span>class <span class="kw">in </span>classes {
-        <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, env.namespaces.main().name, class.name);
+        <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">"{}.{}"</span>, env.namespaces.main().name, class.name);
         <span class="kw">let </span>config = env.config.objects.get(<span class="kw-2">&amp;</span>full_name);
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="bool-val">false</span>) = config.map(|c| c.status.need_generate()) {
@@ -1078,12 +1079,12 @@
 <span class="kw">fn </span>generate_opaque_type(w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="macro">writeln!</span>(
         w,
-        <span class="string">r#&quot;#[repr(C)]
+        <span class="string">r#"#[repr(C)]
 pub struct {name} {{
     _data: [u8; 0],
     _marker: core::marker::PhantomData&lt;(*mut u8, core::marker::PhantomPinned)&gt;,
 }}
-&quot;#
+"#
     </span>)
 }
 
@@ -1093,11 +1094,11 @@ pub struct {name} {{
     interfaces: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>Interface],
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">if </span>!interfaces.is_empty() {
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;// Interfaces&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"// Interfaces"</span>)<span class="question-mark">?</span>;
     }
     <span class="kw">for </span>interface <span class="kw">in </span>interfaces {
         <span class="kw">let </span>ns = env.namespaces.main();
-        <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, ns.name, interface.name);
+        <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">"{}.{}"</span>, ns.name, interface.name);
         <span class="kw">if </span>!env.type_status_sys(<span class="kw-2">&amp;</span>full_name).need_generate() {
             <span class="kw">continue</span>;
         }
@@ -1126,7 +1127,7 @@ pub struct {name} {{
             w,
             <span class="kw-2">&amp;</span>interface.c_type,
             <span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                <span class="string">&quot;write!(f, \&quot;{name} @ {{self:p}}\&quot;)&quot;</span>,
+                <span class="string">"write!(f, \"{name} @ {{self:p}}\")"</span>,
                 name = interface.c_type
             ),
         )<span class="question-mark">?</span>;
@@ -1140,17 +1141,17 @@ pub struct {name} {{
 
 <span class="kw">fn </span>generate_records(w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write, env: <span class="kw-2">&amp;</span>Env, records: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>Record]) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">if </span>!records.is_empty() {
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;// Records&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"// Records"</span>)<span class="question-mark">?</span>;
     }
     <span class="kw">for </span>record <span class="kw">in </span>records {
-        <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, env.namespaces.main().name, record.name);
+        <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">"{}.{}"</span>, env.namespaces.main().name, record.name);
         <span class="kw">let </span>config = env.config.objects.get(<span class="kw-2">&amp;</span>full_name);
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="bool-val">false</span>) = config.map(|c| c.status.need_generate()) {
             <span class="kw">continue</span>;
         }
 
-        <span class="kw">if </span>record.c_type == <span class="string">&quot;GHookList&quot; </span>{
+        <span class="kw">if </span>record.c_type == <span class="string">"GHookList" </span>{
             <span class="comment">// 1. GHookList is useful.
             // 2. GHookList contains bitfields.
             // 3. Bitfields are unrepresentable in Rust.
@@ -1171,13 +1172,13 @@ pub struct {name} {{
 
 <span class="kw">fn </span>generate_ghooklist(w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     w.write_all(
-        <span class="string">br#&quot;#[repr(C)]
+        <span class="string">br#"#[repr(C)]
 #[derive(Copy, Clone)]
 pub struct GHookList {
     pub seq_id: c_ulong,
-    #[cfg(any(not(windows), not(target_pointer_width = &quot;64&quot;)))]
+    #[cfg(any(not(windows), not(target_pointer_width = "64")))]
     pub hook_size_and_setup: gpointer,
-    #[cfg(all(windows, target_pointer_width = &quot;64&quot;))]
+    #[cfg(all(windows, target_pointer_width = "64"))]
     pub hook_size_and_setup: c_ulong,
     pub hooks: *mut GHook,
     pub dummy3: gpointer,
@@ -1187,17 +1188,17 @@ pub struct GHookList {
 
 impl ::std::fmt::Debug for GHookList {
     fn fmt(&amp;self, f: &amp;mut ::std::fmt::Formatter) -&gt; ::std::fmt::Result {
-        write!(f, &quot;GHookList @ {self:p}&quot;)
+        write!(f, "GHookList @ {self:p}")
     }
 }
 
-&quot;#</span>,
+"#</span>,
     )
 }
 
 <span class="kw">fn </span>generate_disguised(w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write, env: <span class="kw-2">&amp;</span>Env, record: <span class="kw-2">&amp;</span>Record) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">let </span>ns = env.namespaces.main();
-    <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, ns.name, record.name);
+    <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">"{}.{}"</span>, ns.name, record.name);
     <span class="kw">let </span>cfg_condition_ = env
         .config
         .objects
@@ -1213,12 +1214,12 @@ impl ::std::fmt::Debug for GHookList {
             update_cfgs::get_object_cfg_condition(<span class="kw-2">&amp;</span>record.name, <span class="kw-2">&amp;</span><span class="prelude-val">None</span>, <span class="kw-2">&amp;</span>ns.identifier_prefixes)
         });
     cfg_condition(w, cfg_condition_.as_ref(), <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
-    generate_opaque_type(w, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;_{}&quot;</span>, record.c_type))<span class="question-mark">?</span>;
+    generate_opaque_type(w, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"_{}"</span>, record.c_type))<span class="question-mark">?</span>;
     cfg_condition(w, cfg_condition_.as_ref(), <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
     <span class="kw">if </span>record.pointer {
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;pub type {name} = *mut _{name};&quot;</span>, name = record.c_type)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"pub type {name} = *mut _{name};"</span>, name = record.c_type)<span class="question-mark">?</span>;
     } <span class="kw">else </span>{
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;pub type {name} = _{name};&quot;</span>, name = record.c_type)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"pub type {name} = _{name};"</span>, name = record.c_type)<span class="question-mark">?</span>;
     }
     <span class="macro">writeln!</span>(w)
 }
@@ -1230,11 +1231,11 @@ impl ::std::fmt::Debug for GHookList {
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     cfg_condition(w, fields.cfg_condition.as_ref(), <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
     <span class="kw">if let </span><span class="prelude-val">Some</span>(align) = align {
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;#[repr(align({align}))]&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"#[repr(align({align}))]"</span>)<span class="question-mark">?</span>;
     }
-    <span class="kw">let </span>traits = fields.derived_traits().join(<span class="string">&quot;, &quot;</span>);
+    <span class="kw">let </span>traits = fields.derived_traits().join(<span class="string">", "</span>);
     <span class="kw">if </span>!traits.is_empty() {
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;#[derive({traits})]&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"#[derive({traits})]"</span>)<span class="question-mark">?</span>;
     }
     <span class="kw">if </span>fields.external {
         <span class="comment">// It would be nice to represent those using extern types
@@ -1242,41 +1243,41 @@ impl ::std::fmt::Debug for GHookList {
         // https://github.com/rust-lang/rust/issues/43467
         </span>generate_opaque_type(w, <span class="kw-2">&amp;</span>fields.name)<span class="question-mark">?</span>;
     } <span class="kw">else </span>{
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;#[repr(C)]&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"#[repr(C)]"</span>)<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(
             w,
-            <span class="string">&quot;pub {kind} {name} {{&quot;</span>,
+            <span class="string">"pub {kind} {name} {{"</span>,
             kind = fields.kind,
             name = <span class="kw-2">&amp;</span>fields.name
         )<span class="question-mark">?</span>;
         <span class="kw">for </span>field <span class="kw">in </span><span class="kw-2">&amp;</span>fields.fields {
             <span class="macro">writeln!</span>(
                 w,
-                <span class="string">&quot;\tpub {field_name}: {field_type},&quot;</span>,
+                <span class="string">"\tpub {field_name}: {field_type},"</span>,
                 field_name = <span class="kw-2">&amp;</span>field.name,
                 field_type = <span class="kw-2">&amp;</span>field.typ
             )<span class="question-mark">?</span>;
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>reason) = fields.truncated {
-            <span class="macro">writeln!</span>(w, <span class="string">&quot;\t_truncated_record_marker: c_void,&quot;</span>)<span class="question-mark">?</span>;
-            <span class="macro">writeln!</span>(w, <span class="string">&quot;\t// {reason}&quot;</span>)<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(w, <span class="string">"\t_truncated_record_marker: c_void,"</span>)<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(w, <span class="string">"\t// {reason}"</span>)<span class="question-mark">?</span>;
         }
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;}}\n&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"}}\n"</span>)<span class="question-mark">?</span>;
     }
 
     cfg_condition(w, fields.cfg_condition.as_ref(), <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(
         w,
-        <span class="string">&quot;impl ::std::fmt::Debug for {name} {{&quot;</span>,
+        <span class="string">"impl ::std::fmt::Debug for {name} {{"</span>,
         name = <span class="kw-2">&amp;</span>fields.name
     )<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(
         w,
-        <span class="string">&quot;\tfn fmt(&amp;self, f: &amp;mut ::std::fmt::Formatter) -&gt; ::std::fmt::Result {{&quot;
+        <span class="string">"\tfn fmt(&amp;self, f: &amp;mut ::std::fmt::Formatter) -&gt; ::std::fmt::Result {{"
     </span>)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(
         w,
-        <span class="string">&quot;\t\tf.debug_struct(&amp;format!(\&quot;{name} @ {{self:p}}\&quot;))&quot;</span>,
+        <span class="string">"\t\tf.debug_struct(&amp;format!(\"{name} @ {{self:p}}\"))"</span>,
         name = <span class="kw-2">&amp;</span>fields.name
     )<span class="question-mark">?</span>;
     <span class="kw">for </span>field <span class="kw">in </span>fields.fields.iter().filter(|f| f.debug) {
@@ -1284,14 +1285,14 @@ impl ::std::fmt::Debug for GHookList {
         // available.
         </span><span class="macro">writeln!</span>(
             w,
-            <span class="string">&quot;\t\t .field(\&quot;{field_name}\&quot;, {field_get})&quot;</span>,
+            <span class="string">"\t\t .field(\"{field_name}\", {field_get})"</span>,
             field_name = <span class="kw-2">&amp;</span>field.name,
             field_get = <span class="kw-2">&amp;</span>field.access_str()
         )<span class="question-mark">?</span>;
     }
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;\t\t .finish()&quot;</span>)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;\t}}&quot;</span>)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;}}&quot;</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">"\t\t .finish()"</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">"\t}}"</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">"}}"</span>)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(w)
 }
 </code></pre></div></section></main></body></html>

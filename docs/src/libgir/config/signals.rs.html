@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/config/signals.rs`."><title>signals.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/config/signals.rs`."><title>signals.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -316,10 +317,10 @@
     <span class="kw">type </span><span class="prelude-val">Err </span>= String;
     <span class="kw">fn </span>from_str(s: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Err&gt; {
         <span class="kw">match </span>s {
-            <span class="string">&quot;none&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::None),
-            <span class="string">&quot;borrow&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Borrow),
-            <span class="string">&quot;treepath&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::TreePath),
-            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;Wrong transformation \&quot;{s}\&quot;&quot;</span>)),
+            <span class="string">"none" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::None),
+            <span class="string">"borrow" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Borrow),
+            <span class="string">"treepath" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::TreePath),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"Wrong transformation \"{s}\""</span>)),
         }
     }
 }
@@ -334,35 +335,35 @@
 
 <span class="kw">impl </span>Parse <span class="kw">for </span>Parameter {
     <span class="kw">fn </span>parse(toml: <span class="kw-2">&amp;</span>Value, object_name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span><span class="prelude-val">Some</span>(ident) = Ident::parse(toml, object_name, <span class="string">&quot;signal parameter&quot;</span>) <span class="kw">else </span>{
+        <span class="kw">let </span><span class="prelude-val">Some</span>(ident) = Ident::parse(toml, object_name, <span class="string">"signal parameter"</span>) <span class="kw">else </span>{
             <span class="macro">error!</span>(
-                <span class="string">&quot;No &#39;name&#39; or &#39;pattern&#39; given for parameter for object {}&quot;</span>,
+                <span class="string">"No 'name' or 'pattern' given for parameter for object {}"</span>,
                 object_name
             );
             <span class="kw">return </span><span class="prelude-val">None</span>;
         };
         toml.check_unwanted(
-            <span class="kw-2">&amp;</span>[<span class="string">&quot;nullable&quot;</span>, <span class="string">&quot;transformation&quot;</span>, <span class="string">&quot;new_name&quot;</span>, <span class="string">&quot;name&quot;</span>, <span class="string">&quot;pattern&quot;</span>],
-            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;parameter {object_name}&quot;</span>),
+            <span class="kw-2">&amp;</span>[<span class="string">"nullable"</span>, <span class="string">"transformation"</span>, <span class="string">"new_name"</span>, <span class="string">"name"</span>, <span class="string">"pattern"</span>],
+            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"parameter {object_name}"</span>),
         );
 
         <span class="kw">let </span>nullable = toml
-            .lookup(<span class="string">&quot;nullable&quot;</span>)
+            .lookup(<span class="string">"nullable"</span>)
             .and_then(Value::as_bool)
             .map(Nullable);
         <span class="kw">let </span>transformation = toml
-            .lookup(<span class="string">&quot;transformation&quot;</span>)
+            .lookup(<span class="string">"transformation"</span>)
             .and_then(Value::as_str)
             .and_then(|s| {
                 TransformationType::from_str(s)
                     .map_err(|err| {
-                        <span class="macro">error!</span>(<span class="string">&quot;{0}&quot;</span>, err);
+                        <span class="macro">error!</span>(<span class="string">"{0}"</span>, err);
                         err
                     })
                     .ok()
             });
         <span class="kw">let </span>new_name = toml
-            .lookup(<span class="string">&quot;new_name&quot;</span>)
+            .lookup(<span class="string">"new_name"</span>)
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
 
@@ -403,40 +404,40 @@
         object_name: <span class="kw-2">&amp;</span>str,
         concurrency: library::Concurrency,
     ) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span><span class="prelude-val">Some</span>(ident) = Ident::parse(toml, object_name, <span class="string">&quot;signal&quot;</span>) <span class="kw">else </span>{
+        <span class="kw">let </span><span class="prelude-val">Some</span>(ident) = Ident::parse(toml, object_name, <span class="string">"signal"</span>) <span class="kw">else </span>{
             <span class="macro">error!</span>(
-                <span class="string">&quot;No &#39;name&#39; or &#39;pattern&#39; given for signal for object {}&quot;</span>,
+                <span class="string">"No 'name' or 'pattern' given for signal for object {}"</span>,
                 object_name
             );
             <span class="kw">return </span><span class="prelude-val">None</span>;
         };
         toml.check_unwanted(
             <span class="kw-2">&amp;</span>[
-                <span class="string">&quot;ignore&quot;</span>,
-                <span class="string">&quot;manual&quot;</span>,
-                <span class="string">&quot;inhibit&quot;</span>,
-                <span class="string">&quot;version&quot;</span>,
-                <span class="string">&quot;parameter&quot;</span>,
-                <span class="string">&quot;return&quot;</span>,
-                <span class="string">&quot;doc_hidden&quot;</span>,
-                <span class="string">&quot;name&quot;</span>,
-                <span class="string">&quot;pattern&quot;</span>,
-                <span class="string">&quot;concurrency&quot;</span>,
-                <span class="string">&quot;doc_trait_name&quot;</span>,
-                <span class="string">&quot;generate_doc&quot;</span>,
+                <span class="string">"ignore"</span>,
+                <span class="string">"manual"</span>,
+                <span class="string">"inhibit"</span>,
+                <span class="string">"version"</span>,
+                <span class="string">"parameter"</span>,
+                <span class="string">"return"</span>,
+                <span class="string">"doc_hidden"</span>,
+                <span class="string">"name"</span>,
+                <span class="string">"pattern"</span>,
+                <span class="string">"concurrency"</span>,
+                <span class="string">"doc_trait_name"</span>,
+                <span class="string">"generate_doc"</span>,
             ],
-            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;signal {object_name}&quot;</span>),
+            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"signal {object_name}"</span>),
         );
 
         <span class="kw">let </span>status = {
             <span class="kw">if </span>toml
-                .lookup(<span class="string">&quot;ignore&quot;</span>)
+                .lookup(<span class="string">"ignore"</span>)
                 .and_then(Value::as_bool)
                 .unwrap_or(<span class="bool-val">false</span>)
             {
                 GStatus::Ignore
             } <span class="kw">else if </span>toml
-                .lookup(<span class="string">&quot;manual&quot;</span>)
+                .lookup(<span class="string">"manual"</span>)
                 .and_then(Value::as_bool)
                 .unwrap_or(<span class="bool-val">false</span>)
             {
@@ -447,32 +448,32 @@
         };
 
         <span class="kw">let </span>inhibit = toml
-            .lookup(<span class="string">&quot;inhibit&quot;</span>)
+            .lookup(<span class="string">"inhibit"</span>)
             .and_then(Value::as_bool)
             .unwrap_or(<span class="bool-val">false</span>);
         <span class="kw">let </span>version = toml
-            .lookup(<span class="string">&quot;version&quot;</span>)
+            .lookup(<span class="string">"version"</span>)
             .and_then(Value::as_str)
             .and_then(|s| s.parse().ok());
-        <span class="kw">let </span>parameters = Parameters::parse(toml.lookup(<span class="string">&quot;parameter&quot;</span>), object_name);
-        <span class="kw">let </span>ret = Return::parse(toml.lookup(<span class="string">&quot;return&quot;</span>), object_name);
+        <span class="kw">let </span>parameters = Parameters::parse(toml.lookup(<span class="string">"parameter"</span>), object_name);
+        <span class="kw">let </span>ret = Return::parse(toml.lookup(<span class="string">"return"</span>), object_name);
 
         <span class="kw">let </span>concurrency = toml
-            .lookup(<span class="string">&quot;concurrency&quot;</span>)
+            .lookup(<span class="string">"concurrency"</span>)
             .and_then(Value::as_str)
             .and_then(|v| v.parse().ok())
             .unwrap_or(concurrency);
 
         <span class="kw">let </span>doc_hidden = toml
-            .lookup(<span class="string">&quot;doc_hidden&quot;</span>)
+            .lookup(<span class="string">"doc_hidden"</span>)
             .and_then(Value::as_bool)
             .unwrap_or(<span class="bool-val">false</span>);
         <span class="kw">let </span>doc_trait_name = toml
-            .lookup(<span class="string">&quot;doc_trait_name&quot;</span>)
+            .lookup(<span class="string">"doc_trait_name"</span>)
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
         <span class="kw">let </span>generate_doc = toml
-            .lookup(<span class="string">&quot;generate_doc&quot;</span>)
+            .lookup(<span class="string">"generate_doc"</span>)
             .and_then(Value::as_bool)
             .unwrap_or(<span class="bool-val">true</span>);
 
@@ -520,57 +521,57 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>signal_parse_default() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;signal1&quot;
-&quot;#</span>,
+            <span class="string">r#"
+name = "signal1"
+"#</span>,
         );
-        <span class="kw">let </span>f = Signal::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>, Default::default()).unwrap();
-        <span class="macro">assert_eq!</span>(f.ident, Ident::Name(<span class="string">&quot;signal1&quot;</span>.into()));
+        <span class="kw">let </span>f = Signal::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>, Default::default()).unwrap();
+        <span class="macro">assert_eq!</span>(f.ident, Ident::Name(<span class="string">"signal1"</span>.into()));
         <span class="macro">assert!</span>(f.status.need_generate());
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>signal_parse_ignore() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;signal1&quot;
+            <span class="string">r#"
+name = "signal1"
 ignore = true
-&quot;#</span>,
+"#</span>,
         );
-        <span class="kw">let </span>f = Signal::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>, Default::default()).unwrap();
+        <span class="kw">let </span>f = Signal::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>, Default::default()).unwrap();
         <span class="macro">assert!</span>(f.status.ignored());
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>signal_parse_manual() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;signal1&quot;
+            <span class="string">r#"
+name = "signal1"
 manual = true
-&quot;#</span>,
+"#</span>,
         );
-        <span class="kw">let </span>f = Signal::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>, Default::default()).unwrap();
+        <span class="kw">let </span>f = Signal::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>, Default::default()).unwrap();
         <span class="macro">assert!</span>(f.status.manual());
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>signal_parse_generate_doc() {
         <span class="kw">let </span>r = toml(
-            <span class="string">r#&quot;
-name = &quot;signal1&quot;
+            <span class="string">r#"
+name = "signal1"
 generate_doc = false
-&quot;#</span>,
+"#</span>,
         );
-        <span class="kw">let </span>f = Signal::parse(<span class="kw-2">&amp;</span>r, <span class="string">&quot;a&quot;</span>, Default::default()).unwrap();
+        <span class="kw">let </span>f = Signal::parse(<span class="kw-2">&amp;</span>r, <span class="string">"a"</span>, Default::default()).unwrap();
         <span class="macro">assert!</span>(!f.generate_doc);
 
-        <span class="comment">// Ensure that the default value is &quot;true&quot;.
+        <span class="comment">// Ensure that the default value is "true".
         </span><span class="kw">let </span>r = toml(
-            <span class="string">r#&quot;
-name = &quot;prop&quot;
-&quot;#</span>,
+            <span class="string">r#"
+name = "prop"
+"#</span>,
         );
-        <span class="kw">let </span>f = Signal::parse(<span class="kw-2">&amp;</span>r, <span class="string">&quot;a&quot;</span>, Default::default()).unwrap();
+        <span class="kw">let </span>f = Signal::parse(<span class="kw-2">&amp;</span>r, <span class="string">"a"</span>, Default::default()).unwrap();
         <span class="macro">assert!</span>(f.generate_doc);
     }
 }

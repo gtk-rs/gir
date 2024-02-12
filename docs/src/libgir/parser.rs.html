@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/parser.rs`."><title>parser.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/parser.rs`."><title>parser.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1513,7 +1514,7 @@
     xmlparser::{Element, XmlParser},
 };
 
-<span class="kw">const </span>EMPTY_CTYPE: <span class="kw-2">&amp;</span>str = <span class="string">&quot;/*EMPTY*/&quot;</span>;
+<span class="kw">const </span>EMPTY_CTYPE: <span class="kw-2">&amp;</span>str = <span class="string">"/*EMPTY*/"</span>;
 
 <span class="kw">pub fn </span>is_empty_c_type(c_type: <span class="kw-2">&amp;</span>str) -&gt; bool {
     c_type == EMPTY_CTYPE
@@ -1532,33 +1533,33 @@
                 <span class="kw">continue</span>;
             };
             <span class="kw">return </span>parser.document(|p, <span class="kw">_</span>| {
-                p.element_with_name(<span class="string">&quot;repository&quot;</span>, |sub_parser, _elem| {
+                p.element_with_name(<span class="string">"repository"</span>, |sub_parser, _elem| {
                     <span class="self">self</span>.read_repository(dirs, sub_parser, libs)
                 })
             });
         }
-        <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;Couldn&#39;t find `{}`...&quot;</span>, <span class="kw-2">&amp;</span>libs[libs.len() - <span class="number">1</span>]))
+        <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"Couldn't find `{}`..."</span>, <span class="kw-2">&amp;</span>libs[libs.len() - <span class="number">1</span>]))
     }
 
     <span class="kw">fn </span>read_repository&lt;P: AsRef&lt;Path&gt;&gt;(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
         dirs: <span class="kw-2">&amp;</span>[P],
-        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
+        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
         libs: <span class="kw-2">&amp;mut </span>Vec&lt;String&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>packages = Vec::new();
         <span class="kw">let </span><span class="kw-2">mut </span>includes = Vec::new();
         parser.elements(|parser, elem| <span class="kw">match </span>elem.name() {
-            <span class="string">&quot;include&quot; </span>=&gt; {
-                <span class="kw">match </span>(elem.attr(<span class="string">&quot;name&quot;</span>), elem.attr(<span class="string">&quot;version&quot;</span>)) {
+            <span class="string">"include" </span>=&gt; {
+                <span class="kw">match </span>(elem.attr(<span class="string">"name"</span>), elem.attr(<span class="string">"version"</span>)) {
                     (<span class="prelude-val">Some</span>(name), <span class="prelude-val">Some</span>(ver)) =&gt; {
                         <span class="kw">if </span><span class="self">self</span>.find_namespace(name).is_none() {
-                            <span class="kw">let </span>lib = <span class="macro">format!</span>(<span class="string">&quot;{name}-{ver}&quot;</span>);
+                            <span class="kw">let </span>lib = <span class="macro">format!</span>(<span class="string">"{name}-{ver}"</span>);
                             <span class="kw">if </span>libs.iter().any(|x| <span class="kw-2">*</span>x == lib) {
                                 <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">format!</span>(
-                                    <span class="string">&quot;`{}` includes itself (full path:`{}`)!&quot;</span>,
+                                    <span class="string">"`{}` includes itself (full path:`{}`)!"</span>,
                                     lib,
-                                    libs.join(<span class="string">&quot;::&quot;</span>)
+                                    libs.join(<span class="string">"::"</span>)
                                 ));
                             }
                             libs.push(lib);
@@ -1571,18 +1572,18 @@
                 }
                 <span class="prelude-val">Ok</span>(())
             }
-            <span class="string">&quot;package&quot; </span>=&gt; {
-                <span class="kw">let </span>name = elem.attr_required(<span class="string">&quot;name&quot;</span>)<span class="question-mark">?</span>;
+            <span class="string">"package" </span>=&gt; {
+                <span class="kw">let </span>name = elem.attr_required(<span class="string">"name"</span>)<span class="question-mark">?</span>;
                 packages.push(name.to_owned());
                 <span class="prelude-val">Ok</span>(())
             }
-            <span class="string">&quot;namespace&quot; </span>=&gt; <span class="self">self</span>.read_namespace(
+            <span class="string">"namespace" </span>=&gt; <span class="self">self</span>.read_namespace(
                 parser,
                 elem,
                 std::mem::take(<span class="kw-2">&amp;mut </span>packages),
                 std::mem::take(<span class="kw-2">&amp;mut </span>includes),
             ),
-            <span class="string">&quot;attribute&quot; </span>=&gt; parser.ignore_element(),
+            <span class="string">"attribute" </span>=&gt; parser.ignore_element(),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(parser.unexpected_element(elem)),
         })<span class="question-mark">?</span>;
         <span class="prelude-val">Ok</span>(())
@@ -1590,21 +1591,21 @@
 
     <span class="kw">fn </span>read_namespace(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
+        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
         elem: <span class="kw-2">&amp;</span>Element,
         packages: Vec&lt;String&gt;,
         c_includes: Vec&lt;String&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
-        <span class="kw">let </span>ns_name = elem.attr_required(<span class="string">&quot;name&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>ns_name = elem.attr_required(<span class="string">"name"</span>)<span class="question-mark">?</span>;
         <span class="kw">let </span>ns_id = <span class="self">self</span>.add_namespace(ns_name);
 
         {
             <span class="kw">let </span>ns = <span class="self">self</span>.namespace_mut(ns_id);
             ns.package_names = packages;
             ns.c_includes = c_includes;
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(s) = elem.attr(<span class="string">&quot;shared-library&quot;</span>) {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(s) = elem.attr(<span class="string">"shared-library"</span>) {
                 ns.shared_library = s
-                    .split(<span class="string">&#39;,&#39;</span>)
+                    .split(<span class="string">','</span>)
                     .filter_map(|x| {
                         <span class="kw">if </span>!x.is_empty() {
                             <span class="prelude-val">Some</span>(String::from(x))
@@ -1614,36 +1615,36 @@
                     })
                     .collect();
             }
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(s) = elem.attr(<span class="string">&quot;identifier-prefixes&quot;</span>) {
-                ns.identifier_prefixes = s.split(<span class="string">&#39;,&#39;</span>).map(String::from).collect();
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(s) = elem.attr(<span class="string">"identifier-prefixes"</span>) {
+                ns.identifier_prefixes = s.split(<span class="string">','</span>).map(String::from).collect();
             }
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(s) = elem.attr(<span class="string">&quot;symbol-prefixes&quot;</span>) {
-                ns.symbol_prefixes = s.split(<span class="string">&#39;,&#39;</span>).map(String::from).collect();
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(s) = elem.attr(<span class="string">"symbol-prefixes"</span>) {
+                ns.symbol_prefixes = s.split(<span class="string">','</span>).map(String::from).collect();
             }
         }
 
         <span class="macro">trace!</span>(
-            <span class="string">&quot;Reading {}-{}&quot;</span>,
+            <span class="string">"Reading {}-{}"</span>,
             ns_name,
-            elem.attr(<span class="string">&quot;version&quot;</span>).unwrap_or(<span class="string">&quot;?&quot;</span>)
+            elem.attr(<span class="string">"version"</span>).unwrap_or(<span class="string">"?"</span>)
         );
 
         parser.elements(|parser, elem| {
-            <span class="macro">trace!</span>(<span class="string">&quot;&lt;{} name={:?}&gt;&quot;</span>, elem.name(), elem.attr(<span class="string">&quot;name&quot;</span>));
+            <span class="macro">trace!</span>(<span class="string">"&lt;{} name={:?}&gt;"</span>, elem.name(), elem.attr(<span class="string">"name"</span>));
             <span class="kw">match </span>elem.name() {
-                <span class="string">&quot;class&quot; </span>=&gt; <span class="self">self</span>.read_class(parser, ns_id, elem),
-                <span class="string">&quot;record&quot; </span>=&gt; <span class="self">self</span>.read_record_start(parser, ns_id, elem),
-                <span class="string">&quot;union&quot; </span>=&gt; <span class="self">self</span>.read_named_union(parser, ns_id, elem),
-                <span class="string">&quot;interface&quot; </span>=&gt; <span class="self">self</span>.read_interface(parser, ns_id, elem),
-                <span class="string">&quot;callback&quot; </span>=&gt; <span class="self">self</span>.read_named_callback(parser, ns_id, elem),
-                <span class="string">&quot;bitfield&quot; </span>=&gt; <span class="self">self</span>.read_bitfield(parser, ns_id, elem),
-                <span class="string">&quot;enumeration&quot; </span>=&gt; <span class="self">self</span>.read_enumeration(parser, ns_id, elem),
-                <span class="string">&quot;function&quot; </span>=&gt; <span class="self">self</span>.read_global_function(parser, ns_id, elem),
-                <span class="string">&quot;constant&quot; </span>=&gt; <span class="self">self</span>.read_constant(parser, ns_id, elem),
-                <span class="string">&quot;alias&quot; </span>=&gt; <span class="self">self</span>.read_alias(parser, ns_id, elem),
-                <span class="string">&quot;boxed&quot; </span>| <span class="string">&quot;function-macro&quot; </span>| <span class="string">&quot;docsection&quot; </span>=&gt; parser.ignore_element(),
+                <span class="string">"class" </span>=&gt; <span class="self">self</span>.read_class(parser, ns_id, elem),
+                <span class="string">"record" </span>=&gt; <span class="self">self</span>.read_record_start(parser, ns_id, elem),
+                <span class="string">"union" </span>=&gt; <span class="self">self</span>.read_named_union(parser, ns_id, elem),
+                <span class="string">"interface" </span>=&gt; <span class="self">self</span>.read_interface(parser, ns_id, elem),
+                <span class="string">"callback" </span>=&gt; <span class="self">self</span>.read_named_callback(parser, ns_id, elem),
+                <span class="string">"bitfield" </span>=&gt; <span class="self">self</span>.read_bitfield(parser, ns_id, elem),
+                <span class="string">"enumeration" </span>=&gt; <span class="self">self</span>.read_enumeration(parser, ns_id, elem),
+                <span class="string">"function" </span>=&gt; <span class="self">self</span>.read_global_function(parser, ns_id, elem),
+                <span class="string">"constant" </span>=&gt; <span class="self">self</span>.read_constant(parser, ns_id, elem),
+                <span class="string">"alias" </span>=&gt; <span class="self">self</span>.read_alias(parser, ns_id, elem),
+                <span class="string">"boxed" </span>| <span class="string">"function-macro" </span>| <span class="string">"docsection" </span>=&gt; parser.ignore_element(),
                 <span class="kw">_ </span>=&gt; {
-                    <span class="macro">warn!</span>(<span class="string">&quot;&lt;{} name={:?}&gt;&quot;</span>, elem.name(), elem.attr(<span class="string">&quot;name&quot;</span>));
+                    <span class="macro">warn!</span>(<span class="string">"&lt;{} name={:?}&gt;"</span>, elem.name(), elem.attr(<span class="string">"name"</span>));
                     parser.ignore_element()
                 }
             }
@@ -1653,28 +1654,28 @@
 
     <span class="kw">fn </span>read_class(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
+        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
         ns_id: u16,
         elem: <span class="kw-2">&amp;</span>Element,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
-        <span class="kw">let </span>class_name = elem.attr_required(<span class="string">&quot;name&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>class_name = elem.attr_required(<span class="string">"name"</span>)<span class="question-mark">?</span>;
         <span class="kw">let </span>c_type = <span class="self">self</span>.read_object_c_type(parser, elem)<span class="question-mark">?</span>;
-        <span class="kw">let </span>symbol_prefix = elem.attr_required(<span class="string">&quot;symbol-prefix&quot;</span>).map(ToOwned::to_owned)<span class="question-mark">?</span>;
-        <span class="kw">let </span>type_struct = elem.attr(<span class="string">&quot;type-struct&quot;</span>).map(ToOwned::to_owned);
-        <span class="kw">let </span>get_type = elem.attr_required(<span class="string">&quot;get-type&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>symbol_prefix = elem.attr_required(<span class="string">"symbol-prefix"</span>).map(ToOwned::to_owned)<span class="question-mark">?</span>;
+        <span class="kw">let </span>type_struct = elem.attr(<span class="string">"type-struct"</span>).map(ToOwned::to_owned);
+        <span class="kw">let </span>get_type = elem.attr_required(<span class="string">"get-type"</span>)<span class="question-mark">?</span>;
         <span class="kw">let </span>version = <span class="self">self</span>.read_version(parser, ns_id, elem)<span class="question-mark">?</span>;
         <span class="kw">let </span>deprecated_version = <span class="self">self</span>.read_deprecated_version(parser, ns_id, elem)<span class="question-mark">?</span>;
-        <span class="kw">let </span>is_fundamental = elem.attr(<span class="string">&quot;fundamental&quot;</span>).map_or(<span class="bool-val">false</span>, |x| x == <span class="string">&quot;1&quot;</span>);
+        <span class="kw">let </span>is_fundamental = elem.attr(<span class="string">"fundamental"</span>).map_or(<span class="bool-val">false</span>, |x| x == <span class="string">"1"</span>);
         <span class="kw">let </span>(ref_fn, unref_fn) = <span class="kw">if </span>is_fundamental {
             (
-                elem.attr(<span class="string">&quot;ref-func&quot;</span>).map(ToOwned::to_owned),
-                elem.attr(<span class="string">&quot;unref-func&quot;</span>).map(ToOwned::to_owned),
+                elem.attr(<span class="string">"ref-func"</span>).map(ToOwned::to_owned),
+                elem.attr(<span class="string">"unref-func"</span>).map(ToOwned::to_owned),
             )
         } <span class="kw">else </span>{
             (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>)
         };
 
-        <span class="kw">let </span>is_abstract = elem.attr(<span class="string">&quot;abstract&quot;</span>).map_or(<span class="bool-val">false</span>, |x| x == <span class="string">&quot;1&quot;</span>);
+        <span class="kw">let </span>is_abstract = elem.attr(<span class="string">"abstract"</span>).map_or(<span class="bool-val">false</span>, |x| x == <span class="string">"1"</span>);
 
         <span class="kw">let </span><span class="kw-2">mut </span>fns = Vec::new();
         <span class="kw">let </span><span class="kw-2">mut </span>signals = Vec::new();
@@ -1687,41 +1688,41 @@
         <span class="kw">let </span><span class="kw-2">mut </span>union_count = <span class="number">1</span>;
 
         parser.elements(|parser, elem| <span class="kw">match </span>elem.name() {
-            <span class="string">&quot;constructor&quot; </span>| <span class="string">&quot;function&quot; </span>| <span class="string">&quot;method&quot; </span>=&gt; {
+            <span class="string">"constructor" </span>| <span class="string">"function" </span>| <span class="string">"method" </span>=&gt; {
                 <span class="self">self</span>.read_function_to_vec(parser, ns_id, elem, <span class="kw-2">&amp;mut </span>fns)
             }
-            <span class="string">&quot;implements&quot; </span>=&gt; <span class="self">self</span>.read_type(parser, ns_id, elem).map(|r| {
+            <span class="string">"implements" </span>=&gt; <span class="self">self</span>.read_type(parser, ns_id, elem).map(|r| {
                 impls.push(r.<span class="number">0</span>);
             }),
-            <span class="string">&quot;signal&quot; </span>=&gt; <span class="self">self
+            <span class="string">"signal" </span>=&gt; <span class="self">self
                 </span>.read_signal(parser, ns_id, elem)
                 .map(|s| signals.push(s)),
-            <span class="string">&quot;property&quot; </span>=&gt; <span class="self">self</span>.read_property(parser, ns_id, elem).map(|p| {
+            <span class="string">"property" </span>=&gt; <span class="self">self</span>.read_property(parser, ns_id, elem).map(|p| {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(p) = p {
                     properties.push(p);
                 }
             }),
-            <span class="string">&quot;field&quot; </span>=&gt; <span class="self">self</span>.read_field(parser, ns_id, elem).map(|f| {
+            <span class="string">"field" </span>=&gt; <span class="self">self</span>.read_field(parser, ns_id, elem).map(|f| {
                 fields.push(f);
             }),
-            <span class="string">&quot;virtual-method&quot; </span>=&gt; <span class="self">self
+            <span class="string">"virtual-method" </span>=&gt; <span class="self">self
                 </span>.read_virtual_method(parser, ns_id, elem)
                 .map(|v| vfns.push(v)),
-            <span class="string">&quot;doc&quot; </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
-            <span class="string">&quot;doc-deprecated&quot; </span>=&gt; parser.text().map(|t| doc_deprecated = <span class="prelude-val">Some</span>(t)),
-            <span class="string">&quot;source-position&quot; </span>=&gt; parser.ignore_element(),
-            <span class="string">&quot;union&quot; </span>=&gt; <span class="self">self
+            <span class="string">"doc" </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
+            <span class="string">"doc-deprecated" </span>=&gt; parser.text().map(|t| doc_deprecated = <span class="prelude-val">Some</span>(t)),
+            <span class="string">"source-position" </span>=&gt; parser.ignore_element(),
+            <span class="string">"union" </span>=&gt; <span class="self">self
                 </span>.read_union(parser, ns_id, elem, <span class="prelude-val">Some</span>(class_name), <span class="prelude-val">Some</span>(c_type))
                 .map(|<span class="kw-2">mut </span>u| {
-                    <span class="kw">let </span>field_name = <span class="kw">if let </span><span class="prelude-val">Some</span>(field_name) = elem.attr(<span class="string">&quot;name&quot;</span>) {
+                    <span class="kw">let </span>field_name = <span class="kw">if let </span><span class="prelude-val">Some</span>(field_name) = elem.attr(<span class="string">"name"</span>) {
                         field_name.into()
                     } <span class="kw">else </span>{
-                        <span class="macro">format!</span>(<span class="string">&quot;u{union_count}&quot;</span>)
+                        <span class="macro">format!</span>(<span class="string">"u{union_count}"</span>)
                     };
 
                     u = Union {
-                        name: <span class="macro">format!</span>(<span class="string">&quot;{class_name}_{field_name}&quot;</span>),
-                        c_type: <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">&quot;{c_type}_{field_name}&quot;</span>)),
+                        name: <span class="macro">format!</span>(<span class="string">"{class_name}_{field_name}"</span>),
+                        c_type: <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">"{c_type}_{field_name}"</span>)),
                         ..u
                     };
 
@@ -1737,12 +1738,12 @@
                     });
                     union_count += <span class="number">1</span>;
                 }),
-            <span class="string">&quot;attribute&quot; </span>=&gt; parser.ignore_element(),
+            <span class="string">"attribute" </span>=&gt; parser.ignore_element(),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(parser.unexpected_element(elem)),
         })<span class="question-mark">?</span>;
 
         <span class="kw">let </span>parent = elem
-            .attr(<span class="string">&quot;parent&quot;</span>)
+            .attr(<span class="string">"parent"</span>)
             .map(|s| <span class="self">self</span>.find_or_stub_type(ns_id, s));
         <span class="kw">let </span>typ = Type::Class(Class {
             name: class_name.into(),
@@ -1774,7 +1775,7 @@
 
     <span class="kw">fn </span>read_record_start(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
+        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
         ns_id: u16,
         elem: <span class="kw-2">&amp;</span>Element,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
@@ -1787,28 +1788,28 @@
 
     <span class="kw">fn </span>read_record(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
+        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
         ns_id: u16,
         elem: <span class="kw-2">&amp;</span>Element,
         parent_name_prefix: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;,
         parent_ctype_prefix: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Type&gt;, String&gt; {
-        <span class="kw">let </span>record_name = elem.attr(<span class="string">&quot;name&quot;</span>).unwrap_or_default();
+        <span class="kw">let </span>record_name = elem.attr(<span class="string">"name"</span>).unwrap_or_default();
         <span class="comment">// Records starting with `_` are intended to be private and should not be bound
-        </span><span class="kw">if </span>record_name.starts_with(<span class="string">&#39;_&#39;</span>) {
+        </span><span class="kw">if </span>record_name.starts_with(<span class="string">'_'</span>) {
             parser.ignore_element()<span class="question-mark">?</span>;
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
         }
-        <span class="kw">let </span>is_class_record = record_name.ends_with(<span class="string">&quot;Class&quot;</span>);
+        <span class="kw">let </span>is_class_record = record_name.ends_with(<span class="string">"Class"</span>);
 
-        <span class="kw">let </span>c_type = elem.attr(<span class="string">&quot;type&quot;</span>).unwrap_or_default();
-        <span class="kw">let </span>symbol_prefix = elem.attr(<span class="string">&quot;symbol-prefix&quot;</span>).map(ToOwned::to_owned);
-        <span class="kw">let </span>get_type = elem.attr(<span class="string">&quot;get-type&quot;</span>).map(ToOwned::to_owned);
-        <span class="kw">let </span>gtype_struct_for = elem.attr(<span class="string">&quot;is-gtype-struct-for&quot;</span>);
+        <span class="kw">let </span>c_type = elem.attr(<span class="string">"type"</span>).unwrap_or_default();
+        <span class="kw">let </span>symbol_prefix = elem.attr(<span class="string">"symbol-prefix"</span>).map(ToOwned::to_owned);
+        <span class="kw">let </span>get_type = elem.attr(<span class="string">"get-type"</span>).map(ToOwned::to_owned);
+        <span class="kw">let </span>gtype_struct_for = elem.attr(<span class="string">"is-gtype-struct-for"</span>);
         <span class="kw">let </span>version = <span class="self">self</span>.read_version(parser, ns_id, elem)<span class="question-mark">?</span>;
         <span class="kw">let </span>deprecated_version = <span class="self">self</span>.read_deprecated_version(parser, ns_id, elem)<span class="question-mark">?</span>;
-        <span class="kw">let </span>pointer = elem.attr_bool(<span class="string">&quot;pointer&quot;</span>, <span class="bool-val">false</span>);
-        <span class="kw">let </span>disguised = elem.attr_bool(<span class="string">&quot;disguised&quot;</span>, <span class="bool-val">false</span>);
+        <span class="kw">let </span>pointer = elem.attr_bool(<span class="string">"pointer"</span>, <span class="bool-val">false</span>);
+        <span class="kw">let </span>disguised = elem.attr_bool(<span class="string">"disguised"</span>, <span class="bool-val">false</span>);
 
         <span class="kw">let </span><span class="kw-2">mut </span>fields = Vec::new();
         <span class="kw">let </span><span class="kw-2">mut </span>fns = Vec::new();
@@ -1817,28 +1818,28 @@
         <span class="kw">let </span><span class="kw-2">mut </span>union_count = <span class="number">1</span>;
 
         parser.elements(|parser, elem| <span class="kw">match </span>elem.name() {
-            <span class="string">&quot;constructor&quot; </span>| <span class="string">&quot;function&quot; </span>| <span class="string">&quot;method&quot; </span>=&gt; {
+            <span class="string">"constructor" </span>| <span class="string">"function" </span>| <span class="string">"method" </span>=&gt; {
                 <span class="self">self</span>.read_function_to_vec(parser, ns_id, elem, <span class="kw-2">&amp;mut </span>fns)
             }
-            <span class="string">&quot;union&quot; </span>=&gt; <span class="self">self
+            <span class="string">"union" </span>=&gt; <span class="self">self
                 </span>.read_union(parser, ns_id, elem, <span class="prelude-val">Some</span>(record_name), <span class="prelude-val">Some</span>(c_type))
                 .map(|<span class="kw-2">mut </span>u| {
-                    <span class="kw">let </span>field_name = <span class="kw">if let </span><span class="prelude-val">Some</span>(field_name) = elem.attr(<span class="string">&quot;name&quot;</span>) {
+                    <span class="kw">let </span>field_name = <span class="kw">if let </span><span class="prelude-val">Some</span>(field_name) = elem.attr(<span class="string">"name"</span>) {
                         field_name.into()
                     } <span class="kw">else </span>{
-                        <span class="macro">format!</span>(<span class="string">&quot;u{union_count}&quot;</span>)
+                        <span class="macro">format!</span>(<span class="string">"u{union_count}"</span>)
                     };
 
                     u = Union {
                         name: <span class="macro">format!</span>(
-                            <span class="string">&quot;{}{}_{}&quot;</span>,
-                            parent_name_prefix.map_or_else(String::new, |s| { <span class="macro">format!</span>(<span class="string">&quot;{s}_&quot;</span>) }),
+                            <span class="string">"{}{}_{}"</span>,
+                            parent_name_prefix.map_or_else(String::new, |s| { <span class="macro">format!</span>(<span class="string">"{s}_"</span>) }),
                             record_name,
                             field_name
                         ),
                         c_type: <span class="prelude-val">Some</span>(<span class="macro">format!</span>(
-                            <span class="string">&quot;{}{}_{}&quot;</span>,
-                            parent_ctype_prefix.map_or_else(String::new, |s| { <span class="macro">format!</span>(<span class="string">&quot;{s}_&quot;</span>) }),
+                            <span class="string">"{}{}_{}"</span>,
+                            parent_ctype_prefix.map_or_else(String::new, |s| { <span class="macro">format!</span>(<span class="string">"{s}_"</span>) }),
                             c_type,
                             field_name
                         )),
@@ -1857,16 +1858,16 @@
                     });
                     union_count += <span class="number">1</span>;
                 }),
-            <span class="string">&quot;field&quot; </span>=&gt; {
+            <span class="string">"field" </span>=&gt; {
                 <span class="self">self</span>.read_field(parser, ns_id, elem).map(|<span class="kw-2">mut </span>f| {
                     <span class="comment">// Workaround for bitfields
-                    </span><span class="kw">if </span>c_type == <span class="string">&quot;GDate&quot; </span>{
-                        <span class="kw">if </span>f.name == <span class="string">&quot;julian_days&quot; </span>{
+                    </span><span class="kw">if </span>c_type == <span class="string">"GDate" </span>{
+                        <span class="kw">if </span>f.name == <span class="string">"julian_days" </span>{
                             fields.push(f);
-                        } <span class="kw">else if </span>f.name == <span class="string">&quot;julian&quot; </span>{
-                            f.name = <span class="string">&quot;flags_dmy&quot;</span>.into();
+                        } <span class="kw">else if </span>f.name == <span class="string">"julian" </span>{
+                            f.name = <span class="string">"flags_dmy"</span>.into();
                             f.typ = TypeId::tid_uint32();
-                            f.c_type = <span class="prelude-val">Some</span>(<span class="string">&quot;guint&quot;</span>.into());
+                            f.c_type = <span class="prelude-val">Some</span>(<span class="string">"guint"</span>.into());
                             f.bits = <span class="prelude-val">None</span>;
                             fields.push(f);
                         } <span class="kw">else </span>{
@@ -1875,16 +1876,16 @@
                         <span class="kw">return</span>;
                     }
                     <span class="comment">// Workaround for wrong GValue c:type
-                    </span><span class="kw">if </span>c_type == <span class="string">&quot;GValue&quot; </span>&amp;&amp; f.name == <span class="string">&quot;data&quot; </span>{
-                        f.c_type = <span class="prelude-val">Some</span>(<span class="string">&quot;GValue_data&quot;</span>.into());
+                    </span><span class="kw">if </span>c_type == <span class="string">"GValue" </span>&amp;&amp; f.name == <span class="string">"data" </span>{
+                        f.c_type = <span class="prelude-val">Some</span>(<span class="string">"GValue_data"</span>.into());
                     }
                     fields.push(f);
                 })
             }
-            <span class="string">&quot;doc&quot; </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
-            <span class="string">&quot;doc-deprecated&quot; </span>=&gt; parser.text().map(|t| doc_deprecated = <span class="prelude-val">Some</span>(t)),
-            <span class="string">&quot;source-position&quot; </span>=&gt; parser.ignore_element(),
-            <span class="string">&quot;attribute&quot; </span>=&gt; parser.ignore_element(),
+            <span class="string">"doc" </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
+            <span class="string">"doc-deprecated" </span>=&gt; parser.text().map(|t| doc_deprecated = <span class="prelude-val">Some</span>(t)),
+            <span class="string">"source-position" </span>=&gt; parser.ignore_element(),
+            <span class="string">"attribute" </span>=&gt; parser.ignore_element(),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(parser.unexpected_element(elem)),
         })<span class="question-mark">?</span>;
 
@@ -1918,21 +1919,21 @@
 
     <span class="kw">fn </span>read_named_union(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
+        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
         ns_id: u16,
         elem: <span class="kw-2">&amp;</span>Element,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
         <span class="comment">// Require a name here
-        </span>elem.attr_required(<span class="string">&quot;name&quot;</span>)<span class="question-mark">?</span>;
+        </span>elem.attr_required(<span class="string">"name"</span>)<span class="question-mark">?</span>;
 
         <span class="self">self</span>.read_union(parser, ns_id, elem, <span class="prelude-val">None</span>, <span class="prelude-val">None</span>)
             .and_then(|<span class="kw-2">mut </span>u| {
-                <span class="macro">assert_ne!</span>(u.name, <span class="string">&quot;&quot;</span>);
+                <span class="macro">assert_ne!</span>(u.name, <span class="string">""</span>);
                 <span class="comment">// Workaround for missing c:type
-                </span><span class="kw">if </span>u.name == <span class="string">&quot;_Value__data__union&quot; </span>{
-                    u.c_type = <span class="prelude-val">Some</span>(<span class="string">&quot;GValue_data&quot;</span>.into());
+                </span><span class="kw">if </span>u.name == <span class="string">"_Value__data__union" </span>{
+                    u.c_type = <span class="prelude-val">Some</span>(<span class="string">"GValue_data"</span>.into());
                 } <span class="kw">else if </span>u.c_type.is_none() {
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(parser.fail(<span class="string">&quot;Missing union c:type&quot;</span>));
+                    <span class="kw">return </span><span class="prelude-val">Err</span>(parser.fail(<span class="string">"Missing union c:type"</span>));
                 }
                 <span class="kw">let </span>union_name = u.name.clone();
                 <span class="self">self</span>.add_type(ns_id, <span class="kw-2">&amp;</span>union_name, Type::Union(u));
@@ -1942,16 +1943,16 @@
 
     <span class="kw">fn </span>read_union(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
+        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
         ns_id: u16,
         elem: <span class="kw-2">&amp;</span>Element,
         parent_name_prefix: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;,
         parent_ctype_prefix: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Union, String&gt; {
-        <span class="kw">let </span>union_name = elem.attr(<span class="string">&quot;name&quot;</span>).unwrap_or(<span class="string">&quot;&quot;</span>);
-        <span class="kw">let </span>c_type = <span class="self">self</span>.read_object_c_type(parser, elem).unwrap_or(<span class="string">&quot;&quot;</span>);
-        <span class="kw">let </span>get_type = elem.attr(<span class="string">&quot;get-type&quot;</span>).map(|s| s.into());
-        <span class="kw">let </span>symbol_prefix = elem.attr(<span class="string">&quot;symbol-prefix&quot;</span>).map(ToOwned::to_owned);
+        <span class="kw">let </span>union_name = elem.attr(<span class="string">"name"</span>).unwrap_or(<span class="string">""</span>);
+        <span class="kw">let </span>c_type = <span class="self">self</span>.read_object_c_type(parser, elem).unwrap_or(<span class="string">""</span>);
+        <span class="kw">let </span>get_type = elem.attr(<span class="string">"get-type"</span>).map(|s| s.into());
+        <span class="kw">let </span>symbol_prefix = elem.attr(<span class="string">"symbol-prefix"</span>).map(ToOwned::to_owned);
 
         <span class="kw">let </span><span class="kw-2">mut </span>fields = Vec::new();
         <span class="kw">let </span><span class="kw-2">mut </span>fns = Vec::new();
@@ -1959,14 +1960,14 @@
         <span class="kw">let </span><span class="kw-2">mut </span>struct_count = <span class="number">1</span>;
 
         parser.elements(|parser, elem| <span class="kw">match </span>elem.name() {
-            <span class="string">&quot;source-position&quot; </span>=&gt; parser.ignore_element(),
-            <span class="string">&quot;field&quot; </span>=&gt; <span class="self">self</span>.read_field(parser, ns_id, elem).map(|f| {
+            <span class="string">"source-position" </span>=&gt; parser.ignore_element(),
+            <span class="string">"field" </span>=&gt; <span class="self">self</span>.read_field(parser, ns_id, elem).map(|f| {
                 fields.push(f);
             }),
-            <span class="string">&quot;constructor&quot; </span>| <span class="string">&quot;function&quot; </span>| <span class="string">&quot;method&quot; </span>=&gt; {
+            <span class="string">"constructor" </span>| <span class="string">"function" </span>| <span class="string">"method" </span>=&gt; {
                 <span class="self">self</span>.read_function_to_vec(parser, ns_id, elem, <span class="kw-2">&amp;mut </span>fns)
             }
-            <span class="string">&quot;record&quot; </span>=&gt; {
+            <span class="string">"record" </span>=&gt; {
                 <span class="kw">let </span><span class="kw-2">mut </span>r = <span class="kw">match </span><span class="self">self</span>.read_record(
                     parser,
                     ns_id,
@@ -1978,22 +1979,22 @@
                     <span class="kw">_ </span>=&gt; <span class="kw">return </span><span class="prelude-val">Ok</span>(()),
                 };
 
-                <span class="kw">let </span>field_name = <span class="kw">if let </span><span class="prelude-val">Some</span>(field_name) = elem.attr(<span class="string">&quot;name&quot;</span>) {
+                <span class="kw">let </span>field_name = <span class="kw">if let </span><span class="prelude-val">Some</span>(field_name) = elem.attr(<span class="string">"name"</span>) {
                     field_name.into()
                 } <span class="kw">else </span>{
-                    <span class="macro">format!</span>(<span class="string">&quot;s{struct_count}&quot;</span>)
+                    <span class="macro">format!</span>(<span class="string">"s{struct_count}"</span>)
                 };
 
                 r = Record {
                     name: <span class="macro">format!</span>(
-                        <span class="string">&quot;{}{}_{}&quot;</span>,
-                        parent_name_prefix.map_or_else(String::new, |s| { <span class="macro">format!</span>(<span class="string">&quot;{s}_&quot;</span>) }),
+                        <span class="string">"{}{}_{}"</span>,
+                        parent_name_prefix.map_or_else(String::new, |s| { <span class="macro">format!</span>(<span class="string">"{s}_"</span>) }),
                         union_name,
                         field_name
                     ),
                     c_type: <span class="macro">format!</span>(
-                        <span class="string">&quot;{}{}_{}&quot;</span>,
-                        parent_ctype_prefix.map_or_else(String::new, |s| { <span class="macro">format!</span>(<span class="string">&quot;{s}_&quot;</span>) }),
+                        <span class="string">"{}{}_{}"</span>,
+                        parent_ctype_prefix.map_or_else(String::new, |s| { <span class="macro">format!</span>(<span class="string">"{s}_"</span>) }),
                         c_type,
                         field_name
                     ),
@@ -2015,8 +2016,8 @@
 
                 <span class="prelude-val">Ok</span>(())
             }
-            <span class="string">&quot;doc&quot; </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
-            <span class="string">&quot;attribute&quot; </span>=&gt; parser.ignore_element(),
+            <span class="string">"doc" </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
+            <span class="string">"attribute" </span>=&gt; parser.ignore_element(),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(parser.unexpected_element(elem)),
         })<span class="question-mark">?</span>;
 
@@ -2037,39 +2038,39 @@
         ns_id: u16,
         elem: <span class="kw-2">&amp;</span>Element,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Function, String&gt; {
-        <span class="kw">let </span>method_name = elem.attr_required(<span class="string">&quot;name&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>method_name = elem.attr_required(<span class="string">"name"</span>)<span class="question-mark">?</span>;
         <span class="kw">let </span>version = <span class="self">self</span>.read_version(parser, ns_id, elem)<span class="question-mark">?</span>;
         <span class="kw">let </span>deprecated_version = <span class="self">self</span>.read_deprecated_version(parser, ns_id, elem)<span class="question-mark">?</span>;
-        <span class="kw">let </span>c_identifier = elem.attr(<span class="string">&quot;identifier&quot;</span>).or_else(|| elem.attr(<span class="string">&quot;name&quot;</span>));
+        <span class="kw">let </span>c_identifier = elem.attr(<span class="string">"identifier"</span>).or_else(|| elem.attr(<span class="string">"name"</span>));
         <span class="kw">let </span><span class="kw-2">mut </span>params = Vec::new();
         <span class="kw">let </span><span class="kw-2">mut </span>ret = <span class="prelude-val">None</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>doc = <span class="prelude-val">None</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>doc_deprecated = <span class="prelude-val">None</span>;
 
         parser.elements(|parser, elem| <span class="kw">match </span>elem.name() {
-            <span class="string">&quot;parameters&quot; </span>=&gt; <span class="self">self
+            <span class="string">"parameters" </span>=&gt; <span class="self">self
                 </span>.read_parameters(parser, ns_id, <span class="bool-val">true</span>, <span class="bool-val">true</span>)
                 .map(|<span class="kw-2">mut </span>ps| params.append(<span class="kw-2">&amp;mut </span>ps)),
-            <span class="string">&quot;return-value&quot; </span>=&gt; {
+            <span class="string">"return-value" </span>=&gt; {
                 <span class="kw">if </span>ret.is_some() {
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(parser.fail(<span class="string">&quot;Too many &lt;return-value&gt; elements&quot;</span>));
+                    <span class="kw">return </span><span class="prelude-val">Err</span>(parser.fail(<span class="string">"Too many &lt;return-value&gt; elements"</span>));
                 }
                 <span class="self">self</span>.read_parameter(parser, ns_id, elem, <span class="bool-val">true</span>, <span class="bool-val">false</span>)
                     .map(|p| ret = <span class="prelude-val">Some</span>(p))
             }
-            <span class="string">&quot;source-position&quot; </span>=&gt; parser.ignore_element(),
-            <span class="string">&quot;doc&quot; </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
-            <span class="string">&quot;doc-deprecated&quot; </span>=&gt; parser.text().map(|t| doc_deprecated = <span class="prelude-val">Some</span>(t)),
-            <span class="string">&quot;attribute&quot; </span>=&gt; parser.ignore_element(),
+            <span class="string">"source-position" </span>=&gt; parser.ignore_element(),
+            <span class="string">"doc" </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
+            <span class="string">"doc-deprecated" </span>=&gt; parser.text().map(|t| doc_deprecated = <span class="prelude-val">Some</span>(t)),
+            <span class="string">"attribute" </span>=&gt; parser.ignore_element(),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(parser.unexpected_element(elem)),
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>throws = elem.attr_bool(<span class="string">&quot;throws&quot;</span>, <span class="bool-val">false</span>);
+        <span class="kw">let </span>throws = elem.attr_bool(<span class="string">"throws"</span>, <span class="bool-val">false</span>);
         <span class="kw">if </span>throws {
             params.push(Parameter {
-                name: <span class="string">&quot;error&quot;</span>.into(),
-                typ: <span class="self">self</span>.find_or_stub_type(ns_id, <span class="string">&quot;GLib.Error&quot;</span>),
-                c_type: <span class="string">&quot;GError**&quot;</span>.into(),
+                name: <span class="string">"error"</span>.into(),
+                typ: <span class="self">self</span>.find_or_stub_type(ns_id, <span class="string">"GLib.Error"</span>),
+                c_type: <span class="string">"GError**"</span>.into(),
                 instance_parameter: <span class="bool-val">false</span>,
                 direction: ParameterDirection::Out,
                 transfer: Transfer::Full,
@@ -2098,43 +2099,43 @@
                 doc_deprecated,
             })
         } <span class="kw">else </span>{
-            <span class="prelude-val">Err</span>(parser.fail(<span class="string">&quot;Missing &lt;return-value&gt; element&quot;</span>))
+            <span class="prelude-val">Err</span>(parser.fail(<span class="string">"Missing &lt;return-value&gt; element"</span>))
         }
     }
 
     <span class="kw">fn </span>read_field(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
+        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
         ns_id: u16,
         elem: <span class="kw-2">&amp;</span>Element,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Field, String&gt; {
-        <span class="kw">let </span>field_name = elem.attr_required(<span class="string">&quot;name&quot;</span>)<span class="question-mark">?</span>;
-        <span class="kw">let </span>private = elem.attr_bool(<span class="string">&quot;private&quot;</span>, <span class="bool-val">false</span>);
-        <span class="kw">let </span>bits = elem.attr(<span class="string">&quot;bits&quot;</span>).and_then(|s| s.parse().ok());
+        <span class="kw">let </span>field_name = elem.attr_required(<span class="string">"name"</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>private = elem.attr_bool(<span class="string">"private"</span>, <span class="bool-val">false</span>);
+        <span class="kw">let </span>bits = elem.attr(<span class="string">"bits"</span>).and_then(|s| s.parse().ok());
 
         <span class="kw">let </span><span class="kw-2">mut </span>typ = <span class="prelude-val">None</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>doc = <span class="prelude-val">None</span>;
 
         parser.elements(|parser, elem| <span class="kw">match </span>elem.name() {
-            <span class="string">&quot;type&quot; </span>| <span class="string">&quot;array&quot; </span>=&gt; {
+            <span class="string">"type" </span>| <span class="string">"array" </span>=&gt; {
                 <span class="kw">if </span>typ.is_some() {
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(parser.fail(<span class="string">&quot;Too many &lt;type&gt; elements&quot;</span>));
+                    <span class="kw">return </span><span class="prelude-val">Err</span>(parser.fail(<span class="string">"Too many &lt;type&gt; elements"</span>));
                 }
                 <span class="self">self</span>.read_type(parser, ns_id, elem).map(|t| {
                     typ = <span class="prelude-val">Some</span>(t);
                 })
             }
-            <span class="string">&quot;callback&quot; </span>=&gt; {
+            <span class="string">"callback" </span>=&gt; {
                 <span class="kw">if </span>typ.is_some() {
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(parser.fail(<span class="string">&quot;Too many &lt;type&gt; elements&quot;</span>));
+                    <span class="kw">return </span><span class="prelude-val">Err</span>(parser.fail(<span class="string">"Too many &lt;type&gt; elements"</span>));
                 }
                 <span class="self">self</span>.read_function(parser, ns_id, elem.name(), elem, <span class="bool-val">true</span>)
                     .map(|f| {
                         typ = <span class="prelude-val">Some</span>((Type::function(<span class="self">self</span>, f), <span class="prelude-val">None</span>, <span class="prelude-val">None</span>));
                     })
             }
-            <span class="string">&quot;doc&quot; </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
-            <span class="string">&quot;attribute&quot; </span>=&gt; parser.ignore_element(),
+            <span class="string">"doc" </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
+            <span class="string">"attribute" </span>=&gt; parser.ignore_element(),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(parser.unexpected_element(elem)),
         })<span class="question-mark">?</span>;
 
@@ -2149,13 +2150,13 @@
                 doc,
             })
         } <span class="kw">else </span>{
-            <span class="prelude-val">Err</span>(parser.fail(<span class="string">&quot;Missing &lt;type&gt; element&quot;</span>))
+            <span class="prelude-val">Err</span>(parser.fail(<span class="string">"Missing &lt;type&gt; element"</span>))
         }
     }
 
     <span class="kw">fn </span>read_named_callback(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
+        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
         ns_id: u16,
         elem: <span class="kw-2">&amp;</span>Element,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
@@ -2170,15 +2171,15 @@
 
     <span class="kw">fn </span>read_interface(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
+        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
         ns_id: u16,
         elem: <span class="kw-2">&amp;</span>Element,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
-        <span class="kw">let </span>interface_name = elem.attr_required(<span class="string">&quot;name&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>interface_name = elem.attr_required(<span class="string">"name"</span>)<span class="question-mark">?</span>;
         <span class="kw">let </span>c_type = <span class="self">self</span>.read_object_c_type(parser, elem)<span class="question-mark">?</span>;
-        <span class="kw">let </span>symbol_prefix = elem.attr_required(<span class="string">&quot;symbol-prefix&quot;</span>).map(ToOwned::to_owned)<span class="question-mark">?</span>;
-        <span class="kw">let </span>type_struct = elem.attr(<span class="string">&quot;type-struct&quot;</span>).map(ToOwned::to_owned);
-        <span class="kw">let </span>get_type = elem.attr_required(<span class="string">&quot;get-type&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>symbol_prefix = elem.attr_required(<span class="string">"symbol-prefix"</span>).map(ToOwned::to_owned)<span class="question-mark">?</span>;
+        <span class="kw">let </span>type_struct = elem.attr(<span class="string">"type-struct"</span>).map(ToOwned::to_owned);
+        <span class="kw">let </span>get_type = elem.attr_required(<span class="string">"get-type"</span>)<span class="question-mark">?</span>;
         <span class="kw">let </span>version = <span class="self">self</span>.read_version(parser, ns_id, elem)<span class="question-mark">?</span>;
         <span class="kw">let </span>deprecated_version = <span class="self">self</span>.read_deprecated_version(parser, ns_id, elem)<span class="question-mark">?</span>;
 
@@ -2191,27 +2192,27 @@
         <span class="kw">let </span><span class="kw-2">mut </span>doc_deprecated = <span class="prelude-val">None</span>;
 
         parser.elements(|parser, elem| <span class="kw">match </span>elem.name() {
-            <span class="string">&quot;constructor&quot; </span>| <span class="string">&quot;function&quot; </span>| <span class="string">&quot;method&quot; </span>=&gt; {
+            <span class="string">"constructor" </span>| <span class="string">"function" </span>| <span class="string">"method" </span>=&gt; {
                 <span class="self">self</span>.read_function_to_vec(parser, ns_id, elem, <span class="kw-2">&amp;mut </span>fns)
             }
-            <span class="string">&quot;prerequisite&quot; </span>=&gt; <span class="self">self</span>.read_type(parser, ns_id, elem).map(|r| {
+            <span class="string">"prerequisite" </span>=&gt; <span class="self">self</span>.read_type(parser, ns_id, elem).map(|r| {
                 prereqs.push(r.<span class="number">0</span>);
             }),
-            <span class="string">&quot;signal&quot; </span>=&gt; <span class="self">self
+            <span class="string">"signal" </span>=&gt; <span class="self">self
                 </span>.read_signal(parser, ns_id, elem)
                 .map(|s| signals.push(s)),
-            <span class="string">&quot;property&quot; </span>=&gt; <span class="self">self</span>.read_property(parser, ns_id, elem).map(|p| {
+            <span class="string">"property" </span>=&gt; <span class="self">self</span>.read_property(parser, ns_id, elem).map(|p| {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(p) = p {
                     properties.push(p);
                 }
             }),
-            <span class="string">&quot;doc&quot; </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
-            <span class="string">&quot;doc-deprecated&quot; </span>=&gt; parser.text().map(|t| doc_deprecated = <span class="prelude-val">Some</span>(t)),
-            <span class="string">&quot;virtual-method&quot; </span>=&gt; <span class="self">self
+            <span class="string">"doc" </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
+            <span class="string">"doc-deprecated" </span>=&gt; parser.text().map(|t| doc_deprecated = <span class="prelude-val">Some</span>(t)),
+            <span class="string">"virtual-method" </span>=&gt; <span class="self">self
                 </span>.read_virtual_method(parser, ns_id, elem)
                 .map(|v| vfns.push(v)),
-            <span class="string">&quot;source-position&quot; </span>=&gt; parser.ignore_element(),
-            <span class="string">&quot;attribute&quot; </span>=&gt; parser.ignore_element(),
+            <span class="string">"source-position" </span>=&gt; parser.ignore_element(),
+            <span class="string">"attribute" </span>=&gt; parser.ignore_element(),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(parser.unexpected_element(elem)),
         })<span class="question-mark">?</span>;
 
@@ -2238,14 +2239,14 @@
 
     <span class="kw">fn </span>read_bitfield(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
+        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
         ns_id: u16,
         elem: <span class="kw-2">&amp;</span>Element,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
-        <span class="kw">let </span>bitfield_name = elem.attr_required(<span class="string">&quot;name&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>bitfield_name = elem.attr_required(<span class="string">"name"</span>)<span class="question-mark">?</span>;
         <span class="kw">let </span>c_type = <span class="self">self</span>.read_object_c_type(parser, elem)<span class="question-mark">?</span>;
-        <span class="kw">let </span>symbol_prefix = elem.attr(<span class="string">&quot;symbol-prefix&quot;</span>).map(ToOwned::to_owned);
-        <span class="kw">let </span>get_type = elem.attr(<span class="string">&quot;get-type&quot;</span>).map(|s| s.into());
+        <span class="kw">let </span>symbol_prefix = elem.attr(<span class="string">"symbol-prefix"</span>).map(ToOwned::to_owned);
+        <span class="kw">let </span>get_type = elem.attr(<span class="string">"get-type"</span>).map(|s| s.into());
         <span class="kw">let </span>version = <span class="self">self</span>.read_version(parser, ns_id, elem)<span class="question-mark">?</span>;
         <span class="kw">let </span>deprecated_version = <span class="self">self</span>.read_deprecated_version(parser, ns_id, elem)<span class="question-mark">?</span>;
 
@@ -2255,16 +2256,16 @@
         <span class="kw">let </span><span class="kw-2">mut </span>doc_deprecated = <span class="prelude-val">None</span>;
 
         parser.elements(|parser, elem| <span class="kw">match </span>elem.name() {
-            <span class="string">&quot;member&quot; </span>=&gt; <span class="self">self
+            <span class="string">"member" </span>=&gt; <span class="self">self
                 </span>.read_member(parser, ns_id, elem)
                 .map(|m| members.push(m)),
-            <span class="string">&quot;constructor&quot; </span>| <span class="string">&quot;function&quot; </span>| <span class="string">&quot;method&quot; </span>=&gt; {
+            <span class="string">"constructor" </span>| <span class="string">"function" </span>| <span class="string">"method" </span>=&gt; {
                 <span class="self">self</span>.read_function_to_vec(parser, ns_id, elem, <span class="kw-2">&amp;mut </span>fns)
             }
-            <span class="string">&quot;doc&quot; </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
-            <span class="string">&quot;doc-deprecated&quot; </span>=&gt; parser.text().map(|t| doc_deprecated = <span class="prelude-val">Some</span>(t)),
-            <span class="string">&quot;source-position&quot; </span>=&gt; parser.ignore_element(),
-            <span class="string">&quot;attribute&quot; </span>=&gt; parser.ignore_element(),
+            <span class="string">"doc" </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
+            <span class="string">"doc-deprecated" </span>=&gt; parser.text().map(|t| doc_deprecated = <span class="prelude-val">Some</span>(t)),
+            <span class="string">"source-position" </span>=&gt; parser.ignore_element(),
+            <span class="string">"attribute" </span>=&gt; parser.ignore_element(),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(parser.unexpected_element(elem)),
         })<span class="question-mark">?</span>;
 
@@ -2286,18 +2287,18 @@
 
     <span class="kw">fn </span>read_enumeration(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
+        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
         ns_id: u16,
         elem: <span class="kw-2">&amp;</span>Element,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
-        <span class="kw">let </span>enum_name = elem.attr_required(<span class="string">&quot;name&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>enum_name = elem.attr_required(<span class="string">"name"</span>)<span class="question-mark">?</span>;
         <span class="kw">let </span>c_type = <span class="self">self</span>.read_object_c_type(parser, elem)<span class="question-mark">?</span>;
-        <span class="kw">let </span>symbol_prefix = elem.attr(<span class="string">&quot;symbol-prefix&quot;</span>).map(ToOwned::to_owned);
-        <span class="kw">let </span>get_type = elem.attr(<span class="string">&quot;get-type&quot;</span>).map(|s| s.into());
+        <span class="kw">let </span>symbol_prefix = elem.attr(<span class="string">"symbol-prefix"</span>).map(ToOwned::to_owned);
+        <span class="kw">let </span>get_type = elem.attr(<span class="string">"get-type"</span>).map(|s| s.into());
         <span class="kw">let </span>version = <span class="self">self</span>.read_version(parser, ns_id, elem)<span class="question-mark">?</span>;
         <span class="kw">let </span>deprecated_version = <span class="self">self</span>.read_deprecated_version(parser, ns_id, elem)<span class="question-mark">?</span>;
         <span class="kw">let </span>error_domain = elem
-            .attr(<span class="string">&quot;error-domain&quot;</span>)
+            .attr(<span class="string">"error-domain"</span>)
             .map(|s| ErrorDomain::Quark(String::from(s)));
 
         <span class="kw">let </span><span class="kw-2">mut </span>members = Vec::new();
@@ -2306,16 +2307,16 @@
         <span class="kw">let </span><span class="kw-2">mut </span>doc_deprecated = <span class="prelude-val">None</span>;
 
         parser.elements(|parser, elem| <span class="kw">match </span>elem.name() {
-            <span class="string">&quot;member&quot; </span>=&gt; <span class="self">self
+            <span class="string">"member" </span>=&gt; <span class="self">self
                 </span>.read_member(parser, ns_id, elem)
                 .map(|m| members.push(m)),
-            <span class="string">&quot;constructor&quot; </span>| <span class="string">&quot;function&quot; </span>| <span class="string">&quot;method&quot; </span>=&gt; {
+            <span class="string">"constructor" </span>| <span class="string">"function" </span>| <span class="string">"method" </span>=&gt; {
                 <span class="self">self</span>.read_function_to_vec(parser, ns_id, elem, <span class="kw-2">&amp;mut </span>fns)
             }
-            <span class="string">&quot;doc&quot; </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
-            <span class="string">&quot;doc-deprecated&quot; </span>=&gt; parser.text().map(|t| doc_deprecated = <span class="prelude-val">Some</span>(t)),
-            <span class="string">&quot;source-position&quot; </span>=&gt; parser.ignore_element(),
-            <span class="string">&quot;attribute&quot; </span>=&gt; parser.ignore_element(),
+            <span class="string">"doc" </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
+            <span class="string">"doc-deprecated" </span>=&gt; parser.text().map(|t| doc_deprecated = <span class="prelude-val">Some</span>(t)),
+            <span class="string">"source-position" </span>=&gt; parser.ignore_element(),
+            <span class="string">"attribute" </span>=&gt; parser.ignore_element(),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(parser.unexpected_element(elem)),
         })<span class="question-mark">?</span>;
 
@@ -2338,11 +2339,11 @@
 
     <span class="kw">fn </span>read_global_function(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
+        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
         ns_id: u16,
         elem: <span class="kw-2">&amp;</span>Element,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
-        <span class="self">self</span>.read_function_if_not_moved(parser, ns_id, <span class="string">&quot;global&quot;</span>, elem, <span class="bool-val">false</span>)
+        <span class="self">self</span>.read_function_if_not_moved(parser, ns_id, <span class="string">"global"</span>, elem, <span class="bool-val">false</span>)
             .map(|func| {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(func) = func {
                     <span class="self">self</span>.add_function(ns_id, func);
@@ -2352,13 +2353,13 @@
 
     <span class="kw">fn </span>read_constant(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
+        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
         ns_id: u16,
         elem: <span class="kw-2">&amp;</span>Element,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
-        <span class="kw">let </span>const_name = elem.attr_required(<span class="string">&quot;name&quot;</span>)<span class="question-mark">?</span>;
-        <span class="kw">let </span>c_identifier = elem.attr_required(<span class="string">&quot;type&quot;</span>)<span class="question-mark">?</span>;
-        <span class="kw">let </span>value = elem.attr_required(<span class="string">&quot;value&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>const_name = elem.attr_required(<span class="string">"name"</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>c_identifier = elem.attr_required(<span class="string">"type"</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>value = elem.attr_required(<span class="string">"value"</span>)<span class="question-mark">?</span>;
         <span class="kw">let </span>version = <span class="self">self</span>.read_version(parser, ns_id, elem)<span class="question-mark">?</span>;
         <span class="kw">let </span>deprecated_version = <span class="self">self</span>.read_deprecated_version(parser, ns_id, elem)<span class="question-mark">?</span>;
 
@@ -2367,10 +2368,10 @@
         <span class="kw">let </span><span class="kw-2">mut </span>doc_deprecated = <span class="prelude-val">None</span>;
 
         parser.elements(|parser, elem| <span class="kw">match </span>elem.name() {
-            <span class="string">&quot;type&quot; </span>| <span class="string">&quot;array&quot; </span>=&gt; {
+            <span class="string">"type" </span>| <span class="string">"array" </span>=&gt; {
                 <span class="kw">if </span>inner.is_some() {
                     <span class="kw">return </span><span class="prelude-val">Err</span>(parser.fail_with_position(
-                        <span class="string">&quot;Too many &lt;type&gt; inner elements in &lt;constant&gt; element&quot;</span>,
+                        <span class="string">"Too many &lt;type&gt; inner elements in &lt;constant&gt; element"</span>,
                         elem.position(),
                     ));
                 }
@@ -2379,16 +2380,16 @@
                     inner = <span class="prelude-val">Some</span>((typ, c_type, array_length));
                 } <span class="kw">else </span>{
                     <span class="kw">return </span><span class="prelude-val">Err</span>(parser.fail_with_position(
-                        <span class="string">&quot;Missing &lt;constant&gt; element&#39;s c:type&quot;</span>,
+                        <span class="string">"Missing &lt;constant&gt; element's c:type"</span>,
                         elem.position(),
                     ));
                 }
                 <span class="prelude-val">Ok</span>(())
             }
-            <span class="string">&quot;doc&quot; </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
-            <span class="string">&quot;doc-deprecated&quot; </span>=&gt; parser.text().map(|t| doc_deprecated = <span class="prelude-val">Some</span>(t)),
-            <span class="string">&quot;source-position&quot; </span>=&gt; parser.ignore_element(),
-            <span class="string">&quot;attribute&quot; </span>=&gt; parser.ignore_element(),
+            <span class="string">"doc" </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
+            <span class="string">"doc-deprecated" </span>=&gt; parser.text().map(|t| doc_deprecated = <span class="prelude-val">Some</span>(t)),
+            <span class="string">"source-position" </span>=&gt; parser.ignore_element(),
+            <span class="string">"attribute" </span>=&gt; parser.ignore_element(),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(parser.unexpected_element(elem)),
         })<span class="question-mark">?</span>;
 
@@ -2410,7 +2411,7 @@
             <span class="prelude-val">Ok</span>(())
         } <span class="kw">else </span>{
             <span class="prelude-val">Err</span>(parser.fail_with_position(
-                <span class="string">&quot;Missing &lt;type&gt; element inside &lt;constant&gt; element&quot;</span>,
+                <span class="string">"Missing &lt;type&gt; element inside &lt;constant&gt; element"</span>,
                 elem.position(),
             ))
         }
@@ -2418,23 +2419,23 @@
 
     <span class="kw">fn </span>read_alias(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
+        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
         ns_id: u16,
         elem: <span class="kw-2">&amp;</span>Element,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
-        <span class="kw">let </span>alias_name = elem.attr_required(<span class="string">&quot;name&quot;</span>)<span class="question-mark">?</span>;
-        <span class="kw">let </span>c_identifier = elem.attr_required(<span class="string">&quot;type&quot;</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>alias_name = elem.attr_required(<span class="string">"name"</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>c_identifier = elem.attr_required(<span class="string">"type"</span>)<span class="question-mark">?</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>inner = <span class="prelude-val">None</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>doc = <span class="prelude-val">None</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>doc_deprecated = <span class="prelude-val">None</span>;
 
         parser.elements(|parser, elem| <span class="kw">match </span>elem.name() {
-            <span class="string">&quot;source-position&quot; </span>=&gt; parser.ignore_element(),
-            <span class="string">&quot;type&quot; </span>| <span class="string">&quot;array&quot; </span>=&gt; {
+            <span class="string">"source-position" </span>=&gt; parser.ignore_element(),
+            <span class="string">"type" </span>| <span class="string">"array" </span>=&gt; {
                 <span class="kw">if </span>inner.is_some() {
                     <span class="kw">return </span><span class="prelude-val">Err</span>(parser.fail_with_position(
-                        <span class="string">&quot;Too many &lt;type&gt; inner elements in &lt;alias&gt; element&quot;</span>,
+                        <span class="string">"Too many &lt;type&gt; inner elements in &lt;alias&gt; element"</span>,
                         elem.position(),
                     ));
                 }
@@ -2442,13 +2443,13 @@
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(c_type) = c_type {
                     inner = <span class="prelude-val">Some</span>((typ, c_type, array_length));
                 } <span class="kw">else </span>{
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(parser.fail(<span class="string">&quot;Missing &lt;alias&gt; target&#39;s c:type&quot;</span>));
+                    <span class="kw">return </span><span class="prelude-val">Err</span>(parser.fail(<span class="string">"Missing &lt;alias&gt; target's c:type"</span>));
                 }
                 <span class="prelude-val">Ok</span>(())
             }
-            <span class="string">&quot;doc&quot; </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
-            <span class="string">&quot;doc-deprecated&quot; </span>=&gt; parser.text().map(|t| doc_deprecated = <span class="prelude-val">Some</span>(t)),
-            <span class="string">&quot;attribute&quot; </span>=&gt; parser.ignore_element(),
+            <span class="string">"doc" </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
+            <span class="string">"doc-deprecated" </span>=&gt; parser.text().map(|t| doc_deprecated = <span class="prelude-val">Some</span>(t)),
+            <span class="string">"attribute" </span>=&gt; parser.ignore_element(),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(parser.unexpected_element(elem)),
         })<span class="question-mark">?</span>;
 
@@ -2465,7 +2466,7 @@
             <span class="prelude-val">Ok</span>(())
         } <span class="kw">else </span>{
             <span class="prelude-val">Err</span>(parser.fail_with_position(
-                <span class="string">&quot;Missing &lt;type&gt; element inside &lt;alias&gt; element&quot;</span>,
+                <span class="string">"Missing &lt;type&gt; element inside &lt;alias&gt; element"</span>,
                 elem.position(),
             ))
         }
@@ -2473,13 +2474,13 @@
 
     <span class="kw">fn </span>read_member(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
+        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
         ns_id: u16,
         elem: <span class="kw-2">&amp;</span>Element,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Member, String&gt; {
-        <span class="kw">let </span>member_name = elem.attr_required(<span class="string">&quot;name&quot;</span>)<span class="question-mark">?</span>;
-        <span class="kw">let </span>value = elem.attr_required(<span class="string">&quot;value&quot;</span>)<span class="question-mark">?</span>;
-        <span class="kw">let </span>c_identifier = elem.attr(<span class="string">&quot;identifier&quot;</span>).map(|x| x.into());
+        <span class="kw">let </span>member_name = elem.attr_required(<span class="string">"name"</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>value = elem.attr_required(<span class="string">"value"</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>c_identifier = elem.attr(<span class="string">"identifier"</span>).map(|x| x.into());
         <span class="kw">let </span>version = <span class="self">self</span>.read_version(parser, ns_id, elem)<span class="question-mark">?</span>;
         <span class="kw">let </span>deprecated_version = <span class="self">self</span>.read_deprecated_version(parser, ns_id, elem)<span class="question-mark">?</span>;
 
@@ -2487,9 +2488,9 @@
         <span class="kw">let </span><span class="kw-2">mut </span>doc_deprecated = <span class="prelude-val">None</span>;
 
         parser.elements(|parser, elem| <span class="kw">match </span>elem.name() {
-            <span class="string">&quot;doc&quot; </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
-            <span class="string">&quot;doc-deprecated&quot; </span>=&gt; parser.text().map(|t| doc_deprecated = <span class="prelude-val">Some</span>(t)),
-            <span class="string">&quot;attribute&quot; </span>=&gt; parser.ignore_element(),
+            <span class="string">"doc" </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
+            <span class="string">"doc-deprecated" </span>=&gt; parser.text().map(|t| doc_deprecated = <span class="prelude-val">Some</span>(t)),
+            <span class="string">"attribute" </span>=&gt; parser.ignore_element(),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(parser.unexpected_element(elem)),
         })<span class="question-mark">?</span>;
 
@@ -2507,14 +2508,14 @@
 
     <span class="kw">fn </span>read_function(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
+        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
         ns_id: u16,
         kind_str: <span class="kw-2">&amp;</span>str,
         elem: <span class="kw-2">&amp;</span>Element,
         is_callback: bool,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Function, String&gt; {
-        <span class="kw">let </span>fn_name = elem.attr_required(<span class="string">&quot;name&quot;</span>)<span class="question-mark">?</span>;
-        <span class="kw">let </span>c_identifier = elem.attr(<span class="string">&quot;identifier&quot;</span>).or_else(|| elem.attr(<span class="string">&quot;type&quot;</span>));
+        <span class="kw">let </span>fn_name = elem.attr_required(<span class="string">"name"</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>c_identifier = elem.attr(<span class="string">"identifier"</span>).or_else(|| elem.attr(<span class="string">"type"</span>));
         <span class="kw">let </span>kind = FunctionKind::from_str(kind_str).map_err(|why| parser.fail(<span class="kw-2">&amp;</span>why))<span class="question-mark">?</span>;
         <span class="kw">let </span>is_method = kind == FunctionKind::Method;
         <span class="kw">let </span>version = <span class="self">self</span>.read_version(parser, ns_id, elem)<span class="question-mark">?</span>;
@@ -2526,38 +2527,38 @@
         <span class="kw">let </span><span class="kw-2">mut </span>doc_deprecated = <span class="prelude-val">None</span>;
 
         parser.elements(|parser, elem| <span class="kw">match </span>elem.name() {
-            <span class="string">&quot;parameters&quot; </span>=&gt; <span class="self">self
+            <span class="string">"parameters" </span>=&gt; <span class="self">self
                 </span>.read_parameters(parser, ns_id, <span class="bool-val">false</span>, is_method)
                 .map(|<span class="kw-2">mut </span>ps| params.append(<span class="kw-2">&amp;mut </span>ps)),
-            <span class="string">&quot;return-value&quot; </span>=&gt; {
+            <span class="string">"return-value" </span>=&gt; {
                 <span class="kw">if </span>ret.is_some() {
                     <span class="kw">return </span><span class="prelude-val">Err</span>(parser.fail_with_position(
-                        <span class="string">&quot;Too many &lt;return-value&gt; elements inside &lt;function&gt; element&quot;</span>,
+                        <span class="string">"Too many &lt;return-value&gt; elements inside &lt;function&gt; element"</span>,
                         elem.position(),
                     ));
                 }
                 ret = <span class="prelude-val">Some</span>(<span class="self">self</span>.read_parameter(parser, ns_id, elem, <span class="bool-val">false</span>, is_method)<span class="question-mark">?</span>);
                 <span class="prelude-val">Ok</span>(())
             }
-            <span class="string">&quot;doc&quot; </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
-            <span class="string">&quot;doc-deprecated&quot; </span>=&gt; parser.text().map(|t| doc_deprecated = <span class="prelude-val">Some</span>(t)),
-            <span class="string">&quot;doc-version&quot; </span>=&gt; parser.ignore_element(),
-            <span class="string">&quot;source-position&quot; </span>=&gt; parser.ignore_element(),
-            <span class="string">&quot;attribute&quot; </span>=&gt; parser.ignore_element(),
+            <span class="string">"doc" </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
+            <span class="string">"doc-deprecated" </span>=&gt; parser.text().map(|t| doc_deprecated = <span class="prelude-val">Some</span>(t)),
+            <span class="string">"doc-version" </span>=&gt; parser.ignore_element(),
+            <span class="string">"source-position" </span>=&gt; parser.ignore_element(),
+            <span class="string">"attribute" </span>=&gt; parser.ignore_element(),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(parser.unexpected_element(elem)),
         })<span class="question-mark">?</span>;
         <span class="comment">// The last argument of a callback is ALWAYS user data, so it has to be marked as such
-        // in case it&#39;s missing.
+        // in case it's missing.
         </span><span class="kw">if </span>is_callback &amp;&amp; params.last().map(|x| x.closure.is_none()).unwrap_or(<span class="bool-val">false</span>) {
             params.last_mut().unwrap().closure = <span class="prelude-val">Some</span>(<span class="number">2000</span>);
         }
 
-        <span class="kw">let </span>throws = elem.attr_bool(<span class="string">&quot;throws&quot;</span>, <span class="bool-val">false</span>);
+        <span class="kw">let </span>throws = elem.attr_bool(<span class="string">"throws"</span>, <span class="bool-val">false</span>);
         <span class="kw">if </span>throws {
             params.push(Parameter {
-                name: <span class="string">&quot;error&quot;</span>.into(),
-                typ: <span class="self">self</span>.find_or_stub_type(ns_id, <span class="string">&quot;GLib.Error&quot;</span>),
-                c_type: <span class="string">&quot;GError**&quot;</span>.into(),
+                name: <span class="string">"error"</span>.into(),
+                typ: <span class="self">self</span>.find_or_stub_type(ns_id, <span class="string">"GLib.Error"</span>),
+                c_type: <span class="string">"GError**"</span>.into(),
                 instance_parameter: <span class="bool-val">false</span>,
                 direction: ParameterDirection::Out,
                 transfer: Transfer::Full,
@@ -2586,7 +2587,7 @@
             })
         } <span class="kw">else </span>{
             <span class="prelude-val">Err</span>(parser.fail_with_position(
-                <span class="string">&quot;Missing &lt;return-value&gt; element in &lt;function&gt; element&quot;</span>,
+                <span class="string">"Missing &lt;return-value&gt; element in &lt;function&gt; element"</span>,
                 elem.position(),
             ))
         }
@@ -2594,7 +2595,7 @@
 
     <span class="kw">fn </span>read_function_to_vec(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
+        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
         ns_id: u16,
         elem: <span class="kw-2">&amp;</span>Element,
         fns: <span class="kw-2">&amp;mut </span>Vec&lt;Function&gt;,
@@ -2607,13 +2608,13 @@
 
     <span class="kw">fn </span>read_function_if_not_moved(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
+        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
         ns_id: u16,
         kind_str: <span class="kw-2">&amp;</span>str,
         elem: <span class="kw-2">&amp;</span>Element,
         is_callback: bool,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Function&gt;, String&gt; {
-        <span class="kw">if </span>elem.attr(<span class="string">&quot;moved-to&quot;</span>).is_some() {
+        <span class="kw">if </span>elem.attr(<span class="string">"moved-to"</span>).is_some() {
             <span class="kw">return </span>parser.ignore_element().map(|<span class="kw">_</span>| <span class="prelude-val">None</span>);
         }
         <span class="self">self</span>.read_function(parser, ns_id, kind_str, elem, is_callback)
@@ -2621,7 +2622,7 @@
                 <span class="kw">if </span>f.c_identifier.is_none() {
                     <span class="kw">return </span><span class="prelude-val">Err</span>(parser.fail_with_position(
                         <span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                            <span class="string">&quot;Missing c:identifier attribute in &lt;{}&gt; element&quot;</span>,
+                            <span class="string">"Missing c:identifier attribute in &lt;{}&gt; element"</span>,
                             elem.name()
                         ),
                         elem.position(),
@@ -2633,13 +2634,13 @@
 
     <span class="kw">fn </span>read_signal(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
+        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
         ns_id: u16,
         elem: <span class="kw-2">&amp;</span>Element,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Signal, String&gt; {
-        <span class="kw">let </span>signal_name = elem.attr_required(<span class="string">&quot;name&quot;</span>)<span class="question-mark">?</span>;
-        <span class="kw">let </span>is_action = elem.attr_bool(<span class="string">&quot;action&quot;</span>, <span class="bool-val">false</span>);
-        <span class="kw">let </span>is_detailed = elem.attr_bool(<span class="string">&quot;detailed&quot;</span>, <span class="bool-val">false</span>);
+        <span class="kw">let </span>signal_name = elem.attr_required(<span class="string">"name"</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>is_action = elem.attr_bool(<span class="string">"action"</span>, <span class="bool-val">false</span>);
+        <span class="kw">let </span>is_detailed = elem.attr_bool(<span class="string">"detailed"</span>, <span class="bool-val">false</span>);
         <span class="kw">let </span>version = <span class="self">self</span>.read_version(parser, ns_id, elem)<span class="question-mark">?</span>;
         <span class="kw">let </span>deprecated_version = <span class="self">self</span>.read_deprecated_version(parser, ns_id, elem)<span class="question-mark">?</span>;
 
@@ -2649,22 +2650,22 @@
         <span class="kw">let </span><span class="kw-2">mut </span>doc_deprecated = <span class="prelude-val">None</span>;
 
         parser.elements(|parser, elem| <span class="kw">match </span>elem.name() {
-            <span class="string">&quot;parameters&quot; </span>=&gt; <span class="self">self
+            <span class="string">"parameters" </span>=&gt; <span class="self">self
                 </span>.read_parameters(parser, ns_id, <span class="bool-val">true</span>, <span class="bool-val">false</span>)
                 .map(|<span class="kw-2">mut </span>ps| params.append(<span class="kw-2">&amp;mut </span>ps)),
-            <span class="string">&quot;return-value&quot; </span>=&gt; {
+            <span class="string">"return-value" </span>=&gt; {
                 <span class="kw">if </span>ret.is_some() {
                     <span class="kw">return </span><span class="prelude-val">Err</span>(parser.fail_with_position(
-                        <span class="string">&quot;Too many &lt;return-value&gt; elements in &lt;signal&gt; element&quot;</span>,
+                        <span class="string">"Too many &lt;return-value&gt; elements in &lt;signal&gt; element"</span>,
                         elem.position(),
                     ));
                 }
                 <span class="self">self</span>.read_parameter(parser, ns_id, elem, <span class="bool-val">true</span>, <span class="bool-val">false</span>)
                     .map(|p| ret = <span class="prelude-val">Some</span>(p))
             }
-            <span class="string">&quot;doc&quot; </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
-            <span class="string">&quot;doc-deprecated&quot; </span>=&gt; parser.text().map(|t| doc_deprecated = <span class="prelude-val">Some</span>(t)),
-            <span class="string">&quot;attribute&quot; </span>=&gt; parser.ignore_element(),
+            <span class="string">"doc" </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
+            <span class="string">"doc-deprecated" </span>=&gt; parser.text().map(|t| doc_deprecated = <span class="prelude-val">Some</span>(t)),
+            <span class="string">"attribute" </span>=&gt; parser.ignore_element(),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(parser.unexpected_element(elem)),
         })<span class="question-mark">?</span>;
         <span class="kw">if let </span><span class="prelude-val">Some</span>(ret) = ret {
@@ -2681,7 +2682,7 @@
             })
         } <span class="kw">else </span>{
             <span class="prelude-val">Err</span>(parser.fail_with_position(
-                <span class="string">&quot;Missing &lt;return-value&gt; element in &lt;signal&gt; element&quot;</span>,
+                <span class="string">"Missing &lt;return-value&gt; element in &lt;signal&gt; element"</span>,
                 elem.position(),
             ))
         }
@@ -2689,13 +2690,13 @@
 
     <span class="kw">fn </span>read_parameters(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
+        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
         ns_id: u16,
         allow_no_ctype: bool,
         for_method: bool,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;Parameter&gt;, String&gt; {
         parser.elements(|parser, elem| <span class="kw">match </span>elem.name() {
-            <span class="string">&quot;parameter&quot; </span>| <span class="string">&quot;instance-parameter&quot; </span>=&gt; {
+            <span class="string">"parameter" </span>| <span class="string">"instance-parameter" </span>=&gt; {
                 <span class="self">self</span>.read_parameter(parser, ns_id, elem, allow_no_ctype, for_method)
             }
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(parser.unexpected_element(elem)),
@@ -2704,26 +2705,26 @@
 
     <span class="kw">fn </span>read_parameter(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
+        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
         ns_id: u16,
         elem: <span class="kw-2">&amp;</span>Element,
         allow_no_ctype: bool,
         for_method: bool,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;Parameter, String&gt; {
-        <span class="kw">let </span>param_name = elem.attr(<span class="string">&quot;name&quot;</span>).unwrap_or(<span class="string">&quot;&quot;</span>);
-        <span class="kw">let </span>instance_parameter = elem.name() == <span class="string">&quot;instance-parameter&quot;</span>;
+        <span class="kw">let </span>param_name = elem.attr(<span class="string">"name"</span>).unwrap_or(<span class="string">""</span>);
+        <span class="kw">let </span>instance_parameter = elem.name() == <span class="string">"instance-parameter"</span>;
         <span class="kw">let </span>transfer = elem
-            .attr_from_str(<span class="string">&quot;transfer-ownership&quot;</span>)<span class="question-mark">?
+            .attr_from_str(<span class="string">"transfer-ownership"</span>)<span class="question-mark">?
             </span>.unwrap_or(Transfer::None);
-        <span class="kw">let </span>nullable = elem.attr_bool(<span class="string">&quot;nullable&quot;</span>, <span class="bool-val">false</span>);
-        <span class="kw">let </span>scope = elem.attr_from_str(<span class="string">&quot;scope&quot;</span>)<span class="question-mark">?</span>.unwrap_or(ParameterScope::None);
-        <span class="kw">let </span>closure = elem.attr_from_str(<span class="string">&quot;closure&quot;</span>)<span class="question-mark">?</span>;
-        <span class="kw">let </span>destroy = elem.attr_from_str(<span class="string">&quot;destroy&quot;</span>)<span class="question-mark">?</span>;
-        <span class="kw">let </span>caller_allocates = elem.attr_bool(<span class="string">&quot;caller-allocates&quot;</span>, <span class="bool-val">false</span>);
-        <span class="kw">let </span>direction = <span class="kw">if </span>elem.name() == <span class="string">&quot;return-value&quot; </span>{
+        <span class="kw">let </span>nullable = elem.attr_bool(<span class="string">"nullable"</span>, <span class="bool-val">false</span>);
+        <span class="kw">let </span>scope = elem.attr_from_str(<span class="string">"scope"</span>)<span class="question-mark">?</span>.unwrap_or(ParameterScope::None);
+        <span class="kw">let </span>closure = elem.attr_from_str(<span class="string">"closure"</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>destroy = elem.attr_from_str(<span class="string">"destroy"</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>caller_allocates = elem.attr_bool(<span class="string">"caller-allocates"</span>, <span class="bool-val">false</span>);
+        <span class="kw">let </span>direction = <span class="kw">if </span>elem.name() == <span class="string">"return-value" </span>{
             <span class="prelude-val">Ok</span>(ParameterDirection::Return)
         } <span class="kw">else </span>{
-            ParameterDirection::from_str(elem.attr(<span class="string">&quot;direction&quot;</span>).unwrap_or(<span class="string">&quot;in&quot;</span>))
+            ParameterDirection::from_str(elem.attr(<span class="string">"direction"</span>).unwrap_or(<span class="string">"in"</span>))
                 .map_err(|why| parser.fail_with_position(<span class="kw-2">&amp;</span>why, elem.position()))
         }<span class="question-mark">?</span>;
 
@@ -2732,10 +2733,10 @@
         <span class="kw">let </span><span class="kw-2">mut </span>doc = <span class="prelude-val">None</span>;
 
         parser.elements(|parser, elem| <span class="kw">match </span>elem.name() {
-            <span class="string">&quot;type&quot; </span>| <span class="string">&quot;array&quot; </span>=&gt; {
+            <span class="string">"type" </span>| <span class="string">"array" </span>=&gt; {
                 <span class="kw">if </span>typ.is_some() {
                     <span class="kw">return </span><span class="prelude-val">Err</span>(parser.fail_with_position(
-                        <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;Too many &lt;type&gt; elements in &lt;{}&gt; element&quot;</span>, elem.name()),
+                        <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"Too many &lt;type&gt; elements in &lt;{}&gt; element"</span>, elem.name()),
                         elem.position(),
                     ));
                 }
@@ -2745,19 +2746,19 @@
                         typ = <span class="prelude-val">Some</span>((tid, <span class="prelude-val">Some</span>(EMPTY_CTYPE.to_owned()), <span class="prelude-val">None</span>));
                     } <span class="kw">else </span>{
                         <span class="kw">return </span><span class="prelude-val">Err</span>(parser.fail_with_position(
-                            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;Missing c:type attribute in &lt;{}&gt; element&quot;</span>, elem.name()),
+                            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"Missing c:type attribute in &lt;{}&gt; element"</span>, elem.name()),
                             elem.position(),
                         ));
                     }
                 }
                 <span class="prelude-val">Ok</span>(())
             }
-            <span class="string">&quot;varargs&quot; </span>=&gt; {
+            <span class="string">"varargs" </span>=&gt; {
                 varargs = <span class="bool-val">true</span>;
                 parser.ignore_element()
             }
-            <span class="string">&quot;doc&quot; </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
-            <span class="string">&quot;attribute&quot; </span>=&gt; parser.ignore_element(),
+            <span class="string">"doc" </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
+            <span class="string">"attribute" </span>=&gt; parser.ignore_element(),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(parser.unexpected_element(elem)),
         })<span class="question-mark">?</span>;
 
@@ -2784,7 +2785,7 @@
         } <span class="kw">else if </span>varargs {
             <span class="prelude-val">Ok</span>(Parameter {
                 name: String::new(),
-                typ: <span class="self">self</span>.find_type(INTERNAL_NAMESPACE, <span class="string">&quot;varargs&quot;</span>).unwrap(),
+                typ: <span class="self">self</span>.find_type(INTERNAL_NAMESPACE, <span class="string">"varargs"</span>).unwrap(),
                 c_type: String::new(),
                 instance_parameter,
                 direction: Default::default(),
@@ -2800,7 +2801,7 @@
             })
         } <span class="kw">else </span>{
             <span class="prelude-val">Err</span>(parser.fail_with_position(
-                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;Missing &lt;type&gt; element in &lt;{}&gt; element&quot;</span>, elem.name()),
+                <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"Missing &lt;type&gt; element in &lt;{}&gt; element"</span>, elem.name()),
                 elem.position(),
             ))
         }
@@ -2808,16 +2809,16 @@
 
     <span class="kw">fn </span>read_property(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
+        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
         ns_id: u16,
         elem: <span class="kw-2">&amp;</span>Element,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Property&gt;, String&gt; {
-        <span class="kw">let </span>prop_name = elem.attr_required(<span class="string">&quot;name&quot;</span>)<span class="question-mark">?</span>;
-        <span class="kw">let </span>readable = elem.attr_bool(<span class="string">&quot;readable&quot;</span>, <span class="bool-val">true</span>);
-        <span class="kw">let </span>writable = elem.attr_bool(<span class="string">&quot;writable&quot;</span>, <span class="bool-val">false</span>);
-        <span class="kw">let </span>construct = elem.attr_bool(<span class="string">&quot;construct&quot;</span>, <span class="bool-val">false</span>);
-        <span class="kw">let </span>construct_only = elem.attr_bool(<span class="string">&quot;construct-only&quot;</span>, <span class="bool-val">false</span>);
-        <span class="kw">let </span>transfer = Transfer::from_str(elem.attr(<span class="string">&quot;transfer-ownership&quot;</span>).unwrap_or(<span class="string">&quot;none&quot;</span>))
+        <span class="kw">let </span>prop_name = elem.attr_required(<span class="string">"name"</span>)<span class="question-mark">?</span>;
+        <span class="kw">let </span>readable = elem.attr_bool(<span class="string">"readable"</span>, <span class="bool-val">true</span>);
+        <span class="kw">let </span>writable = elem.attr_bool(<span class="string">"writable"</span>, <span class="bool-val">false</span>);
+        <span class="kw">let </span>construct = elem.attr_bool(<span class="string">"construct"</span>, <span class="bool-val">false</span>);
+        <span class="kw">let </span>construct_only = elem.attr_bool(<span class="string">"construct-only"</span>, <span class="bool-val">false</span>);
+        <span class="kw">let </span>transfer = Transfer::from_str(elem.attr(<span class="string">"transfer-ownership"</span>).unwrap_or(<span class="string">"none"</span>))
             .map_err(|why| parser.fail_with_position(<span class="kw-2">&amp;</span>why, elem.position()))<span class="question-mark">?</span>;
 
         <span class="kw">let </span>version = <span class="self">self</span>.read_version(parser, ns_id, elem)<span class="question-mark">?</span>;
@@ -2828,14 +2829,14 @@
         <span class="kw">let </span><span class="kw-2">mut </span>doc_deprecated = <span class="prelude-val">None</span>;
 
         parser.elements(|parser, elem| <span class="kw">match </span>elem.name() {
-            <span class="string">&quot;type&quot; </span>| <span class="string">&quot;array&quot; </span>=&gt; {
+            <span class="string">"type" </span>| <span class="string">"array" </span>=&gt; {
                 <span class="kw">if </span>typ.is_some() {
                     <span class="kw">return </span><span class="prelude-val">Err</span>(parser.fail_with_position(
-                        <span class="string">&quot;Too many &lt;type&gt; elements in &lt;property&gt; element&quot;</span>,
+                        <span class="string">"Too many &lt;type&gt; elements in &lt;property&gt; element"</span>,
                         elem.position(),
                     ));
                 }
-                <span class="kw">if </span>!elem.has_attrs() &amp;&amp; elem.name() == <span class="string">&quot;type&quot; </span>{
+                <span class="kw">if </span>!elem.has_attrs() &amp;&amp; elem.name() == <span class="string">"type" </span>{
                     <span class="comment">// defend from &lt;type/&gt;
                     </span>has_empty_type_tag = <span class="bool-val">true</span>;
                     <span class="kw">return </span>parser.ignore_element();
@@ -2846,9 +2847,9 @@
                 }
                 <span class="prelude-val">Ok</span>(())
             }
-            <span class="string">&quot;doc&quot; </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
-            <span class="string">&quot;doc-deprecated&quot; </span>=&gt; parser.text().map(|t| doc_deprecated = <span class="prelude-val">Some</span>(t)),
-            <span class="string">&quot;attribute&quot; </span>=&gt; parser.ignore_element(),
+            <span class="string">"doc" </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
+            <span class="string">"doc-deprecated" </span>=&gt; parser.text().map(|t| doc_deprecated = <span class="prelude-val">Some</span>(t)),
+            <span class="string">"attribute" </span>=&gt; parser.ignore_element(),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(parser.unexpected_element(elem)),
         })<span class="question-mark">?</span>;
 
@@ -2873,7 +2874,7 @@
             }))
         } <span class="kw">else </span>{
             <span class="prelude-val">Err</span>(parser.fail_with_position(
-                <span class="string">&quot;Missing &lt;type&gt; element in &lt;property&gt; element&quot;</span>,
+                <span class="string">"Missing &lt;type&gt; element in &lt;property&gt; element"</span>,
                 elem.position(),
             ))
         }
@@ -2881,41 +2882,41 @@
 
     <span class="kw">fn </span>read_type(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
+        parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
         ns_id: u16,
         elem: <span class="kw-2">&amp;</span>Element,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;(TypeId, <span class="prelude-ty">Option</span>&lt;String&gt;, <span class="prelude-ty">Option</span>&lt;u32&gt;), String&gt; {
         <span class="kw">let </span>type_name = elem
-            .attr(<span class="string">&quot;name&quot;</span>)
+            .attr(<span class="string">"name"</span>)
             .or_else(|| {
-                <span class="kw">if </span>elem.name() == <span class="string">&quot;array&quot; </span>{
-                    <span class="prelude-val">Some</span>(<span class="string">&quot;array&quot;</span>)
+                <span class="kw">if </span>elem.name() == <span class="string">"array" </span>{
+                    <span class="prelude-val">Some</span>(<span class="string">"array"</span>)
                 } <span class="kw">else </span>{
                     <span class="prelude-val">None
                 </span>}
             })
             .ok_or_else(|| {
                 parser.fail_with_position(
-                    <span class="string">&quot;&lt;type&gt; element is missing a name attribute&quot;</span>,
+                    <span class="string">"&lt;type&gt; element is missing a name attribute"</span>,
                     elem.position(),
                 )
             })<span class="question-mark">?</span>;
-        <span class="kw">let </span>c_type = elem.attr(<span class="string">&quot;type&quot;</span>).map(|s| s.into());
-        <span class="kw">let </span>array_length = elem.attr(<span class="string">&quot;length&quot;</span>).and_then(|s| s.parse().ok());
+        <span class="kw">let </span>c_type = elem.attr(<span class="string">"type"</span>).map(|s| s.into());
+        <span class="kw">let </span>array_length = elem.attr(<span class="string">"length"</span>).and_then(|s| s.parse().ok());
 
         <span class="kw">let </span>inner = parser.elements(|parser, elem| <span class="kw">match </span>elem.name() {
-            <span class="string">&quot;type&quot; </span>| <span class="string">&quot;array&quot; </span>=&gt; <span class="self">self</span>.read_type(parser, ns_id, elem),
+            <span class="string">"type" </span>| <span class="string">"array" </span>=&gt; <span class="self">self</span>.read_type(parser, ns_id, elem),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(parser.unexpected_element(elem)),
         })<span class="question-mark">?</span>;
 
-        <span class="kw">if </span>inner.is_empty() || type_name == <span class="string">&quot;GLib.ByteArray&quot; </span>{
-            <span class="kw">if </span>type_name == <span class="string">&quot;array&quot; </span>{
+        <span class="kw">if </span>inner.is_empty() || type_name == <span class="string">"GLib.ByteArray" </span>{
+            <span class="kw">if </span>type_name == <span class="string">"array" </span>{
                 <span class="prelude-val">Err</span>(parser.fail_with_position(
-                    <span class="string">&quot;&lt;type&gt; element is missing an inner element type&quot;</span>,
+                    <span class="string">"&lt;type&gt; element is missing an inner element type"</span>,
                     elem.position(),
                 ))
-            } <span class="kw">else if </span>type_name == <span class="string">&quot;gboolean&quot; </span>&amp;&amp; c_type.as_deref() == <span class="prelude-val">Some</span>(<span class="string">&quot;_Bool&quot;</span>) {
-                <span class="prelude-val">Ok</span>((<span class="self">self</span>.find_or_stub_type(ns_id, <span class="string">&quot;bool&quot;</span>), c_type, array_length))
+            } <span class="kw">else if </span>type_name == <span class="string">"gboolean" </span>&amp;&amp; c_type.as_deref() == <span class="prelude-val">Some</span>(<span class="string">"_Bool"</span>) {
+                <span class="prelude-val">Ok</span>((<span class="self">self</span>.find_or_stub_type(ns_id, <span class="string">"bool"</span>), c_type, array_length))
             } <span class="kw">else </span>{
                 <span class="prelude-val">Ok</span>((
                     <span class="self">self</span>.find_or_stub_type(ns_id, type_name),
@@ -2924,18 +2925,18 @@
                 ))
             }
         } <span class="kw">else </span>{
-            <span class="kw">let </span>tid = <span class="kw">if </span>type_name == <span class="string">&quot;array&quot; </span>{
+            <span class="kw">let </span>tid = <span class="kw">if </span>type_name == <span class="string">"array" </span>{
                 <span class="kw">let </span>inner_type = <span class="kw-2">&amp;</span>inner[<span class="number">0</span>];
                 Type::c_array(
                     <span class="self">self</span>,
                     inner_type.<span class="number">0</span>,
-                    elem.attr(<span class="string">&quot;fixed-size&quot;</span>).and_then(|n| n.parse().ok()),
+                    elem.attr(<span class="string">"fixed-size"</span>).and_then(|n| n.parse().ok()),
                     inner_type.<span class="number">1</span>.clone(),
                 )
             } <span class="kw">else </span>{
                 <span class="kw">let </span>inner = inner.iter().map(|r| r.<span class="number">0</span>).collect();
                 Type::container(<span class="self">self</span>, type_name, inner).ok_or_else(|| {
-                    parser.fail_with_position(<span class="string">&quot;Unknown container type&quot;</span>, elem.position())
+                    parser.fail_with_position(<span class="string">"Unknown container type"</span>, elem.position())
                 })<span class="question-mark">?
             </span>};
             <span class="prelude-val">Ok</span>((tid, c_type, array_length))
@@ -2944,25 +2945,25 @@
 
     <span class="kw">fn </span>read_version(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        parser: <span class="kw-2">&amp;</span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
+        parser: <span class="kw-2">&amp;</span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
         ns_id: u16,
         elem: <span class="kw-2">&amp;</span>Element,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Version&gt;, String&gt; {
-        <span class="self">self</span>.read_version_attribute(parser, ns_id, elem, <span class="string">&quot;version&quot;</span>)
+        <span class="self">self</span>.read_version_attribute(parser, ns_id, elem, <span class="string">"version"</span>)
     }
 
     <span class="kw">fn </span>read_deprecated_version(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        parser: <span class="kw-2">&amp;</span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
+        parser: <span class="kw-2">&amp;</span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
         ns_id: u16,
         elem: <span class="kw-2">&amp;</span>Element,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Version&gt;, String&gt; {
-        <span class="self">self</span>.read_version_attribute(parser, ns_id, elem, <span class="string">&quot;deprecated-version&quot;</span>)
+        <span class="self">self</span>.read_version_attribute(parser, ns_id, elem, <span class="string">"deprecated-version"</span>)
     }
 
     <span class="kw">fn </span>read_version_attribute(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        parser: <span class="kw-2">&amp;</span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
+        parser: <span class="kw-2">&amp;</span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
         ns_id: u16,
         elem: <span class="kw-2">&amp;</span>Element,
         attr: <span class="kw-2">&amp;</span>str,
@@ -2973,23 +2974,23 @@
                     <span class="self">self</span>.register_version(ns_id, v);
                     <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(v))
                 }
-                <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(parser.fail(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;Invalid `{attr}` attribute: {e}&quot;</span>))),
+                <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(parser.fail(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"Invalid `{attr}` attribute: {e}"</span>))),
             }
         } <span class="kw">else </span>{
             <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
         }
     }
 
-    <span class="kw">fn </span>read_object_c_type&lt;<span class="lifetime">&#39;a</span>&gt;(
+    <span class="kw">fn </span>read_object_c_type&lt;<span class="lifetime">'a</span>&gt;(
         <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        parser: <span class="kw-2">&amp;</span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;,
-        elem: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Element,
-    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str, String&gt; {
-        elem.attr(<span class="string">&quot;type&quot;</span>)
-            .or_else(|| elem.attr(<span class="string">&quot;type-name&quot;</span>))
+        parser: <span class="kw-2">&amp;</span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
+        elem: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Element,
+    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, String&gt; {
+        elem.attr(<span class="string">"type"</span>)
+            .or_else(|| elem.attr(<span class="string">"type-name"</span>))
             .ok_or_else(|| {
                 parser.fail(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-                    <span class="string">&quot;Missing `c:type`/`glib:type-name` attributes on element &lt;{}&gt;&quot;</span>,
+                    <span class="string">"Missing `c:type`/`glib:type-name` attributes on element &lt;{}&gt;"</span>,
                     elem.name()
                 ))
             })
@@ -2998,7 +2999,7 @@
 
 <span class="kw">fn </span>make_file_name(dir: <span class="kw-2">&amp;</span>Path, name: <span class="kw-2">&amp;</span>str) -&gt; PathBuf {
     <span class="kw">let </span><span class="kw-2">mut </span>path = dir.to_path_buf();
-    <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">&quot;{name}.gir&quot;</span>);
+    <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">"{name}.gir"</span>);
     path.push(name);
     path
 }

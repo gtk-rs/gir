@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/writer/primitives.rs`."><title>primitives.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/writer/primitives.rs`."><title>primitives.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -138,9 +139,9 @@
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::defines::<span class="kw-2">*</span>;
 
 <span class="comment">// TODO: convert to macro with usage
-// format!(indent!(5, &quot;format:{}&quot;), 6)
+// format!(indent!(5, "format:{}"), 6)
 </span><span class="kw">pub fn </span>tabs(num: usize) -&gt; String {
-    <span class="macro">format!</span>(<span class="string">&quot;{:1$}&quot;</span>, <span class="string">&quot;&quot;</span>, TAB_SIZE * num)
+    <span class="macro">format!</span>(<span class="string">"{:1$}"</span>, <span class="string">""</span>, TAB_SIZE * num)
 }
 
 <span class="kw">pub fn </span>format_block(prefix: <span class="kw-2">&amp;</span>str, suffix: <span class="kw-2">&amp;</span>str, body: <span class="kw-2">&amp;</span>[String]) -&gt; Vec&lt;String&gt; {
@@ -149,7 +150,7 @@
         v.push(prefix.into());
     }
     <span class="kw">for </span>s <span class="kw">in </span>body.iter() {
-        <span class="kw">let </span>s = <span class="macro">format!</span>(<span class="string">&quot;{TAB}{s}&quot;</span>);
+        <span class="kw">let </span>s = <span class="macro">format!</span>(<span class="string">"{TAB}{s}"</span>);
         v.push(s);
     }
     <span class="kw">if </span>!suffix.is_empty() {
@@ -165,7 +166,7 @@
     outer_separator: <span class="kw-2">&amp;</span>str,
     inner_separator: <span class="kw-2">&amp;</span>str,
 ) -&gt; String {
-    <span class="kw">let </span><span class="kw-2">mut </span>s = <span class="macro">format!</span>(<span class="string">&quot;{prefix}{outer_separator}&quot;</span>);
+    <span class="kw">let </span><span class="kw-2">mut </span>s = <span class="macro">format!</span>(<span class="string">"{prefix}{outer_separator}"</span>);
     <span class="kw">let </span><span class="kw-2">mut </span>first = <span class="bool-val">true</span>;
     <span class="kw">for </span>s_ <span class="kw">in </span>body {
         <span class="kw">if </span>first {
@@ -218,7 +219,7 @@
 }
 
 <span class="kw">pub fn </span>comment_block(body: <span class="kw-2">&amp;</span>[String]) -&gt; Vec&lt;String&gt; {
-    body.iter().map(|s| <span class="macro">format!</span>(<span class="string">&quot;//{s}&quot;</span>)).collect()
+    body.iter().map(|s| <span class="macro">format!</span>(<span class="string">"//{s}"</span>)).collect()
 }
 
 <span class="attr">#[cfg(test)]
@@ -227,48 +228,48 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_tabs() {
-        <span class="macro">assert_eq!</span>(tabs(<span class="number">0</span>), <span class="string">&quot;&quot;</span>);
+        <span class="macro">assert_eq!</span>(tabs(<span class="number">0</span>), <span class="string">""</span>);
         <span class="macro">assert_eq!</span>(tabs(<span class="number">1</span>), TAB);
-        <span class="macro">assert_eq!</span>(tabs(<span class="number">2</span>), <span class="macro">format!</span>(<span class="string">&quot;{TAB}{TAB}&quot;</span>));
+        <span class="macro">assert_eq!</span>(tabs(<span class="number">2</span>), <span class="macro">format!</span>(<span class="string">"{TAB}{TAB}"</span>));
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_format_block() {
-        <span class="kw">let </span>body = <span class="macro">vec!</span>[<span class="string">&quot;0 =&gt; 1,&quot;</span>.into(), <span class="string">&quot;1 =&gt; 0,&quot;</span>.into()];
-        <span class="kw">let </span>actual = format_block(<span class="string">&quot;match a {&quot;</span>, <span class="string">&quot;}&quot;</span>, <span class="kw-2">&amp;</span>body);
-        <span class="kw">let </span>expected = [<span class="string">&quot;match a {&quot;</span>, <span class="string">&quot;    0 =&gt; 1,&quot;</span>, <span class="string">&quot;    1 =&gt; 0,&quot;</span>, <span class="string">&quot;}&quot;</span>];
+        <span class="kw">let </span>body = <span class="macro">vec!</span>[<span class="string">"0 =&gt; 1,"</span>.into(), <span class="string">"1 =&gt; 0,"</span>.into()];
+        <span class="kw">let </span>actual = format_block(<span class="string">"match a {"</span>, <span class="string">"}"</span>, <span class="kw-2">&amp;</span>body);
+        <span class="kw">let </span>expected = [<span class="string">"match a {"</span>, <span class="string">"    0 =&gt; 1,"</span>, <span class="string">"    1 =&gt; 0,"</span>, <span class="string">"}"</span>];
         <span class="macro">assert_eq!</span>(actual, expected);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_format_block_smart_width_one_line_outer_separator() {
-        <span class="kw">let </span>body = <span class="macro">vec!</span>[<span class="string">&quot;f()&quot;</span>.into()];
-        <span class="kw">let </span>actual = format_block_smart_width(<span class="string">&quot;unsafe {&quot;</span>, <span class="string">&quot;}&quot;</span>, <span class="kw-2">&amp;</span>body, <span class="string">&quot; &quot;</span>, <span class="string">&quot;&quot;</span>, <span class="number">14</span>);
-        <span class="kw">let </span>expected = [<span class="string">&quot;unsafe { f() }&quot;</span>];
+        <span class="kw">let </span>body = <span class="macro">vec!</span>[<span class="string">"f()"</span>.into()];
+        <span class="kw">let </span>actual = format_block_smart_width(<span class="string">"unsafe {"</span>, <span class="string">"}"</span>, <span class="kw-2">&amp;</span>body, <span class="string">" "</span>, <span class="string">""</span>, <span class="number">14</span>);
+        <span class="kw">let </span>expected = [<span class="string">"unsafe { f() }"</span>];
         <span class="macro">assert_eq!</span>(actual, expected);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_format_block_smart_width_many_lines_outer_separator() {
-        <span class="kw">let </span>body = <span class="macro">vec!</span>[<span class="string">&quot;f()&quot;</span>.into()];
-        <span class="kw">let </span>actual = format_block_smart_width(<span class="string">&quot;unsafe {&quot;</span>, <span class="string">&quot;}&quot;</span>, <span class="kw-2">&amp;</span>body, <span class="string">&quot; &quot;</span>, <span class="string">&quot;&quot;</span>, <span class="number">13</span>);
-        <span class="kw">let </span>expected = [<span class="string">&quot;unsafe {&quot;</span>, <span class="string">&quot;    f()&quot;</span>, <span class="string">&quot;}&quot;</span>];
+        <span class="kw">let </span>body = <span class="macro">vec!</span>[<span class="string">"f()"</span>.into()];
+        <span class="kw">let </span>actual = format_block_smart_width(<span class="string">"unsafe {"</span>, <span class="string">"}"</span>, <span class="kw-2">&amp;</span>body, <span class="string">" "</span>, <span class="string">""</span>, <span class="number">13</span>);
+        <span class="kw">let </span>expected = [<span class="string">"unsafe {"</span>, <span class="string">"    f()"</span>, <span class="string">"}"</span>];
         <span class="macro">assert_eq!</span>(actual, expected);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_format_block_smart_one_line_inner_separator() {
-        <span class="kw">let </span>body = <span class="macro">vec!</span>[<span class="string">&quot;a: &amp;str&quot;</span>.into(), <span class="string">&quot;b: &amp;str&quot;</span>.into()];
-        <span class="kw">let </span>actual = format_block_smart(<span class="string">&quot;f(&quot;</span>, <span class="string">&quot;)&quot;</span>, <span class="kw-2">&amp;</span>body, <span class="string">&quot;&quot;</span>, <span class="string">&quot;, &quot;</span>);
-        <span class="kw">let </span>expected = [<span class="string">&quot;f(a: &amp;str, b: &amp;str)&quot;</span>];
+        <span class="kw">let </span>body = <span class="macro">vec!</span>[<span class="string">"a: &amp;str"</span>.into(), <span class="string">"b: &amp;str"</span>.into()];
+        <span class="kw">let </span>actual = format_block_smart(<span class="string">"f("</span>, <span class="string">")"</span>, <span class="kw-2">&amp;</span>body, <span class="string">""</span>, <span class="string">", "</span>);
+        <span class="kw">let </span>expected = [<span class="string">"f(a: &amp;str, b: &amp;str)"</span>];
         <span class="macro">assert_eq!</span>(actual, expected);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_comment_block() {
-        <span class="kw">let </span>body = <span class="macro">vec!</span>[<span class="string">&quot;f(a,&quot;</span>.into(), <span class="string">&quot;  b)&quot;</span>.into()];
+        <span class="kw">let </span>body = <span class="macro">vec!</span>[<span class="string">"f(a,"</span>.into(), <span class="string">"  b)"</span>.into()];
         <span class="kw">let </span>actual = comment_block(<span class="kw-2">&amp;</span>body);
-        <span class="kw">let </span>expected = [<span class="string">&quot;//f(a,&quot;</span>, <span class="string">&quot;//  b)&quot;</span>];
+        <span class="kw">let </span>expected = [<span class="string">"//f(a,"</span>, <span class="string">"//  b)"</span>];
         <span class="macro">assert_eq!</span>(actual, expected);
     }
 }

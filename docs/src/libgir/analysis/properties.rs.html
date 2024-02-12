@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/analysis/properties.rs`."><title>properties.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/analysis/properties.rs`."><title>properties.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -538,25 +539,25 @@
     <span class="kw">let </span>generate = generate.unwrap_or_else(PropertyGenerateFlags::all);
 
     <span class="kw">let </span>imports = <span class="kw-2">&amp;mut </span>imports.with_defaults(prop_version, <span class="kw-2">&amp;</span><span class="prelude-val">None</span>);
-    imports.add(<span class="string">&quot;glib::translate::*&quot;</span>);
+    imports.add(<span class="string">"glib::translate::*"</span>);
 
     <span class="kw">let </span>type_string = RustType::try_new(env, prop.typ);
     <span class="kw">let </span>name_for_func = nameutil::signal_to_snake(<span class="kw-2">&amp;</span>name);
 
-    <span class="kw">let </span><span class="kw-2">mut </span>get_prop_name = <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">&quot;get_property_{name_for_func}&quot;</span>));
+    <span class="kw">let </span><span class="kw-2">mut </span>get_prop_name = <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">"get_property_{name_for_func}"</span>));
 
     <span class="kw">let </span>bypass_auto_rename = configured_properties.iter().any(|f| f.bypass_auto_rename);
     <span class="kw">let </span>(check_get_func_names, <span class="kw-2">mut </span>get_func_name) = <span class="kw">if </span>bypass_auto_rename {
         (
-            <span class="macro">vec!</span>[<span class="macro">format!</span>(<span class="string">&quot;get_{name_for_func}&quot;</span>)],
-            get_prop_name.take().expect(<span class="string">&quot;defined 10 lines above&quot;</span>),
+            <span class="macro">vec!</span>[<span class="macro">format!</span>(<span class="string">"get_{name_for_func}"</span>)],
+            get_prop_name.take().expect(<span class="string">"defined 10 lines above"</span>),
         )
     } <span class="kw">else </span>{
         get_func_name(<span class="kw-2">&amp;</span>name_for_func, prop.typ == library::TypeId::tid_bool())
     };
 
-    <span class="kw">let </span><span class="kw-2">mut </span>set_func_name = <span class="macro">format!</span>(<span class="string">&quot;set_{name_for_func}&quot;</span>);
-    <span class="kw">let </span><span class="kw-2">mut </span>set_prop_name = <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">&quot;set_property_{name_for_func}&quot;</span>));
+    <span class="kw">let </span><span class="kw-2">mut </span>set_func_name = <span class="macro">format!</span>(<span class="string">"set_{name_for_func}"</span>);
+    <span class="kw">let </span><span class="kw-2">mut </span>set_prop_name = <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">"set_property_{name_for_func}"</span>));
 
     <span class="kw">let </span><span class="kw-2">mut </span>readable = prop.readable;
     <span class="kw">let </span><span class="kw-2">mut </span>writable = <span class="kw">if </span>prop.construct_only {
@@ -567,13 +568,13 @@
     <span class="kw">let </span><span class="kw-2">mut </span>notifiable = !prop.construct_only;
     <span class="kw">if </span>generate_set &amp;&amp; generate.contains(PropertyGenerateFlags::GET) &amp;&amp; !readable {
         <span class="macro">warn!</span>(
-            <span class="string">&quot;Attempt to generate getter for notreadable property \&quot;{}.{}\&quot;&quot;</span>,
+            <span class="string">"Attempt to generate getter for notreadable property \"{}.{}\""</span>,
             type_name, name
         );
     }
     <span class="kw">if </span>generate_set &amp;&amp; generate.contains(PropertyGenerateFlags::SET) &amp;&amp; !writable {
         <span class="macro">warn!</span>(
-            <span class="string">&quot;Attempt to generate setter for nonwritable property \&quot;{}.{}\&quot;&quot;</span>,
+            <span class="string">"Attempt to generate setter for nonwritable property \"{}.{}\""</span>,
             type_name, name
         );
     }
@@ -598,8 +599,8 @@
                 </span><span class="kw">if </span>env.is_totally_deprecated(<span class="prelude-val">Some</span>(type_tid.ns_id), version)
                     || version &lt;= prop_version
                 {
-                    <span class="comment">// And its availability covers the property&#39;s availability
-                    // =&gt; don&#39;t generate the get property.
+                    <span class="comment">// And its availability covers the property's availability
+                    // =&gt; don't generate the get property.
                     </span>readable = <span class="bool-val">false</span>;
                 } <span class="kw">else </span>{
                     <span class="comment">// The property is required in earlier versions than the getter
@@ -618,8 +619,8 @@
         <span class="kw">if </span>has {
             <span class="comment">// There is a matching set func
             </span><span class="kw">if </span>env.is_totally_deprecated(<span class="prelude-val">Some</span>(type_tid.ns_id), version) || version &lt;= prop_version {
-                <span class="comment">// And its availability covers the property&#39;s availability
-                // =&gt; don&#39;t generate the set property.
+                <span class="comment">// And its availability covers the property's availability
+                // =&gt; don't generate the set property.
                 </span>writable = <span class="bool-val">false</span>;
             } <span class="kw">else </span>{
                 <span class="comment">// The property is required in earlier versions than the setter
@@ -642,7 +643,7 @@
             imports.add_used_types(rust_type.used_types());
         }
         <span class="kw">if </span>type_string.is_ok() {
-            imports.add(<span class="string">&quot;glib::prelude::*&quot;</span>);
+            imports.add(<span class="string">"glib::prelude::*"</span>);
         }
 
         <span class="prelude-val">Some</span>(Property {
@@ -672,15 +673,15 @@
             imports.add_used_types(rust_type.used_types());
         }
         <span class="kw">if </span>type_string.is_ok() {
-            imports.add(<span class="string">&quot;glib::prelude::*&quot;</span>);
+            imports.add(<span class="string">"glib::prelude::*"</span>);
         }
         <span class="kw">let </span>set_bound = PropertyBound::get(env, prop.typ);
         <span class="kw">if </span>type_string.is_ok() &amp;&amp; set_bound.is_some() {
-            imports.add(<span class="string">&quot;glib::prelude::*&quot;</span>);
+            imports.add(<span class="string">"glib::prelude::*"</span>);
             <span class="kw">if </span>!<span class="kw-2">*</span>nullable {
                 <span class="comment">// TODO: support non-nullable setter if found any
                 </span><span class="macro">warn!</span>(
-                    <span class="string">&quot;Non nullable setter for property generated as nullable \&quot;{}.{}\&quot;&quot;</span>,
+                    <span class="string">"Non nullable setter for property generated as nullable \"{}.{}\""</span>,
                     type_name, name
                 );
             }
@@ -706,7 +707,7 @@
     </span>};
 
     <span class="kw">if </span>!generate_trait &amp;&amp; (writable || readable || notifiable) {
-        imports.add(<span class="string">&quot;glib::prelude::*&quot;</span>);
+        imports.add(<span class="string">"glib::prelude::*"</span>);
     }
 
     <span class="kw">let </span>notify_signal = <span class="kw">if </span>notifiable {
@@ -714,15 +715,15 @@
         <span class="kw">let </span>trampoline = trampolines::analyze(
             env,
             <span class="kw-2">&amp;</span>library::Signal {
-                name: <span class="macro">format!</span>(<span class="string">&quot;notify::{name}&quot;</span>),
+                name: <span class="macro">format!</span>(<span class="string">"notify::{name}"</span>),
                 parameters: Vec::new(),
                 ret: library::Parameter {
                     name: String::new(),
                     typ: env
                         .library
-                        .find_type(library::INTERNAL_NAMESPACE, <span class="string">&quot;none&quot;</span>)
+                        .find_type(library::INTERNAL_NAMESPACE, <span class="string">"none"</span>)
                         .unwrap(),
-                    c_type: <span class="string">&quot;none&quot;</span>.into(),
+                    c_type: <span class="string">"none"</span>.into(),
                     instance_parameter: <span class="bool-val">false</span>,
                     direction: library::ParameterDirection::Return,
                     transfer: library::Transfer::None,
@@ -737,7 +738,7 @@
                 },
                 is_action: <span class="bool-val">false</span>,
                 is_detailed: <span class="bool-val">false</span>, <span class="comment">/* well, technically this *is* an instance of a detailed
-                                     * signal, but we &quot;pre-detailed&quot; it */
+                                     * signal, but we "pre-detailed" it */
                 </span>version: prop_version,
                 deprecated_version: prop.deprecated_version,
                 doc: <span class="prelude-val">None</span>,
@@ -755,14 +756,14 @@
         <span class="kw">if </span>trampoline.is_ok() {
             imports.add_used_types(<span class="kw-2">&amp;</span>used_types);
             <span class="kw">if </span>generate_trait {
-                imports.add(<span class="string">&quot;glib::prelude::*&quot;</span>);
+                imports.add(<span class="string">"glib::prelude::*"</span>);
             }
-            imports.add(<span class="string">&quot;glib::signal::{connect_raw, SignalHandlerId}&quot;</span>);
-            imports.add(<span class="string">&quot;std::boxed::Box as Box_&quot;</span>);
+            imports.add(<span class="string">"glib::signal::{connect_raw, SignalHandlerId}"</span>);
+            imports.add(<span class="string">"std::boxed::Box as Box_"</span>);
 
             <span class="prelude-val">Some</span>(signals::Info {
-                connect_name: <span class="macro">format!</span>(<span class="string">&quot;connect_{name_for_func}_notify&quot;</span>),
-                signal_name: <span class="macro">format!</span>(<span class="string">&quot;notify::{name}&quot;</span>),
+                connect_name: <span class="macro">format!</span>(<span class="string">"connect_{name_for_func}_notify"</span>),
+                signal_name: <span class="macro">format!</span>(<span class="string">"notify::{name}"</span>),
                 trampoline,
                 action_emit_name: <span class="prelude-val">None</span>,
                 version: prop_version,
@@ -788,28 +789,28 @@
         <span class="prelude-val">Ok</span>(new_name) =&gt; {
             <span class="kw">let </span>new_name = new_name.unwrap();
             <span class="kw">let </span><span class="kw-2">mut </span>check_get_func_names = <span class="macro">vec!</span>[
-                <span class="macro">format!</span>(<span class="string">&quot;get_{prop_name}&quot;</span>),
+                <span class="macro">format!</span>(<span class="string">"get_{prop_name}"</span>),
                 prop_name.to_string(),
-                <span class="macro">format!</span>(<span class="string">&quot;get_{new_name}&quot;</span>),
+                <span class="macro">format!</span>(<span class="string">"get_{new_name}"</span>),
                 new_name.clone(),
             ];
 
             <span class="kw">if </span>is_bool_getter {
-                check_get_func_names.push(<span class="macro">format!</span>(<span class="string">&quot;is_{prop_name}&quot;</span>));
-                check_get_func_names.push(<span class="macro">format!</span>(<span class="string">&quot;is_{new_name}&quot;</span>));
+                check_get_func_names.push(<span class="macro">format!</span>(<span class="string">"is_{prop_name}"</span>));
+                check_get_func_names.push(<span class="macro">format!</span>(<span class="string">"is_{new_name}"</span>));
             }
             (check_get_func_names, new_name)
         }
         <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; {
-            <span class="kw">let </span><span class="kw-2">mut </span>check_get_func_names = <span class="macro">vec!</span>[<span class="macro">format!</span>(<span class="string">&quot;get_{prop_name}&quot;</span>), prop_name.to_string()];
+            <span class="kw">let </span><span class="kw-2">mut </span>check_get_func_names = <span class="macro">vec!</span>[<span class="macro">format!</span>(<span class="string">"get_{prop_name}"</span>), prop_name.to_string()];
 
             <span class="comment">// Name is reserved
             </span><span class="kw">let </span>get_func_name = <span class="kw">if </span>is_bool_getter {
-                <span class="kw">let </span>get_func_name = <span class="macro">format!</span>(<span class="string">&quot;is_{prop_name}&quot;</span>);
+                <span class="kw">let </span>get_func_name = <span class="macro">format!</span>(<span class="string">"is_{prop_name}"</span>);
                 check_get_func_names.push(get_func_name.clone());
                 get_func_name
             } <span class="kw">else </span>{
-                <span class="macro">format!</span>(<span class="string">&quot;get_{prop_name}&quot;</span>)
+                <span class="macro">format!</span>(<span class="string">"get_{prop_name}"</span>)
             };
             (check_get_func_names, get_func_name)
         }

@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/xmlparser.rs`."><title>xmlparser.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/xmlparser.rs`."><title>xmlparser.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -482,9 +483,9 @@
 };
 
 <span class="doccomment">/// NOTE: After parser returns an error its further behaviour is unspecified.
-</span><span class="kw">pub struct </span>XmlParser&lt;<span class="lifetime">&#39;a</span>&gt; {
+</span><span class="kw">pub struct </span>XmlParser&lt;<span class="lifetime">'a</span>&gt; {
     <span class="doccomment">/// Inner XML parser doing actual work.
-    </span>parser: EventReader&lt;Box&lt;<span class="kw">dyn </span><span class="lifetime">&#39;a </span>+ Read&gt;&gt;,
+    </span>parser: EventReader&lt;Box&lt;<span class="kw">dyn </span><span class="lifetime">'a </span>+ Read&gt;&gt;,
     <span class="doccomment">/// Next event to be returned.
     ///
     /// Takes priority over events returned from inner parser.
@@ -505,10 +506,10 @@
 <span class="kw">impl </span>ErrorEmitter {
     <span class="kw">pub fn </span>emit(<span class="kw-2">&amp;</span><span class="self">self</span>, message: <span class="kw-2">&amp;</span>str, position: TextPosition) -&gt; String {
         <span class="kw">let </span>enriched = <span class="kw">match </span><span class="self">self</span>.path {
-            <span class="prelude-val">Some</span>(<span class="kw-2">ref </span>path) =&gt; <span class="macro">format!</span>(<span class="string">&quot;{} at line {}: {}&quot;</span>, path.display(), position, message),
-            <span class="prelude-val">None </span>=&gt; <span class="macro">format!</span>(<span class="string">&quot;{position} {message}&quot;</span>),
+            <span class="prelude-val">Some</span>(<span class="kw-2">ref </span>path) =&gt; <span class="macro">format!</span>(<span class="string">"{} at line {}: {}"</span>, path.display(), position, message),
+            <span class="prelude-val">None </span>=&gt; <span class="macro">format!</span>(<span class="string">"{position} {message}"</span>),
         };
-        <span class="macro">format!</span>(<span class="string">&quot;GirXml: {enriched}&quot;</span>)
+        <span class="macro">format!</span>(<span class="string">"GirXml: {enriched}"</span>)
     }
 
     <span class="kw">pub fn </span>emit_error(<span class="kw-2">&amp;</span><span class="self">self</span>, error: <span class="kw-2">&amp;</span>xml::reader::Error) -&gt; String {
@@ -516,17 +517,17 @@
         // That is why we have a separate implementation that only
         // prepends the file path.
         </span><span class="kw">let </span>enriched = <span class="kw">match </span><span class="self">self</span>.path {
-            <span class="prelude-val">Some</span>(<span class="kw-2">ref </span>path) =&gt; <span class="macro">format!</span>(<span class="string">&quot;{}:{}&quot;</span>, path.display(), error),
-            <span class="prelude-val">None </span>=&gt; <span class="macro">format!</span>(<span class="string">&quot;{error}&quot;</span>),
+            <span class="prelude-val">Some</span>(<span class="kw-2">ref </span>path) =&gt; <span class="macro">format!</span>(<span class="string">"{}:{}"</span>, path.display(), error),
+            <span class="prelude-val">None </span>=&gt; <span class="macro">format!</span>(<span class="string">"{error}"</span>),
         };
-        <span class="macro">format!</span>(<span class="string">&quot;GirXml: {enriched}&quot;</span>)
+        <span class="macro">format!</span>(<span class="string">"GirXml: {enriched}"</span>)
     }
 }
 
-<span class="doccomment">/// A wrapper for `XmlEvent::StartDocument` which doesn&#39;t have its own type.
+<span class="doccomment">/// A wrapper for `XmlEvent::StartDocument` which doesn't have its own type.
 </span><span class="kw">pub struct </span>Document;
 
-<span class="doccomment">/// A wrapper for `XmlEvent::StartElement` which doesn&#39;t have its own type.
+<span class="doccomment">/// A wrapper for `XmlEvent::StartElement` which doesn't have its own type.
 </span><span class="kw">pub struct </span>Element {
     name: OwnedName,
     attributes: Vec&lt;OwnedAttribute&gt;,
@@ -558,7 +559,7 @@
     <span class="kw">pub fn </span>attr_bool(<span class="kw-2">&amp;</span><span class="self">self</span>, name: <span class="kw-2">&amp;</span>str, default: bool) -&gt; bool {
         <span class="kw">for </span>attr <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.attributes {
             <span class="kw">if </span>attr.name.local_name == name {
-                <span class="kw">return </span>attr.value == <span class="string">&quot;1&quot;</span>;
+                <span class="kw">return </span>attr.value == <span class="string">"1"</span>;
             }
         }
         default
@@ -574,7 +575,7 @@
                 <span class="prelude-val">Ok</span>(value) =&gt; <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(value)),
                 <span class="prelude-val">Err</span>(error) =&gt; {
                     <span class="kw">let </span>message = <span class="macro">format!</span>(
-                        <span class="string">&quot;Attribute `{}` on element &lt;{}&gt; has invalid value: {}&quot;</span>,
+                        <span class="string">"Attribute `{}` on element &lt;{}&gt; has invalid value: {}"</span>,
                         name,
                         <span class="self">self</span>.name(),
                         error
@@ -600,7 +601,7 @@
             }
         }
         <span class="kw">let </span>message = <span class="macro">format!</span>(
-            <span class="string">&quot;Attribute `{}` on element &lt;{}&gt; is required.&quot;</span>,
+            <span class="string">"Attribute `{}` on element &lt;{}&gt; is required."</span>,
             name,
             <span class="self">self</span>.name()
         );
@@ -608,10 +609,10 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; XmlParser&lt;<span class="lifetime">&#39;a</span>&gt; {
-    <span class="kw">pub fn </span>from_path(path: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;, String&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; XmlParser&lt;<span class="lifetime">'a</span>&gt; {
+    <span class="kw">pub fn </span>from_path(path: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;XmlParser&lt;<span class="lifetime">'_</span>&gt;, String&gt; {
         <span class="kw">match </span>File::open(path) {
-            <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;Can&#39;t open file \&quot;{}\&quot;: {}&quot;</span>, path.display(), e)),
+            <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"Can't open file \"{}\": {}"</span>, path.display(), e)),
             <span class="prelude-val">Ok</span>(file) =&gt; <span class="prelude-val">Ok</span>(XmlParser {
                 parser: EventReader::new(Box::new(BufReader::new(file))),
                 peek_event: <span class="prelude-val">None</span>,
@@ -624,7 +625,7 @@
     }
 
     <span class="attr">#[cfg(test)]
-    </span><span class="kw">pub fn </span>new&lt;<span class="lifetime">&#39;r</span>, R: <span class="lifetime">&#39;r </span>+ Read&gt;(read: R) -&gt; XmlParser&lt;<span class="lifetime">&#39;r</span>&gt; {
+    </span><span class="kw">pub fn </span>new&lt;<span class="lifetime">'r</span>, R: <span class="lifetime">'r </span>+ Read&gt;(read: R) -&gt; XmlParser&lt;<span class="lifetime">'r</span>&gt; {
         XmlParser {
             parser: EventReader::new(Box::new(read)),
             peek_event: <span class="prelude-val">None</span>,
@@ -644,12 +645,12 @@
     }
 
     <span class="kw">pub fn </span>unexpected_element(<span class="kw-2">&amp;</span><span class="self">self</span>, elem: <span class="kw-2">&amp;</span>Element) -&gt; String {
-        <span class="kw">let </span>message = <span class="macro">format!</span>(<span class="string">&quot;Unexpected element &lt;{}&gt;&quot;</span>, elem.name());
+        <span class="kw">let </span>message = <span class="macro">format!</span>(<span class="string">"Unexpected element &lt;{}&gt;"</span>, elem.name());
         <span class="self">self</span>.error_emitter.emit(<span class="kw-2">&amp;</span>message, elem.position())
     }
 
     <span class="kw">fn </span>unexpected_event(<span class="kw-2">&amp;</span><span class="self">self</span>, event: <span class="kw-2">&amp;</span>XmlEvent) -&gt; String {
-        <span class="kw">let </span>message = <span class="macro">format!</span>(<span class="string">&quot;Unexpected event {event:?}&quot;</span>);
+        <span class="kw">let </span>message = <span class="macro">format!</span>(<span class="string">"Unexpected event {event:?}"</span>);
         <span class="self">self</span>.error_emitter.emit(<span class="kw-2">&amp;</span>message, <span class="self">self</span>.position())
     }
 
@@ -691,7 +692,7 @@
 
     <span class="kw">pub fn </span>document&lt;R, F&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, f: F) -&gt; <span class="prelude-ty">Result</span>&lt;R, String&gt;
     <span class="kw">where
-        </span>F: FnOnce(<span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;, Document) -&gt; <span class="prelude-ty">Result</span>&lt;R, String&gt;,
+        </span>F: FnOnce(<span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">'_</span>&gt;, Document) -&gt; <span class="prelude-ty">Result</span>&lt;R, String&gt;,
     {
         <span class="kw">let </span>doc = <span class="self">self</span>.start_document()<span class="question-mark">?</span>;
         <span class="kw">let </span>result = f(<span class="self">self</span>, doc)<span class="question-mark">?</span>;
@@ -715,7 +716,7 @@
 
     <span class="kw">pub fn </span>elements&lt;R, F&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw-2">mut </span>f: F) -&gt; <span class="prelude-ty">Result</span>&lt;Vec&lt;R&gt;, String&gt;
     <span class="kw">where
-        </span>F: FnMut(<span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;, <span class="kw-2">&amp;</span>Element) -&gt; <span class="prelude-ty">Result</span>&lt;R, String&gt;,
+        </span>F: FnMut(<span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">'_</span>&gt;, <span class="kw-2">&amp;</span>Element) -&gt; <span class="prelude-ty">Result</span>&lt;R, String&gt;,
     {
         <span class="kw">let </span><span class="kw-2">mut </span>results = Vec::new();
         <span class="kw">loop </span>{
@@ -732,7 +733,7 @@
 
     <span class="kw">pub fn </span>element_with_name&lt;R, F&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, expected_name: <span class="kw-2">&amp;</span>str, f: F) -&gt; <span class="prelude-ty">Result</span>&lt;R, String&gt;
     <span class="kw">where
-        </span>F: FnOnce(<span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;, <span class="kw-2">&amp;</span>Element) -&gt; <span class="prelude-ty">Result</span>&lt;R, String&gt;,
+        </span>F: FnOnce(<span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">'_</span>&gt;, <span class="kw-2">&amp;</span>Element) -&gt; <span class="prelude-ty">Result</span>&lt;R, String&gt;,
     {
         <span class="kw">let </span>elem = <span class="self">self</span>.start_element()<span class="question-mark">?</span>;
         <span class="kw">if </span>expected_name != elem.name.local_name {
@@ -780,7 +781,7 @@
                     <span class="macro">unreachable!</span>();
                 }
                 <span class="kw">_ if </span>result.is_empty() =&gt; {
-                    <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="self">self</span>.fail(<span class="string">&quot;Expected text content&quot;</span>));
+                    <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="self">self</span>.fail(<span class="string">"Expected text content"</span>));
                 }
                 <span class="kw">_ </span>=&gt; <span class="kw">break</span>,
             }
@@ -820,7 +821,7 @@
 
     <span class="kw">fn </span>with_parser&lt;F, R&gt;(xml: <span class="kw-2">&amp;</span>[u8], f: F) -&gt; <span class="prelude-ty">Result</span>&lt;R, String&gt;
     <span class="kw">where
-        </span>F: FnOnce(XmlParser&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;R, String&gt;,
+        </span>F: FnOnce(XmlParser&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;R, String&gt;,
     {
         f(XmlParser::new(xml))
     }
@@ -833,79 +834,79 @@
             })
         }
 
-        <span class="kw">let </span>xml = <span class="string">br#&quot;&lt;?xml version=&quot;1.0&quot;?&gt;
+        <span class="kw">let </span>xml = <span class="string">br#"&lt;?xml version="1.0"?&gt;
             &lt;!-- a comment --&gt;
             &lt;a&gt;
-            &lt;/a&gt;&quot;#</span>;
+            &lt;/a&gt;"#</span>;
 
-        <span class="macro">assert!</span>(parse_with_root_name(xml, <span class="string">&quot;a&quot;</span>).is_ok());
-        <span class="macro">assert!</span>(parse_with_root_name(xml, <span class="string">&quot;b&quot;</span>).is_err());
+        <span class="macro">assert!</span>(parse_with_root_name(xml, <span class="string">"a"</span>).is_ok());
+        <span class="macro">assert!</span>(parse_with_root_name(xml, <span class="string">"b"</span>).is_err());
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_ignore_element() {
-        <span class="kw">let </span>xml = <span class="string">br#&quot;&lt;?xml version=&quot;1.0&quot;?&gt;
+        <span class="kw">let </span>xml = <span class="string">br#"&lt;?xml version="1.0"?&gt;
             &lt;a&gt;
                 &lt;b&gt;
                     &lt;c/&gt;
                     &lt;d/&gt;
                 &lt;/b&gt;
                 &lt;b&gt; some text content &lt;/b&gt;
-            &lt;/a&gt;&quot;#</span>;
+            &lt;/a&gt;"#</span>;
 
         with_parser(xml, |<span class="kw-2">mut </span>p| {
-            p.document(|p, <span class="kw">_</span>| p.element_with_name(<span class="string">&quot;a&quot;</span>, |p, <span class="kw">_</span>| p.ignore_element()))
+            p.document(|p, <span class="kw">_</span>| p.element_with_name(<span class="string">"a"</span>, |p, <span class="kw">_</span>| p.ignore_element()))
         })
         .unwrap();
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_elements() {
-        <span class="kw">let </span>xml = <span class="string">br#&quot;&lt;?xml version=&quot;1.0&quot;?&gt;
+        <span class="kw">let </span>xml = <span class="string">br#"&lt;?xml version="1.0"?&gt;
             &lt;root&gt;
-                &lt;child name=&quot;a&quot; /&gt;
-                &lt;child name=&quot;b&quot; /&gt;
-                &lt;child name=&quot;c&quot; /&gt;
-            &lt;/root&gt;&quot;#</span>;
+                &lt;child name="a" /&gt;
+                &lt;child name="b" /&gt;
+                &lt;child name="c" /&gt;
+            &lt;/root&gt;"#</span>;
 
         <span class="kw">let </span>result: String = with_parser(xml, |<span class="kw-2">mut </span>p| {
             p.document(|p, <span class="kw">_</span>| {
-                p.element_with_name(<span class="string">&quot;root&quot;</span>, |p, <span class="kw">_</span>| {
-                    p.elements(|<span class="kw">_</span>, elem| elem.attr_required(<span class="string">&quot;name&quot;</span>).map(|s| s.to_owned()))
-                        .map(|v| v.join(<span class="string">&quot;.&quot;</span>))
+                p.element_with_name(<span class="string">"root"</span>, |p, <span class="kw">_</span>| {
+                    p.elements(|<span class="kw">_</span>, elem| elem.attr_required(<span class="string">"name"</span>).map(|s| s.to_owned()))
+                        .map(|v| v.join(<span class="string">"."</span>))
                 })
             })
         })
         .unwrap();
 
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;a.b.c&quot;</span>, result);
+        <span class="macro">assert_eq!</span>(<span class="string">"a.b.c"</span>, result);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_text() {
-        <span class="kw">let </span>xml = <span class="string">br#&quot;&lt;?xml version=&quot;1.0&quot;?&gt;
-            &lt;x&gt;hello world!&lt;/x&gt;&quot;#</span>;
+        <span class="kw">let </span>xml = <span class="string">br#"&lt;?xml version="1.0"?&gt;
+            &lt;x&gt;hello world!&lt;/x&gt;"#</span>;
 
         <span class="kw">let </span>result: String = with_parser(xml, |<span class="kw-2">mut </span>p| {
-            p.document(|p, <span class="kw">_</span>| p.element_with_name(<span class="string">&quot;x&quot;</span>, |p, <span class="kw">_</span>| p.text()))
+            p.document(|p, <span class="kw">_</span>| p.element_with_name(<span class="string">"x"</span>, |p, <span class="kw">_</span>| p.text()))
         })
         .unwrap();
 
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;hello world!&quot;</span>, <span class="kw-2">&amp;</span>result);
+        <span class="macro">assert_eq!</span>(<span class="string">"hello world!"</span>, <span class="kw-2">&amp;</span>result);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_attr_required() {
-        <span class="kw">let </span>xml = <span class="string">br#&quot;&lt;?xml version=&quot;1.0&quot;?&gt;
-            &lt;x a=&quot;1&quot; b=&quot;2&quot;&gt;&lt;/x&gt;&quot;#</span>;
+        <span class="kw">let </span>xml = <span class="string">br#"&lt;?xml version="1.0"?&gt;
+            &lt;x a="1" b="2"&gt;&lt;/x&gt;"#</span>;
 
         with_parser(xml, |<span class="kw-2">mut </span>p| {
             p.document(|p, <span class="kw">_</span>| {
-                p.element_with_name(<span class="string">&quot;x&quot;</span>, |<span class="kw">_</span>, elem| {
-                    <span class="macro">assert!</span>(elem.attr_required(<span class="string">&quot;a&quot;</span>).is_ok());
-                    <span class="macro">assert!</span>(elem.attr_required(<span class="string">&quot;b&quot;</span>).is_ok());
-                    <span class="macro">assert!</span>(elem.attr_required(<span class="string">&quot;c&quot;</span>).is_err());
-                    <span class="macro">assert!</span>(elem.attr_required(<span class="string">&quot;d&quot;</span>).is_err());
+                p.element_with_name(<span class="string">"x"</span>, |<span class="kw">_</span>, elem| {
+                    <span class="macro">assert!</span>(elem.attr_required(<span class="string">"a"</span>).is_ok());
+                    <span class="macro">assert!</span>(elem.attr_required(<span class="string">"b"</span>).is_ok());
+                    <span class="macro">assert!</span>(elem.attr_required(<span class="string">"c"</span>).is_err());
+                    <span class="macro">assert!</span>(elem.attr_required(<span class="string">"d"</span>).is_err());
                     <span class="prelude-val">Ok</span>(())
                 })
             })
@@ -915,14 +916,14 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_attr_from_str() {
-        <span class="kw">let </span>xml = <span class="string">br#&quot;&lt;?xml version=&quot;1.0&quot;?&gt;
-            &lt;x a=&quot;123&quot; b=&quot;2a&quot;&gt;&lt;/x&gt;&quot;#</span>;
+        <span class="kw">let </span>xml = <span class="string">br#"&lt;?xml version="1.0"?&gt;
+            &lt;x a="123" b="2a"&gt;&lt;/x&gt;"#</span>;
 
         with_parser(xml, |<span class="kw-2">mut </span>p| {
             p.document(|p, <span class="kw">_</span>| {
-                p.element_with_name(<span class="string">&quot;x&quot;</span>, |<span class="kw">_</span>, elem| {
-                    <span class="macro">assert_eq!</span>(elem.attr_from_str::&lt;usize&gt;(<span class="string">&quot;a&quot;</span>).unwrap(), <span class="prelude-val">Some</span>(<span class="number">123</span>));
-                    <span class="macro">assert!</span>(elem.attr_from_str::&lt;usize&gt;(<span class="string">&quot;b&quot;</span>).is_err());
+                p.element_with_name(<span class="string">"x"</span>, |<span class="kw">_</span>, elem| {
+                    <span class="macro">assert_eq!</span>(elem.attr_from_str::&lt;usize&gt;(<span class="string">"a"</span>).unwrap(), <span class="prelude-val">Some</span>(<span class="number">123</span>));
+                    <span class="macro">assert!</span>(elem.attr_from_str::&lt;usize&gt;(<span class="string">"b"</span>).is_err());
                     <span class="prelude-val">Ok</span>(())
                 })
             })

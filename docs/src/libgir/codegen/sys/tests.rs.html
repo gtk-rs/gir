@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/sys/tests.rs`."><title>tests.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/sys/tests.rs`."><title>tests.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -593,26 +594,26 @@
         <span class="kw">return</span>;
     }
 
-    <span class="kw">let </span>tests = env.config.target_path.join(<span class="string">&quot;tests&quot;</span>);
+    <span class="kw">let </span>tests = env.config.target_path.join(<span class="string">"tests"</span>);
 
-    <span class="kw">let </span>manual_h = tests.join(<span class="string">&quot;manual.h&quot;</span>);
+    <span class="kw">let </span>manual_h = tests.join(<span class="string">"manual.h"</span>);
     <span class="kw">if </span>!manual_h.exists() {
         save_to_file(<span class="kw-2">&amp;</span>manual_h, env.config.make_backup, |w| {
             generate_manual_h(env, <span class="kw-2">&amp;</span>manual_h, w)
         });
     }
 
-    <span class="kw">let </span>layout_c = tests.join(<span class="string">&quot;layout.c&quot;</span>);
+    <span class="kw">let </span>layout_c = tests.join(<span class="string">"layout.c"</span>);
     save_to_file(<span class="kw-2">&amp;</span>layout_c, env.config.make_backup, |w| {
         generate_layout_c(env, <span class="kw-2">&amp;</span>layout_c, w, <span class="kw-2">&amp;</span>ctypes)
     });
 
-    <span class="kw">let </span>constant_c = tests.join(<span class="string">&quot;constant.c&quot;</span>);
+    <span class="kw">let </span>constant_c = tests.join(<span class="string">"constant.c"</span>);
     save_to_file(<span class="kw-2">&amp;</span>constant_c, env.config.make_backup, |w| {
         generate_constant_c(env, <span class="kw-2">&amp;</span>constant_c, w, <span class="kw-2">&amp;</span>cconsts)
     });
 
-    <span class="kw">let </span>abi_rs = tests.join(<span class="string">&quot;abi.rs&quot;</span>);
+    <span class="kw">let </span>abi_rs = tests.join(<span class="string">"abi.rs"</span>);
     save_to_file(<span class="kw-2">&amp;</span>abi_rs, env.config.make_backup, |w| {
         generate_abi_rs(env, <span class="kw-2">&amp;</span>abi_rs, w, crate_name, <span class="kw-2">&amp;</span>ctypes, <span class="kw-2">&amp;</span>cconsts)
     });
@@ -644,7 +645,7 @@
 }
 
 <span class="kw">fn </span>prepare_ctype(env: <span class="kw-2">&amp;</span>Env, ns: <span class="kw-2">&amp;</span>Namespace, t: <span class="kw-2">&amp;</span>Type) -&gt; <span class="prelude-ty">Option</span>&lt;CType&gt; {
-    <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, ns.name, t.get_name());
+    <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">"{}.{}"</span>, ns.name, t.get_name());
     <span class="kw">if </span>env.type_status_sys(<span class="kw-2">&amp;</span>full_name).ignored() {
         <span class="kw">return </span><span class="prelude-val">None</span>;
     }
@@ -670,13 +671,13 @@
         .constants
         .iter()
         .filter_map(|constant| {
-            <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, <span class="kw-2">&amp;</span>ns.name, constant.name);
+            <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">"{}.{}"</span>, <span class="kw-2">&amp;</span>ns.name, constant.name);
             <span class="kw">if </span>env.type_status_sys(<span class="kw-2">&amp;</span>full_name).ignored() {
                 <span class="kw">return </span><span class="prelude-val">None</span>;
             }
             <span class="kw">let </span>value = <span class="kw">match </span>constant {
-                c <span class="kw">if </span>c.c_type == <span class="string">&quot;gboolean&quot; </span>&amp;&amp; c.value == <span class="string">&quot;true&quot; </span>=&gt; <span class="string">&quot;1&quot;</span>,
-                c <span class="kw">if </span>c.c_type == <span class="string">&quot;gboolean&quot; </span>&amp;&amp; c.value == <span class="string">&quot;false&quot; </span>=&gt; <span class="string">&quot;0&quot;</span>,
+                c <span class="kw">if </span>c.c_type == <span class="string">"gboolean" </span>&amp;&amp; c.value == <span class="string">"true" </span>=&gt; <span class="string">"1"</span>,
+                c <span class="kw">if </span>c.c_type == <span class="string">"gboolean" </span>&amp;&amp; c.value == <span class="string">"false" </span>=&gt; <span class="string">"0"</span>,
                 c =&gt; <span class="kw-2">&amp;</span>c.value,
             };
             <span class="prelude-val">Some</span>(CConstant {
@@ -692,7 +693,7 @@
         } <span class="kw">else </span>{
             <span class="kw">continue</span>;
         };
-        <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, <span class="kw-2">&amp;</span>ns.name, typ.get_name());
+        <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">"{}.{}"</span>, <span class="kw-2">&amp;</span>ns.name, typ.get_name());
         <span class="kw">if </span>env.type_status_sys(<span class="kw-2">&amp;</span>full_name).ignored() {
             <span class="kw">continue</span>;
         }
@@ -702,7 +703,7 @@
                     <span class="comment">// GLib assumes that bitflags are unsigned integers,
                     // see the GValue machinery around them for example
                     </span>constants.push(CConstant {
-                        name: <span class="macro">format!</span>(<span class="string">&quot;(guint) {}&quot;</span>, member.c_identifier),
+                        name: <span class="macro">format!</span>(<span class="string">"(guint) {}"</span>, member.c_identifier),
                         value: member
                             .value
                             .parse::&lt;i32&gt;()
@@ -716,7 +717,7 @@
                     <span class="comment">// GLib assumes that enums are signed integers,
                     // see the GValue machinery around them for example
                     </span>constants.push(CConstant {
-                        name: <span class="macro">format!</span>(<span class="string">&quot;(gint) {}&quot;</span>, member.c_identifier),
+                        name: <span class="macro">format!</span>(<span class="string">"(gint) {}"</span>, member.c_identifier),
                         value: member.value.clone(),
                     });
                 }
@@ -727,9 +728,9 @@
 
     constants.sort_by(|a, b| {
         <span class="kw">fn </span>strip_cast(x: <span class="kw-2">&amp;</span>CConstant) -&gt; <span class="kw-2">&amp;</span>str {
-            <span class="kw">if </span>x.name.starts_with(<span class="string">&quot;(gint) &quot;</span>) {
+            <span class="kw">if </span>x.name.starts_with(<span class="string">"(gint) "</span>) {
                 <span class="kw-2">&amp;</span>x.name[<span class="number">7</span>..]
-            } <span class="kw">else if </span>x.name.starts_with(<span class="string">&quot;(guint) &quot;</span>) {
+            } <span class="kw">else if </span>x.name.starts_with(<span class="string">"(guint) "</span>) {
                 <span class="kw-2">&amp;</span>x.name[<span class="number">8</span>..]
             } <span class="kw">else </span>{
                 x.name.as_str()
@@ -745,20 +746,20 @@
 </span><span class="kw">fn </span>is_name_made_up(name: <span class="kw-2">&amp;</span>str) -&gt; bool {
     <span class="comment">// Unnamed types are assigned name during parsing, those names contain an
     // underscore.
-    </span>name.contains(<span class="string">&#39;_&#39;</span>) &amp;&amp; !name.ends_with(<span class="string">&quot;_t&quot;</span>)
+    </span>name.contains(<span class="string">'_'</span>) &amp;&amp; !name.ends_with(<span class="string">"_t"</span>)
 }
 
 <span class="kw">fn </span>generate_manual_h(env: <span class="kw-2">&amp;</span>Env, path: <span class="kw-2">&amp;</span>Path, w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write) -&gt; io::Result&lt;()&gt; {
-    <span class="macro">info!</span>(<span class="string">&quot;Generating file {:?}&quot;</span>, path);
+    <span class="macro">info!</span>(<span class="string">"Generating file {:?}"</span>, path);
     <span class="macro">writeln!</span>(
         w,
-        <span class="string">&quot;// Feel free to edit this file, it won&#39;t be regenerated by gir generator unless removed.&quot;
+        <span class="string">"// Feel free to edit this file, it won't be regenerated by gir generator unless removed."
     </span>)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
 
     <span class="kw">let </span>ns = env.library.namespace(MAIN_NAMESPACE);
     <span class="kw">for </span>include <span class="kw">in </span><span class="kw-2">&amp;</span>ns.c_includes {
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;#include &lt;{include}&gt;&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"#include &lt;{include}&gt;"</span>)<span class="question-mark">?</span>;
     }
 
     <span class="prelude-val">Ok</span>(())
@@ -771,25 +772,25 @@
     w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write,
     ctypes: <span class="kw-2">&amp;</span>[CType],
 ) -&gt; io::Result&lt;()&gt; {
-    <span class="macro">info!</span>(<span class="string">&quot;Generating file {:?}&quot;</span>, path);
+    <span class="macro">info!</span>(<span class="string">"Generating file {:?}"</span>, path);
     general::start_comments(w, <span class="kw-2">&amp;</span>env.config)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;#include \&quot;manual.h\&quot;&quot;</span>)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;#include &lt;stdalign.h&gt;&quot;</span>)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;#include &lt;stdio.h&gt;&quot;</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">"#include \"manual.h\""</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">"#include &lt;stdalign.h&gt;"</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">"#include &lt;stdio.h&gt;"</span>)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;{}&quot;</span>, <span class="string">r&quot;int main() {&quot;</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">"{}"</span>, <span class="string">r"int main() {"</span>)<span class="question-mark">?</span>;
 
     <span class="kw">for </span>ctype <span class="kw">in </span>ctypes {
         <span class="macro">writeln!</span>(
             w,
-            <span class="string">&quot;    printf(\&quot;%s;%zu;%zu\\n\&quot;, \&quot;{ctype}\&quot;, sizeof({ctype}), alignof({ctype}));&quot;</span>,
+            <span class="string">"    printf(\"%s;%zu;%zu\\n\", \"{ctype}\", sizeof({ctype}), alignof({ctype}));"</span>,
             ctype = ctype.name
         )<span class="question-mark">?</span>;
     }
 
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;    return 0;&quot;</span>)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;{}&quot;</span>, <span class="string">r&quot;}&quot;</span>)
+    <span class="macro">writeln!</span>(w, <span class="string">"    return 0;"</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">"{}"</span>, <span class="string">r"}"</span>)
 }
 
 <span class="attr">#[allow(clippy::write_literal)]
@@ -799,47 +800,47 @@
     w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write,
     cconsts: <span class="kw-2">&amp;</span>[CConstant],
 ) -&gt; io::Result&lt;()&gt; {
-    <span class="macro">info!</span>(<span class="string">&quot;Generating file {:?}&quot;</span>, path);
+    <span class="macro">info!</span>(<span class="string">"Generating file {:?}"</span>, path);
     general::start_comments(w, <span class="kw-2">&amp;</span>env.config)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;#include \&quot;manual.h\&quot;&quot;</span>)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;#include &lt;stdio.h&gt;&quot;</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">"#include \"manual.h\""</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">"#include &lt;stdio.h&gt;"</span>)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(
         w,
-        <span class="string">&quot;{}&quot;</span>,
-        <span class="string">r#&quot;
+        <span class="string">"{}"</span>,
+        <span class="string">r#"
 #define PRINT_CONSTANT(CONSTANT_NAME) \
-    printf(&quot;%s;&quot;, #CONSTANT_NAME); \
+    printf("%s;", #CONSTANT_NAME); \
     printf(_Generic((CONSTANT_NAME), \
-                    char *: &quot;%s&quot;, \
-                    const char *: &quot;%s&quot;, \
-                    char: &quot;%c&quot;, \
-                    signed char: &quot;%hhd&quot;, \
-                    unsigned char: &quot;%hhu&quot;, \
-                    short int: &quot;%hd&quot;, \
-                    unsigned short int: &quot;%hu&quot;, \
-                    int: &quot;%d&quot;, \
-                    unsigned int: &quot;%u&quot;, \
-                    long: &quot;%ld&quot;, \
-                    unsigned long: &quot;%lu&quot;, \
-                    long long: &quot;%lld&quot;, \
-                    unsigned long long: &quot;%llu&quot;, \
-                    float: &quot;%f&quot;, \
-                    double: &quot;%f&quot;, \
-                    long double: &quot;%ld&quot;), \
+                    char *: "%s", \
+                    const char *: "%s", \
+                    char: "%c", \
+                    signed char: "%hhd", \
+                    unsigned char: "%hhu", \
+                    short int: "%hd", \
+                    unsigned short int: "%hu", \
+                    int: "%d", \
+                    unsigned int: "%u", \
+                    long: "%ld", \
+                    unsigned long: "%lu", \
+                    long long: "%lld", \
+                    unsigned long long: "%llu", \
+                    float: "%f", \
+                    double: "%f", \
+                    long double: "%ld"), \
            CONSTANT_NAME); \
-    printf(&quot;\n&quot;);
-&quot;#
+    printf("\n");
+"#
     </span>)<span class="question-mark">?</span>;
 
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;{}&quot;</span>, <span class="string">r&quot;int main() {&quot;</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">"{}"</span>, <span class="string">r"int main() {"</span>)<span class="question-mark">?</span>;
 
     <span class="kw">for </span>cconst <span class="kw">in </span>cconsts {
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;    PRINT_CONSTANT({name});&quot;</span>, name = cconst.name,)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"    PRINT_CONSTANT({name});"</span>, name = cconst.name,)<span class="question-mark">?</span>;
     }
 
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;    return 0;&quot;</span>)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;{}&quot;</span>, <span class="string">r&quot;}&quot;</span>)
+    <span class="macro">writeln!</span>(w, <span class="string">"    return 0;"</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">"{}"</span>, <span class="string">r"}"</span>)
 }
 
 <span class="attr">#[allow(clippy::write_literal)]
@@ -852,35 +853,35 @@
     cconsts: <span class="kw-2">&amp;</span>[CConstant],
 ) -&gt; io::Result&lt;()&gt; {
     <span class="kw">let </span>ns = env.library.namespace(MAIN_NAMESPACE);
-    <span class="kw">let </span><span class="kw-2">mut </span>package_names = ns.package_names.join(<span class="string">&quot;\&quot;, \&quot;&quot;</span>);
+    <span class="kw">let </span><span class="kw-2">mut </span>package_names = ns.package_names.join(<span class="string">"\", \""</span>);
     <span class="kw">if </span>!package_names.is_empty() {
-        package_names = <span class="macro">format!</span>(<span class="string">&quot;\&quot;{package_names}\&quot;&quot;</span>);
+        package_names = <span class="macro">format!</span>(<span class="string">"\"{package_names}\""</span>);
     }
 
-    <span class="macro">info!</span>(<span class="string">&quot;Generating file {:?}&quot;</span>, path);
+    <span class="macro">info!</span>(<span class="string">"Generating file {:?}"</span>, path);
     general::start_comments(w, <span class="kw-2">&amp;</span>env.config)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;#![cfg(unix)]&quot;</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">"#![cfg(unix)]"</span>)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
 
     <span class="kw">if </span>!ctypes.is_empty() {
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;use {crate_name}::*;&quot;</span>)<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;use std::mem::{{align_of, size_of}};&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"use {crate_name}::*;"</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"use std::mem::{{align_of, size_of}};"</span>)<span class="question-mark">?</span>;
     }
 
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;use std::env;&quot;</span>)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;use std::error::Error;&quot;</span>)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;use std::ffi::OsString;&quot;</span>)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;use std::path::Path;&quot;</span>)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;use std::process::{{Command, Stdio}};&quot;</span>)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;use std::str;&quot;</span>)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;use tempfile::Builder;&quot;</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">"use std::env;"</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">"use std::error::Error;"</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">"use std::ffi::OsString;"</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">"use std::path::Path;"</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">"use std::process::{{Command, Stdio}};"</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">"use std::str;"</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">"use tempfile::Builder;"</span>)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;static PACKAGES: &amp;[&amp;str] = &amp;[{package_names}];&quot;</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">"static PACKAGES: &amp;[&amp;str] = &amp;[{package_names}];"</span>)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(
         w,
-        <span class="string">&quot;{}&quot;</span>,
-        <span class="string">r#&quot;
+        <span class="string">"{}"</span>,
+        <span class="string">r#"
 #[derive(Clone, Debug)]
 struct Compiler {
     pub args: Vec&lt;String&gt;,
@@ -888,14 +889,14 @@ struct Compiler {
 
 impl Compiler {
     pub fn new() -&gt; Result&lt;Self, Box&lt;dyn Error&gt;&gt; {
-        let mut args = get_var(&quot;CC&quot;, &quot;cc&quot;)?;
-        args.push(&quot;-Wno-deprecated-declarations&quot;.to_owned());
+        let mut args = get_var("CC", "cc")?;
+        args.push("-Wno-deprecated-declarations".to_owned());
         // For _Generic
-        args.push(&quot;-std=c11&quot;.to_owned());
+        args.push("-std=c11".to_owned());
         // For %z support in printf when using MinGW.
-        args.push(&quot;-D__USE_MINGW_ANSI_STDIO&quot;.to_owned());
-        args.extend(get_var(&quot;CFLAGS&quot;, &quot;&quot;)?);
-        args.extend(get_var(&quot;CPPFLAGS&quot;, &quot;&quot;)?);
+        args.push("-D__USE_MINGW_ANSI_STDIO".to_owned());
+        args.extend(get_var("CFLAGS", "")?);
+        args.extend(get_var("CPPFLAGS", "")?);
         args.extend(pkg_config_cflags(PACKAGES)?);
         Ok(Self { args })
     }
@@ -903,11 +904,11 @@ impl Compiler {
     pub fn compile(&amp;self, src: &amp;Path, out: &amp;Path) -&gt; Result&lt;(), Box&lt;dyn Error&gt;&gt; {
         let mut cmd = self.to_command();
         cmd.arg(src);
-        cmd.arg(&quot;-o&quot;);
+        cmd.arg("-o");
         cmd.arg(out);
         let status = cmd.spawn()?.wait()?;
         if !status.success() {
-            return Err(format!(&quot;compilation command {cmd:?} failed, {status}&quot;).into());
+            return Err(format!("compilation command {cmd:?} failed, {status}").into());
         }
         Ok(())
     }
@@ -923,7 +924,7 @@ fn get_var(name: &amp;str, default: &amp;str) -&gt; Result&lt;Vec&lt;String&gt;,
     match env::var(name) {
         Ok(value) =&gt; Ok(shell_words::split(&amp;value)?),
         Err(env::VarError::NotPresent) =&gt; Ok(shell_words::split(default)?),
-        Err(err) =&gt; Err(format!(&quot;{name} {err}&quot;).into()),
+        Err(err) =&gt; Err(format!("{name} {err}").into()),
     }
 }
 
@@ -931,16 +932,16 @@ fn pkg_config_cflags(packages: &amp;[&amp;str]) -&gt; Result&lt;Vec&lt;String&gt
     if packages.is_empty() {
         return Ok(Vec::new());
     }
-    let pkg_config = env::var_os(&quot;PKG_CONFIG&quot;)
-        .unwrap_or_else(|| OsString::from(&quot;pkg-config&quot;));
+    let pkg_config = env::var_os("PKG_CONFIG")
+        .unwrap_or_else(|| OsString::from("pkg-config"));
     let mut cmd = Command::new(pkg_config);
-    cmd.arg(&quot;--cflags&quot;);
+    cmd.arg("--cflags");
     cmd.args(packages);
     cmd.stderr(Stdio::inherit());
     let out = cmd.output()?;
     if !out.status.success() {
         let (status, stdout) = (out.status, String::from_utf8_lossy(&amp;out.stdout));
-        return Err(format!(&quot;command {cmd:?} failed, {status:?}\nstdout: {stdout}&quot;).into());
+        return Err(format!("command {cmd:?} failed, {status:?}\nstdout: {stdout}").into());
     }
     let stdout = str::from_utf8(&amp;out.stdout)?;
     Ok(shell_words::split(stdout.trim())?)
@@ -969,13 +970,13 @@ impl Results {
         self.failed += 1;
     }
     fn summary(&amp;self) -&gt; String {
-        format!(&quot;{} passed; {} failed&quot;, self.passed, self.failed)
+        format!("{} passed; {} failed", self.passed, self.failed)
     }
     fn expect_total_success(&amp;self) {
         if self.failed == 0 {
-            println!(&quot;OK: {}&quot;, self.summary());
+            println!("OK: {}", self.summary());
         } else {
-            panic!(&quot;FAILED: {}&quot;, self.summary());
+            panic!("FAILED: {}", self.summary());
         };
     }
 }
@@ -984,8 +985,8 @@ impl Results {
 fn cross_validate_constants_with_c() {
     let mut c_constants: Vec&lt;(String, String)&gt; = Vec::new();
 
-    for l in get_c_output(&quot;constant&quot;).unwrap().lines() {
-        let (name, value) = l.split_once(&#39;;&#39;).expect(&quot;Missing &#39;;&#39; separator&quot;);
+    for l in get_c_output("constant").unwrap().lines() {
+        let (name, value) = l.split_once(';').expect("Missing ';' separator");
         c_constants.push((name.to_owned(), value.to_owned()));
     }
 
@@ -996,14 +997,14 @@ fn cross_validate_constants_with_c() {
     {
         if rust_name != c_name {
             results.record_failed();
-            eprintln!(&quot;Name mismatch:\nRust: {rust_name:?}\nC:    {c_name:?}&quot;);
+            eprintln!("Name mismatch:\nRust: {rust_name:?}\nC:    {c_name:?}");
             continue;
         }
 
         if rust_value != c_value {
             results.record_failed();
             eprintln!(
-                &quot;Constant value mismatch for {rust_name}\nRust: {rust_value:?}\nC:    {c_value:?}&quot;,
+                "Constant value mismatch for {rust_name}\nRust: {rust_value:?}\nC:    {c_value:?}",
             );
             continue;
         }
@@ -1018,11 +1019,11 @@ fn cross_validate_constants_with_c() {
 fn cross_validate_layout_with_c() {
     let mut c_layouts = Vec::new();
 
-    for l in get_c_output(&quot;layout&quot;).unwrap().lines() {
-        let (name, value) = l.split_once(&#39;;&#39;).expect(&quot;Missing first &#39;;&#39; separator&quot;);
-        let (size, alignment) = value.split_once(&#39;;&#39;).expect(&quot;Missing second &#39;;&#39; separator&quot;);
-        let size = size.parse().expect(&quot;Failed to parse size&quot;);
-        let alignment = alignment.parse().expect(&quot;Failed to parse alignment&quot;);
+    for l in get_c_output("layout").unwrap().lines() {
+        let (name, value) = l.split_once(';').expect("Missing first ';' separator");
+        let (size, alignment) = value.split_once(';').expect("Missing second ';' separator");
+        let size = size.parse().expect("Failed to parse size");
+        let alignment = alignment.parse().expect("Failed to parse alignment");
         c_layouts.push((name.to_owned(), Layout { size, alignment }));
     }
 
@@ -1033,14 +1034,14 @@ fn cross_validate_layout_with_c() {
     {
         if rust_name != c_name {
             results.record_failed();
-            eprintln!(&quot;Name mismatch:\nRust: {rust_name:?}\nC:    {c_name:?}&quot;);
+            eprintln!("Name mismatch:\nRust: {rust_name:?}\nC:    {c_name:?}");
             continue;
         }
 
         if rust_layout != c_layout {
             results.record_failed();
             eprintln!(
-                &quot;Layout mismatch for {rust_name}\nRust: {rust_layout:?}\nC:    {c_layout:?}&quot;,
+                "Layout mismatch for {rust_name}\nRust: {rust_layout:?}\nC:    {c_layout:?}",
             );
             continue;
         }
@@ -1052,11 +1053,11 @@ fn cross_validate_layout_with_c() {
 }
 
 fn get_c_output(name: &amp;str) -&gt; Result&lt;String, Box&lt;dyn Error&gt;&gt; {
-    let tmpdir = Builder::new().prefix(&quot;abi&quot;).tempdir()?;
+    let tmpdir = Builder::new().prefix("abi").tempdir()?;
     let exe = tmpdir.path().join(name);
-    let c_file = Path::new(&quot;tests&quot;).join(name).with_extension(&quot;c&quot;);
+    let c_file = Path::new("tests").join(name).with_extension("c");
 
-    let cc = Compiler::new().expect(&quot;configured compiler&quot;);
+    let cc = Compiler::new().expect("configured compiler");
     cc.compile(&amp;c_file, &amp;exe)?;
 
     let mut cmd = Command::new(exe);
@@ -1064,13 +1065,13 @@ fn get_c_output(name: &amp;str) -&gt; Result&lt;String, Box&lt;dyn Error&gt;&gt;
     let out = cmd.output()?;
     if !out.status.success() {
         let (status, stdout) = (out.status, String::from_utf8_lossy(&amp;out.stdout));
-        return Err(format!(&quot;command {cmd:?} failed, {status:?}\nstdout: {stdout}&quot;).into());
+        return Err(format!("command {cmd:?} failed, {status:?}\nstdout: {stdout}").into());
     }
 
     Ok(String::from_utf8(out.stdout)?)
 }
 
-const RUST_LAYOUTS: &amp;[(&amp;str, Layout)] = &amp;[&quot;#
+const RUST_LAYOUTS: &amp;[(&amp;str, Layout)] = &amp;["#
     </span>)<span class="question-mark">?</span>;
     <span class="kw">for </span>ctype <span class="kw">in </span>ctypes {
         <span class="kw">let </span>ns = env.namespaces.main();
@@ -1080,30 +1081,30 @@ const RUST_LAYOUTS: &amp;[(&amp;str, Layout)] = &amp;[&quot;#
             <span class="kw-2">&amp;</span>ns.identifier_prefixes,
         );
         general::cfg_condition(w, cfg_condition.as_ref(), <span class="bool-val">false</span>, <span class="number">1</span>)<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;    (\&quot;{ctype}\&quot;, Layout {{size: size_of::&lt;{ctype}&gt;(), alignment: align_of::&lt;{ctype}&gt;()}}),&quot;</span>,
+        <span class="macro">writeln!</span>(w, <span class="string">"    (\"{ctype}\", Layout {{size: size_of::&lt;{ctype}&gt;(), alignment: align_of::&lt;{ctype}&gt;()}}),"</span>,
                  ctype=ctype.name)<span class="question-mark">?</span>;
     }
     <span class="macro">writeln!</span>(
         w,
-        <span class="string">&quot;{}&quot;</span>,
-        <span class="string">r#&quot;];
+        <span class="string">"{}"</span>,
+        <span class="string">r#"];
 
-const RUST_CONSTANTS: &amp;[(&amp;str, &amp;str)] = &amp;[&quot;#
+const RUST_CONSTANTS: &amp;[(&amp;str, &amp;str)] = &amp;["#
     </span>)<span class="question-mark">?</span>;
     <span class="kw">for </span>cconst <span class="kw">in </span>cconsts {
         <span class="macro">writeln!</span>(
             w,
-            <span class="string">&quot;    (\&quot;{name}\&quot;, \&quot;{value}\&quot;),&quot;</span>,
+            <span class="string">"    (\"{name}\", \"{value}\"),"</span>,
             name = cconst.name,
             value = <span class="kw-2">&amp;</span>general::escape_string(<span class="kw-2">&amp;</span>cconst.value)
         )<span class="question-mark">?</span>;
     }
     <span class="macro">writeln!</span>(
         w,
-        <span class="string">&quot;{}&quot;</span>,
-        <span class="string">r#&quot;];
+        <span class="string">"{}"</span>,
+        <span class="string">r#"];
 
-&quot;#
+"#
     </span>)
 }
 </code></pre></div></section></main></body></html>

@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/translate_from_glib.rs`."><title>translate_from_glib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/translate_from_glib.rs`."><title>translate_from_glib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -196,30 +197,30 @@
             Direct =&gt; (String::new(), String::new()),
             Scalar =&gt; <span class="kw">match </span>env.library.type_(<span class="self">self</span>.typ) {
                 library::Type::Basic(library::Basic::UniChar) =&gt; (
-                    <span class="string">&quot;std::convert::TryFrom::try_from(&quot;</span>.into(),
-                    <span class="string">&quot;).expect(\&quot;conversion from an invalid Unicode value attempted\&quot;)&quot;</span>.into(),
+                    <span class="string">"std::convert::TryFrom::try_from("</span>.into(),
+                    <span class="string">").expect(\"conversion from an invalid Unicode value attempted\")"</span>.into(),
                 ),
-                <span class="kw">_ </span>=&gt; (<span class="string">&quot;from_glib(&quot;</span>.into(), <span class="string">&quot;)&quot;</span>.into()),
+                <span class="kw">_ </span>=&gt; (<span class="string">"from_glib("</span>.into(), <span class="string">")"</span>.into()),
             },
             <span class="prelude-ty">Option </span>=&gt; {
                 <span class="kw">let </span>(pre, post) = <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.try_from_glib {
-                    TryFromGlib::Option =&gt; (<span class="string">&quot;from_glib(&quot;</span>, <span class="string">&quot;)&quot;</span>),
+                    TryFromGlib::Option =&gt; (<span class="string">"from_glib("</span>, <span class="string">")"</span>),
                     TryFromGlib::OptionMandatory =&gt; (
-                        <span class="string">&quot;try_from_glib(&quot;</span>,
-                        <span class="string">&quot;).expect(\&quot;mandatory glib value is None\&quot;)&quot;</span>,
+                        <span class="string">"try_from_glib("</span>,
+                        <span class="string">").expect(\"mandatory glib value is None\")"</span>,
                     ),
-                    other =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Unexpected {other:?} for ConversionType::Option&quot;</span>),
+                    other =&gt; <span class="macro">panic!</span>(<span class="string">"Unexpected {other:?} for ConversionType::Option"</span>),
                 };
                 (pre.to_string(), post.to_string())
             }
             <span class="prelude-ty">Result </span>{ .. } =&gt; {
                 <span class="kw">let </span>(pre, post) = <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.try_from_glib {
-                    TryFromGlib::Result { .. } =&gt; (<span class="string">&quot;try_from_glib(&quot;</span>, <span class="string">&quot;)&quot;</span>),
+                    TryFromGlib::Result { .. } =&gt; (<span class="string">"try_from_glib("</span>, <span class="string">")"</span>),
                     TryFromGlib::ResultInfallible { .. } =&gt; (
-                        <span class="string">&quot;try_from_glib(&quot;</span>,
-                        <span class="string">&quot;).unwrap_or_else(|err| panic!(\&quot;infallible {}\&quot;, err))&quot;</span>,
+                        <span class="string">"try_from_glib("</span>,
+                        <span class="string">").unwrap_or_else(|err| panic!(\"infallible {}\", err))"</span>,
                     ),
-                    other =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Unexpected {other:?} for ConversionType::Result&quot;</span>),
+                    other =&gt; <span class="macro">panic!</span>(<span class="string">"Unexpected {other:?} for ConversionType::Result"</span>),
                 };
                 (pre.to_string(), post.to_string())
             }
@@ -231,16 +232,16 @@
                     | library::Type::PtrArray(..)
                     | library::Type::CArray(..) =&gt; {
                         <span class="kw">if </span>array_length.is_some() {
-                            (<span class="macro">format!</span>(<span class="string">&quot;FromGlibContainer::{}&quot;</span>, trans.<span class="number">0</span>), trans.<span class="number">1</span>)
+                            (<span class="macro">format!</span>(<span class="string">"FromGlibContainer::{}"</span>, trans.<span class="number">0</span>), trans.<span class="number">1</span>)
                         } <span class="kw">else </span>{
-                            (<span class="macro">format!</span>(<span class="string">&quot;FromGlibPtrContainer::{}&quot;</span>, trans.<span class="number">0</span>), trans.<span class="number">1</span>)
+                            (<span class="macro">format!</span>(<span class="string">"FromGlibPtrContainer::{}"</span>, trans.<span class="number">0</span>), trans.<span class="number">1</span>)
                         }
                     }
                     <span class="kw">_ </span>=&gt; trans,
                 }
             }
-            Borrow =&gt; (<span class="string">&quot;/*TODO: conversion Borrow*/&quot;</span>.into(), String::new()),
-            Unknown =&gt; (<span class="string">&quot;/*Unknown conversion*/&quot;</span>.into(), String::new()),
+            Borrow =&gt; (<span class="string">"/*TODO: conversion Borrow*/"</span>.into(), String::new()),
+            Unknown =&gt; (<span class="string">"/*Unknown conversion*/"</span>.into(), String::new()),
         }
     }
 }
@@ -261,14 +262,14 @@
                     <span class="kw">let </span>from_glib_xxx = from_glib_xxx(par.lib_par.transfer, <span class="prelude-val">None</span>);
 
                     <span class="kw">let </span>prefix = <span class="kw">if </span><span class="kw-2">*</span>par.lib_par.nullable {
-                        <span class="macro">format!</span>(<span class="string">&quot;Option::&lt;{}&gt;::{}&quot;</span>, rust_type.into_string(), from_glib_xxx.<span class="number">0</span>)
+                        <span class="macro">format!</span>(<span class="string">"Option::&lt;{}&gt;::{}"</span>, rust_type.into_string(), from_glib_xxx.<span class="number">0</span>)
                     } <span class="kw">else </span>{
-                        <span class="macro">format!</span>(<span class="string">&quot;{}::{}&quot;</span>, rust_type.into_string(), from_glib_xxx.<span class="number">0</span>)
+                        <span class="macro">format!</span>(<span class="string">"{}::{}"</span>, rust_type.into_string(), from_glib_xxx.<span class="number">0</span>)
                     };
                     <span class="kw">let </span>suffix_function = <span class="kw">if </span><span class="kw-2">*</span>par.lib_par.nullable {
-                        <span class="string">&quot;map(|o| o.unsafe_cast())&quot;
+                        <span class="string">"map(|o| o.unsafe_cast())"
                     </span>} <span class="kw">else </span>{
-                        <span class="string">&quot;unsafe_cast()&quot;
+                        <span class="string">"unsafe_cast()"
                     </span>};
 
                     <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>msg) = <span class="self">self</span>.nullable_return_is_error {
@@ -276,31 +277,31 @@
                         (
                             prefix,
                             <span class="macro">format!</span>(
-                                <span class="string">&quot;{}.{}.ok_or_else(|| {}(\&quot;{}\&quot;))&quot;</span>,
+                                <span class="string">"{}.{}.ok_or_else(|| {}(\"{}\"))"</span>,
                                 from_glib_xxx.<span class="number">1</span>,
                                 suffix_function,
-                                use_glib_type(env, <span class="string">&quot;bool_error!&quot;</span>),
+                                use_glib_type(env, <span class="string">"bool_error!"</span>),
                                 msg
                             ),
                         )
                     } <span class="kw">else </span>{
-                        (prefix, <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, from_glib_xxx.<span class="number">1</span>, suffix_function))
+                        (prefix, <span class="macro">format!</span>(<span class="string">"{}.{}"</span>, from_glib_xxx.<span class="number">1</span>, suffix_function))
                     }
                 }
                 <span class="prelude-val">None </span><span class="kw">if </span><span class="self">self</span>.bool_return_is_error.is_some() =&gt; (
-                    use_glib_type(env, <span class="string">&quot;result_from_gboolean!(&quot;</span>),
-                    <span class="macro">format!</span>(<span class="string">&quot;, \&quot;{}\&quot;)&quot;</span>, <span class="self">self</span>.bool_return_is_error.as_ref().unwrap()),
+                    use_glib_type(env, <span class="string">"result_from_gboolean!("</span>),
+                    <span class="macro">format!</span>(<span class="string">", \"{}\")"</span>, <span class="self">self</span>.bool_return_is_error.as_ref().unwrap()),
                 ),
                 <span class="prelude-val">None </span><span class="kw">if </span><span class="self">self</span>.nullable_return_is_error.is_some() =&gt; {
                     <span class="kw">let </span>res = Mode::from(par).translate_from_glib_as_function(env, array_length);
                     <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>msg) = <span class="self">self</span>.nullable_return_is_error {
                         <span class="macro">assert!</span>(<span class="kw-2">*</span>par.lib_par.nullable);
                         (
-                            <span class="macro">format!</span>(<span class="string">&quot;Option::&lt;_&gt;::{}&quot;</span>, res.<span class="number">0</span>),
+                            <span class="macro">format!</span>(<span class="string">"Option::&lt;_&gt;::{}"</span>, res.<span class="number">0</span>),
                             <span class="macro">format!</span>(
-                                <span class="string">&quot;{}.ok_or_else(|| {}(\&quot;{}\&quot;))&quot;</span>,
+                                <span class="string">"{}.ok_or_else(|| {}(\"{}\"))"</span>,
                                 res.<span class="number">1</span>,
-                                use_glib_type(env, <span class="string">&quot;bool_error!&quot;</span>),
+                                use_glib_type(env, <span class="string">"bool_error!"</span>),
                                 msg
                             ),
                         )
@@ -310,26 +311,26 @@
                 }
                 <span class="prelude-val">None </span>=&gt; Mode::from(par).translate_from_glib_as_function(env, array_length),
             },
-            <span class="prelude-val">None </span>=&gt; (String::new(), <span class="string">&quot;;&quot;</span>.into()),
+            <span class="prelude-val">None </span>=&gt; (String::new(), <span class="string">";"</span>.into()),
         }
     }
 }
 
 <span class="kw">fn </span>from_glib_xxx(transfer: library::Transfer, array_length: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;) -&gt; (String, String) {
     <span class="kw">use </span><span class="kw">crate</span>::library::Transfer;
-    <span class="kw">let </span>good_print = |name: <span class="kw-2">&amp;</span>str| <span class="macro">format!</span>(<span class="string">&quot;, {name}.assume_init() as _)&quot;</span>);
+    <span class="kw">let </span>good_print = |name: <span class="kw-2">&amp;</span>str| <span class="macro">format!</span>(<span class="string">", {name}.assume_init() as _)"</span>);
     <span class="kw">match </span>(transfer, array_length) {
-        (Transfer::None, <span class="prelude-val">None</span>) =&gt; (<span class="string">&quot;from_glib_none(&quot;</span>.into(), <span class="string">&quot;)&quot;</span>.into()),
-        (Transfer::Full, <span class="prelude-val">None</span>) =&gt; (<span class="string">&quot;from_glib_full(&quot;</span>.into(), <span class="string">&quot;)&quot;</span>.into()),
-        (Transfer::Container, <span class="prelude-val">None</span>) =&gt; (<span class="string">&quot;from_glib_container(&quot;</span>.into(), <span class="string">&quot;)&quot;</span>.into()),
+        (Transfer::None, <span class="prelude-val">None</span>) =&gt; (<span class="string">"from_glib_none("</span>.into(), <span class="string">")"</span>.into()),
+        (Transfer::Full, <span class="prelude-val">None</span>) =&gt; (<span class="string">"from_glib_full("</span>.into(), <span class="string">")"</span>.into()),
+        (Transfer::Container, <span class="prelude-val">None</span>) =&gt; (<span class="string">"from_glib_container("</span>.into(), <span class="string">")"</span>.into()),
         (Transfer::None, <span class="prelude-val">Some</span>(array_length_name)) =&gt; {
-            (<span class="string">&quot;from_glib_none_num(&quot;</span>.into(), good_print(array_length_name))
+            (<span class="string">"from_glib_none_num("</span>.into(), good_print(array_length_name))
         }
         (Transfer::Full, <span class="prelude-val">Some</span>(array_length_name)) =&gt; {
-            (<span class="string">&quot;from_glib_full_num(&quot;</span>.into(), good_print(array_length_name))
+            (<span class="string">"from_glib_full_num("</span>.into(), good_print(array_length_name))
         }
         (Transfer::Container, <span class="prelude-val">Some</span>(array_length_name)) =&gt; (
-            <span class="string">&quot;from_glib_container_num(&quot;</span>.into(),
+            <span class="string">"from_glib_container_num("</span>.into(),
             good_print(array_length_name),
         ),
     }

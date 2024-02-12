@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/writer/to_code.rs`."><title>to_code.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/writer/to_code.rs`."><title>to_code.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -242,19 +243,19 @@
         <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
             Comment(<span class="kw-2">ref </span>chs) =&gt; comment_block(<span class="kw-2">&amp;</span>chs.to_code(env)),
             Chunks(<span class="kw-2">ref </span>chs) =&gt; chs.to_code(env),
-            BlockHalf(<span class="kw-2">ref </span>chs) =&gt; format_block(<span class="string">&quot;&quot;</span>, <span class="string">&quot;}&quot;</span>, <span class="kw-2">&amp;</span>chs.to_code(env)),
+            BlockHalf(<span class="kw-2">ref </span>chs) =&gt; format_block(<span class="string">""</span>, <span class="string">"}"</span>, <span class="kw-2">&amp;</span>chs.to_code(env)),
             UnsafeSmart(<span class="kw-2">ref </span>chs) =&gt; {
-                format_block_smart(<span class="string">&quot;unsafe {&quot;</span>, <span class="string">&quot;}&quot;</span>, <span class="kw-2">&amp;</span>chs.to_code(env), <span class="string">&quot; &quot;</span>, <span class="string">&quot; &quot;</span>)
+                format_block_smart(<span class="string">"unsafe {"</span>, <span class="string">"}"</span>, <span class="kw-2">&amp;</span>chs.to_code(env), <span class="string">" "</span>, <span class="string">" "</span>)
             }
-            Unsafe(<span class="kw-2">ref </span>chs) =&gt; format_block(<span class="string">&quot;unsafe {&quot;</span>, <span class="string">&quot;}&quot;</span>, <span class="kw-2">&amp;</span>chs.to_code(env)),
-            FfiCallTODO(<span class="kw-2">ref </span>name) =&gt; <span class="macro">vec!</span>[<span class="macro">format!</span>(<span class="string">&quot;TODO: call {name}()&quot;</span>)],
+            Unsafe(<span class="kw-2">ref </span>chs) =&gt; format_block(<span class="string">"unsafe {"</span>, <span class="string">"}"</span>, <span class="kw-2">&amp;</span>chs.to_code(env)),
+            FfiCallTODO(<span class="kw-2">ref </span>name) =&gt; <span class="macro">vec!</span>[<span class="macro">format!</span>(<span class="string">"TODO: call {name}()"</span>)],
             FfiCall {
                 <span class="kw-2">ref </span>name,
                 <span class="kw-2">ref </span>params,
             } =&gt; {
-                <span class="kw">let </span>prefix = <span class="macro">format!</span>(<span class="string">&quot;{name}(&quot;</span>);
+                <span class="kw">let </span>prefix = <span class="macro">format!</span>(<span class="string">"{name}("</span>);
                 <span class="comment">// TODO: change to format_block or format_block_smart
-                </span><span class="kw">let </span>s = format_block_one_line(<span class="kw-2">&amp;</span>prefix, <span class="string">&quot;)&quot;</span>, <span class="kw-2">&amp;</span>params.to_code(env), <span class="string">&quot;&quot;</span>, <span class="string">&quot;, &quot;</span>);
+                </span><span class="kw">let </span>s = format_block_one_line(<span class="kw-2">&amp;</span>prefix, <span class="string">")"</span>, <span class="kw-2">&amp;</span>params.to_code(env), <span class="string">""</span>, <span class="string">", "</span>);
                 <span class="macro">vec!</span>[s]
             }
             FfiCallParameter {
@@ -265,11 +266,11 @@
             }
             FfiCallOutParameter { <span class="kw-2">ref </span>par } =&gt; {
                 <span class="kw">let </span>s = <span class="kw">if </span>par.caller_allocates {
-                    <span class="macro">format!</span>(<span class="string">&quot;{}.to_glib_none_mut().0&quot;</span>, par.name)
+                    <span class="macro">format!</span>(<span class="string">"{}.to_glib_none_mut().0"</span>, par.name)
                 } <span class="kw">else if </span>par.is_uninitialized &amp;&amp; !par.is_error {
-                    <span class="macro">format!</span>(<span class="string">&quot;{}.as_mut_ptr()&quot;</span>, par.name)
+                    <span class="macro">format!</span>(<span class="string">"{}.as_mut_ptr()"</span>, par.name)
                 } <span class="kw">else </span>{
-                    <span class="macro">format!</span>(<span class="string">&quot;&amp;mut {}&quot;</span>, par.name)
+                    <span class="macro">format!</span>(<span class="string">"&amp;mut {}"</span>, par.name)
                 };
                 <span class="macro">vec!</span>[s]
             }
@@ -281,7 +282,7 @@
                 <span class="kw">let </span>call_strings = call.to_code(env);
                 <span class="kw">let </span>(prefix, suffix) =
                     ret.translate_from_glib_as_function(env, array_length_name.as_deref());
-                <span class="kw">let </span>s = format_block_one_line(<span class="kw-2">&amp;</span>prefix, <span class="kw-2">&amp;</span>suffix, <span class="kw-2">&amp;</span>call_strings, <span class="string">&quot;&quot;</span>, <span class="string">&quot;&quot;</span>);
+                <span class="kw">let </span>s = format_block_one_line(<span class="kw-2">&amp;</span>prefix, <span class="kw-2">&amp;</span>suffix, <span class="kw-2">&amp;</span>call_strings, <span class="string">""</span>, <span class="string">""</span>);
                 <span class="macro">vec!</span>[s]
             }
             Let {
@@ -290,25 +291,25 @@
                 <span class="kw-2">ref </span>value,
                 <span class="kw-2">ref </span>type_,
             } =&gt; {
-                <span class="kw">let </span>modif = <span class="kw">if </span>is_mut { <span class="string">&quot;mut &quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;&quot; </span>};
+                <span class="kw">let </span>modif = <span class="kw">if </span>is_mut { <span class="string">"mut " </span>} <span class="kw">else </span>{ <span class="string">"" </span>};
                 <span class="kw">let </span>type_string = <span class="kw">if let </span><span class="prelude-val">Some</span>(type_) = type_ {
                     <span class="kw">let </span>type_strings = type_.to_code(env);
-                    format_block_one_line(<span class="string">&quot;: &quot;</span>, <span class="string">&quot;&quot;</span>, <span class="kw-2">&amp;</span>type_strings, <span class="string">&quot;&quot;</span>, <span class="string">&quot;&quot;</span>)
+                    format_block_one_line(<span class="string">": "</span>, <span class="string">""</span>, <span class="kw-2">&amp;</span>type_strings, <span class="string">""</span>, <span class="string">""</span>)
                 } <span class="kw">else </span>{
                     String::new()
                 };
                 <span class="kw">let </span>value_strings = value.to_code(env);
-                <span class="kw">let </span>prefix = <span class="macro">format!</span>(<span class="string">&quot;let {modif}{name}{type_string} = &quot;</span>);
-                <span class="kw">let </span>s = format_block_one_line(<span class="kw-2">&amp;</span>prefix, <span class="string">&quot;;&quot;</span>, <span class="kw-2">&amp;</span>value_strings, <span class="string">&quot;&quot;</span>, <span class="string">&quot;&quot;</span>);
+                <span class="kw">let </span>prefix = <span class="macro">format!</span>(<span class="string">"let {modif}{name}{type_string} = "</span>);
+                <span class="kw">let </span>s = format_block_one_line(<span class="kw-2">&amp;</span>prefix, <span class="string">";"</span>, <span class="kw-2">&amp;</span>value_strings, <span class="string">""</span>, <span class="string">""</span>);
                 <span class="macro">vec!</span>[s]
             }
-            Uninitialized =&gt; <span class="macro">vec!</span>[<span class="string">&quot;std::mem::MaybeUninit::uninit()&quot;</span>.into()],
+            Uninitialized =&gt; <span class="macro">vec!</span>[<span class="string">"std::mem::MaybeUninit::uninit()"</span>.into()],
             UninitializedNamed { <span class="kw-2">ref </span>name } =&gt; {
-                <span class="kw">let </span>s = <span class="macro">format!</span>(<span class="string">&quot;{name}::uninitialized()&quot;</span>);
+                <span class="kw">let </span>s = <span class="macro">format!</span>(<span class="string">"{name}::uninitialized()"</span>);
                 <span class="macro">vec!</span>[s]
             }
-            NullPtr =&gt; <span class="macro">vec!</span>[<span class="string">&quot;std::ptr::null()&quot;</span>.into()],
-            NullMutPtr =&gt; <span class="macro">vec!</span>[<span class="string">&quot;std::ptr::null_mut()&quot;</span>.into()],
+            NullPtr =&gt; <span class="macro">vec!</span>[<span class="string">"std::ptr::null()"</span>.into()],
+            NullMutPtr =&gt; <span class="macro">vec!</span>[<span class="string">"std::ptr::null_mut()"</span>.into()],
             Custom(<span class="kw-2">ref </span>string) =&gt; <span class="macro">vec!</span>[string.clone()],
             Tuple(<span class="kw-2">ref </span>chs, <span class="kw-2">ref </span>mode) =&gt; {
                 <span class="attr">#[allow(deprecated)]
@@ -317,8 +318,8 @@
                     TupleMode::WithUnit =&gt; chs.len() != <span class="number">1</span>,
                     TupleMode::Simple =&gt; <span class="bool-val">true</span>,
                 };
-                <span class="kw">let </span>(prefix, suffix) = <span class="kw">if </span>with_bracket { (<span class="string">&quot;(&quot;</span>, <span class="string">&quot;)&quot;</span>) } <span class="kw">else </span>{ (<span class="string">&quot;&quot;</span>, <span class="string">&quot;&quot;</span>) };
-                <span class="kw">let </span>s = format_block_one_line(prefix, suffix, <span class="kw-2">&amp;</span>chs.to_code(env), <span class="string">&quot;&quot;</span>, <span class="string">&quot;, &quot;</span>);
+                <span class="kw">let </span>(prefix, suffix) = <span class="kw">if </span>with_bracket { (<span class="string">"("</span>, <span class="string">")"</span>) } <span class="kw">else </span>{ (<span class="string">""</span>, <span class="string">""</span>) };
+                <span class="kw">let </span>s = format_block_one_line(prefix, suffix, <span class="kw-2">&amp;</span>chs.to_code(env), <span class="string">""</span>, <span class="string">", "</span>);
                 <span class="macro">vec!</span>[s]
             }
             FromGlibConversion {
@@ -329,7 +330,7 @@
                 <span class="kw">let </span>value_strings = value.to_code(env);
                 <span class="kw">let </span>(prefix, suffix) =
                     mode.translate_from_glib_as_function(env, array_length_name.as_deref());
-                <span class="kw">let </span>s = format_block_one_line(<span class="kw-2">&amp;</span>prefix, <span class="kw-2">&amp;</span>suffix, <span class="kw-2">&amp;</span>value_strings, <span class="string">&quot;&quot;</span>, <span class="string">&quot;&quot;</span>);
+                <span class="kw">let </span>s = format_block_one_line(<span class="kw-2">&amp;</span>prefix, <span class="kw-2">&amp;</span>suffix, <span class="kw-2">&amp;</span>value_strings, <span class="string">""</span>, <span class="string">""</span>);
                 <span class="macro">vec!</span>[s]
             }
             OptionalReturn {
@@ -337,15 +338,15 @@
                 <span class="kw-2">ref </span>value,
             } =&gt; {
                 <span class="kw">let </span>value_strings = value.to_code(env);
-                <span class="kw">let </span>prefix = <span class="macro">format!</span>(<span class="string">&quot;if {condition} {{ Some(&quot;</span>);
-                <span class="kw">let </span>suffix = <span class="string">&quot;) } else { None }&quot;</span>;
-                <span class="kw">let </span>s = format_block_one_line(<span class="kw-2">&amp;</span>prefix, suffix, <span class="kw-2">&amp;</span>value_strings, <span class="string">&quot;&quot;</span>, <span class="string">&quot;&quot;</span>);
+                <span class="kw">let </span>prefix = <span class="macro">format!</span>(<span class="string">"if {condition} {{ Some("</span>);
+                <span class="kw">let </span>suffix = <span class="string">") } else { None }"</span>;
+                <span class="kw">let </span>s = format_block_one_line(<span class="kw-2">&amp;</span>prefix, suffix, <span class="kw-2">&amp;</span>value_strings, <span class="string">""</span>, <span class="string">""</span>);
                 <span class="macro">vec!</span>[s]
             }
             AssertErrorSanity =&gt; {
                 <span class="kw">let </span>assert = <span class="macro">format!</span>(
-                    <span class="string">&quot;debug_assert_eq!(is_ok == {}, !error.is_null());&quot;</span>,
-                    use_glib_type(env, <span class="string">&quot;ffi::GFALSE&quot;</span>)
+                    <span class="string">"debug_assert_eq!(is_ok == {}, !error.is_null());"</span>,
+                    use_glib_type(env, <span class="string">"ffi::GFALSE"</span>)
                 );
                 <span class="macro">vec!</span>[assert]
             }
@@ -355,9 +356,9 @@
                     <span class="prelude-val">None </span>=&gt; <span class="macro">vec!</span>[],
                 };
                 <span class="kw">let </span>value_strings = value.to_code(env);
-                <span class="kw">let </span>prefix = <span class="string">&quot;if error.is_null() { Ok(&quot;</span>;
-                <span class="kw">let </span>suffix = <span class="string">&quot;) } else { Err(from_glib_full(error)) }&quot;</span>;
-                <span class="kw">let </span>s = format_block_one_line(prefix, suffix, <span class="kw-2">&amp;</span>value_strings, <span class="string">&quot;&quot;</span>, <span class="string">&quot;&quot;</span>);
+                <span class="kw">let </span>prefix = <span class="string">"if error.is_null() { Ok("</span>;
+                <span class="kw">let </span>suffix = <span class="string">") } else { Err(from_glib_full(error)) }"</span>;
+                <span class="kw">let </span>s = format_block_one_line(prefix, suffix, <span class="kw-2">&amp;</span>value_strings, <span class="string">""</span>, <span class="string">""</span>);
                 lines.push(s);
                 lines
             }
@@ -371,23 +372,23 @@
                 <span class="kw">let </span><span class="kw-2">mut </span>v: Vec&lt;String&gt; = Vec::with_capacity(<span class="number">6</span>);
                 <span class="kw">if </span>is_detailed {
                     v.push(<span class="macro">format!</span>(
-                        <span class="string">r#&quot;let detailed_signal_name = detail.map(|name| {{ format!(&quot;{signal}::{{name}}\0&quot;) }});&quot;#
+                        <span class="string">r#"let detailed_signal_name = detail.map(|name| {{ format!("{signal}::{{name}}\0") }});"#
                     </span>));
                     v.push(<span class="macro">format!</span>(
-                        <span class="string">r#&quot;let signal_name: &amp;[u8] = detailed_signal_name.as_ref().map_or(&amp;b&quot;{signal}\0&quot;[..], |n| n.as_bytes());&quot;#
+                        <span class="string">r#"let signal_name: &amp;[u8] = detailed_signal_name.as_ref().map_or(&amp;b"{signal}\0"[..], |n| n.as_bytes());"#
                     </span>));
                     v.push(
-                        <span class="string">&quot;connect_raw(self.as_ptr() as *mut _, signal_name.as_ptr() as *const _,&quot;
+                        <span class="string">"connect_raw(self.as_ptr() as *mut _, signal_name.as_ptr() as *const _,"
                             </span>.to_string(),
                     );
                 } <span class="kw">else </span>{
                     v.push(<span class="macro">format!</span>(
-                        <span class="string">&quot;connect_raw(self.as_ptr() as *mut _, b\&quot;{signal}\\0\&quot;.as_ptr() as *const _,&quot;
+                        <span class="string">"connect_raw(self.as_ptr() as *mut _, b\"{signal}\\0\".as_ptr() as *const _,"
                     </span>));
                 }
-                <span class="kw">let </span>self_str = <span class="kw">if </span>in_trait { <span class="string">&quot;Self, &quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;&quot; </span>};
+                <span class="kw">let </span>self_str = <span class="kw">if </span>in_trait { <span class="string">"Self, " </span>} <span class="kw">else </span>{ <span class="string">"" </span>};
                 v.push(<span class="macro">format!</span>(
-                    <span class="string">&quot;\tSome(std::mem::transmute::&lt;_, unsafe extern \&quot;C\&quot; fn()&gt;({trampoline}::&lt;{self_str}F&gt; as *const ())), Box_::into_raw(f))&quot;
+                    <span class="string">"\tSome(std::mem::transmute::&lt;_, unsafe extern \"C\" fn()&gt;({trampoline}::&lt;{self_str}F&gt; as *const ())), Box_::into_raw(f))"
                 </span>));
                 v
             }
@@ -399,32 +400,32 @@
                 <span class="kw-2">ref </span>return_value,
                 <span class="kw-2">ref </span>bounds,
             } =&gt; {
-                <span class="kw">let </span>prefix = <span class="macro">format!</span>(<span class="string">r#&quot;unsafe extern &quot;C&quot; fn {name}{bounds}(&quot;#</span>);
-                <span class="kw">let </span>suffix = <span class="string">&quot;)&quot;</span>.to_string();
+                <span class="kw">let </span>prefix = <span class="macro">format!</span>(<span class="string">r#"unsafe extern "C" fn {name}{bounds}("#</span>);
+                <span class="kw">let </span>suffix = <span class="string">")"</span>.to_string();
                 <span class="kw">let </span>params: Vec&lt;<span class="kw">_</span>&gt; = parameters
                     .iter()
                     .flat_map(|param| param.to_code(env))
                     .collect();
-                <span class="kw">let </span><span class="kw-2">mut </span>s = format_block_one_line(<span class="kw-2">&amp;</span>prefix, <span class="kw-2">&amp;</span>suffix, <span class="kw-2">&amp;</span>params, <span class="string">&quot;&quot;</span>, <span class="string">&quot;, &quot;</span>);
+                <span class="kw">let </span><span class="kw-2">mut </span>s = format_block_one_line(<span class="kw-2">&amp;</span>prefix, <span class="kw-2">&amp;</span>suffix, <span class="kw-2">&amp;</span>params, <span class="string">""</span>, <span class="string">", "</span>);
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(return_value) = return_value {
-                    <span class="macro">write!</span>(s, <span class="string">&quot; -&gt; {return_value}&quot;</span>).unwrap();
+                    <span class="macro">write!</span>(s, <span class="string">" -&gt; {return_value}"</span>).unwrap();
                 }
-                s.push_str(<span class="string">&quot; {&quot;</span>);
-                <span class="kw">let </span><span class="kw-2">mut </span>code = format_block(<span class="string">&quot;&quot;</span>, <span class="string">&quot;}&quot;</span>, <span class="kw-2">&amp;</span>body.to_code(env));
+                s.push_str(<span class="string">" {"</span>);
+                <span class="kw">let </span><span class="kw-2">mut </span>code = format_block(<span class="string">""</span>, <span class="string">"}"</span>, <span class="kw-2">&amp;</span>body.to_code(env));
                 code.insert(<span class="number">0</span>, s);
                 code
             }
             Cast {
                 <span class="kw-2">ref </span>name,
                 <span class="kw-2">ref </span>type_,
-            } =&gt; <span class="macro">vec!</span>[<span class="macro">format!</span>(<span class="string">&quot;{name} as {type_}&quot;</span>)],
+            } =&gt; <span class="macro">vec!</span>[<span class="macro">format!</span>(<span class="string">"{name} as {type_}"</span>)],
             Call {
                 <span class="kw-2">ref </span>func_name,
                 <span class="kw-2">ref </span>arguments,
             } =&gt; {
                 <span class="kw">let </span>args: Vec&lt;<span class="kw">_</span>&gt; = arguments.iter().flat_map(|arg| arg.to_code(env)).collect();
-                <span class="kw">let </span>s = format_block_one_line(<span class="string">&quot;(&quot;</span>, <span class="string">&quot;)&quot;</span>, <span class="kw-2">&amp;</span>args, <span class="string">&quot;&quot;</span>, <span class="string">&quot;,&quot;</span>);
-                <span class="macro">vec!</span>[<span class="macro">format!</span>(<span class="string">&quot;{func_name}{s};&quot;</span>)]
+                <span class="kw">let </span>s = format_block_one_line(<span class="string">"("</span>, <span class="string">")"</span>, <span class="kw-2">&amp;</span>args, <span class="string">""</span>, <span class="string">","</span>);
+                <span class="macro">vec!</span>[<span class="macro">format!</span>(<span class="string">"{func_name}{s};"</span>)]
             }
         }
     }
@@ -432,7 +433,7 @@
 
 <span class="kw">impl </span>ToCode <span class="kw">for </span>Param {
     <span class="kw">fn </span>to_code(<span class="kw-2">&amp;</span><span class="self">self</span>, _env: <span class="kw-2">&amp;</span>Env) -&gt; Vec&lt;String&gt; {
-        <span class="macro">vec!</span>[<span class="macro">format!</span>(<span class="string">&quot;{}: {}&quot;</span>, <span class="self">self</span>.name, <span class="self">self</span>.typ)]
+        <span class="macro">vec!</span>[<span class="macro">format!</span>(<span class="string">"{}: {}"</span>, <span class="self">self</span>.name, <span class="self">self</span>.typ)]
     }
 }
 

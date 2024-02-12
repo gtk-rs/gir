@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/config/functions.rs`."><title>functions.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/config/functions.rs`."><title>functions.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -986,17 +987,17 @@
 
 <span class="kw">impl </span>Parse <span class="kw">for </span>CallbackParameter {
     <span class="kw">fn </span>parse(toml: <span class="kw-2">&amp;</span>Value, object_name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span><span class="prelude-val">Some</span>(ident) = Ident::parse(toml, object_name, <span class="string">&quot;callback parameter&quot;</span>) <span class="kw">else </span>{
+        <span class="kw">let </span><span class="prelude-val">Some</span>(ident) = Ident::parse(toml, object_name, <span class="string">"callback parameter"</span>) <span class="kw">else </span>{
             <span class="macro">error!</span>(
-                <span class="string">&quot;No &#39;name&#39; or &#39;pattern&#39; given for parameter for object {}&quot;</span>,
+                <span class="string">"No 'name' or 'pattern' given for parameter for object {}"</span>,
                 object_name
             );
             <span class="kw">return </span><span class="prelude-val">None</span>;
         };
-        toml.check_unwanted(<span class="kw-2">&amp;</span>[<span class="string">&quot;nullable&quot;</span>], <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;callback parameter {object_name}&quot;</span>));
+        toml.check_unwanted(<span class="kw-2">&amp;</span>[<span class="string">"nullable"</span>], <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"callback parameter {object_name}"</span>));
 
         <span class="kw">let </span>nullable = toml
-            .lookup(<span class="string">&quot;nullable&quot;</span>)
+            .lookup(<span class="string">"nullable"</span>)
             .and_then(Value::as_bool)
             .map(Nullable);
 
@@ -1013,7 +1014,7 @@
 <span class="attr">#[derive(Clone, Debug)]
 </span><span class="kw">pub struct </span>Parameter {
     <span class="kw">pub </span>ident: Ident,
-    <span class="comment">// true - parameter don&#39;t changed in FFI function,
+    <span class="comment">// true - parameter don't changed in FFI function,
     // false(default) - parameter can be changed in FFI function
     </span><span class="kw">pub </span>constant: bool,
     <span class="kw">pub </span>move_: <span class="prelude-ty">Option</span>&lt;bool&gt;,
@@ -1027,59 +1028,59 @@
 
 <span class="kw">impl </span>Parse <span class="kw">for </span>Parameter {
     <span class="kw">fn </span>parse(toml: <span class="kw-2">&amp;</span>Value, object_name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span><span class="prelude-val">Some</span>(ident) = Ident::parse(toml, object_name, <span class="string">&quot;function parameter&quot;</span>) <span class="kw">else </span>{
+        <span class="kw">let </span><span class="prelude-val">Some</span>(ident) = Ident::parse(toml, object_name, <span class="string">"function parameter"</span>) <span class="kw">else </span>{
             <span class="macro">error!</span>(
-                <span class="string">&quot;No &#39;name&#39; or &#39;pattern&#39; given for parameter for object {}&quot;</span>,
+                <span class="string">"No 'name' or 'pattern' given for parameter for object {}"</span>,
                 object_name
             );
             <span class="kw">return </span><span class="prelude-val">None</span>;
         };
         toml.check_unwanted(
             <span class="kw-2">&amp;</span>[
-                <span class="string">&quot;const&quot;</span>,
-                <span class="string">&quot;nullable&quot;</span>,
-                <span class="string">&quot;mandatory&quot;</span>,
-                <span class="string">&quot;infallible&quot;</span>,
-                <span class="string">&quot;length_of&quot;</span>,
-                <span class="string">&quot;name&quot;</span>,
-                <span class="string">&quot;move&quot;</span>,
-                <span class="string">&quot;pattern&quot;</span>,
-                <span class="string">&quot;string_type&quot;</span>,
-                <span class="string">&quot;callback_parameter&quot;</span>,
+                <span class="string">"const"</span>,
+                <span class="string">"nullable"</span>,
+                <span class="string">"mandatory"</span>,
+                <span class="string">"infallible"</span>,
+                <span class="string">"length_of"</span>,
+                <span class="string">"name"</span>,
+                <span class="string">"move"</span>,
+                <span class="string">"pattern"</span>,
+                <span class="string">"string_type"</span>,
+                <span class="string">"callback_parameter"</span>,
             ],
-            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;function parameter {object_name}&quot;</span>),
+            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"function parameter {object_name}"</span>),
         );
 
         <span class="kw">let </span>constant = toml
-            .lookup(<span class="string">&quot;const&quot;</span>)
+            .lookup(<span class="string">"const"</span>)
             .and_then(Value::as_bool)
             .unwrap_or(<span class="bool-val">false</span>);
-        <span class="kw">let </span>move_ = toml.lookup(<span class="string">&quot;move&quot;</span>).and_then(Value::as_bool);
+        <span class="kw">let </span>move_ = toml.lookup(<span class="string">"move"</span>).and_then(Value::as_bool);
         <span class="kw">let </span>nullable = toml
-            .lookup(<span class="string">&quot;nullable&quot;</span>)
+            .lookup(<span class="string">"nullable"</span>)
             .and_then(Value::as_bool)
             .map(Nullable);
         <span class="kw">let </span>mandatory = toml
-            .lookup(<span class="string">&quot;mandatory&quot;</span>)
+            .lookup(<span class="string">"mandatory"</span>)
             .and_then(Value::as_bool)
             .map(Mandatory);
         <span class="kw">let </span>infallible = toml
-            .lookup(<span class="string">&quot;infallible&quot;</span>)
+            .lookup(<span class="string">"infallible"</span>)
             .and_then(Value::as_bool)
             .map(Infallible);
         <span class="kw">let </span>length_of = toml
-            .lookup(<span class="string">&quot;length_of&quot;</span>)
+            .lookup(<span class="string">"length_of"</span>)
             .and_then(Value::as_str)
-            .map(|s| <span class="kw">if </span>s == <span class="string">&quot;return&quot; </span>{ <span class="string">&quot;&quot; </span>} <span class="kw">else </span>{ s })
+            .map(|s| <span class="kw">if </span>s == <span class="string">"return" </span>{ <span class="string">"" </span>} <span class="kw">else </span>{ s })
             .map(ToOwned::to_owned);
-        <span class="kw">let </span>string_type = toml.lookup(<span class="string">&quot;string_type&quot;</span>).and_then(Value::as_str);
+        <span class="kw">let </span>string_type = toml.lookup(<span class="string">"string_type"</span>).and_then(Value::as_str);
         <span class="kw">let </span>string_type = <span class="kw">match </span>string_type {
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">None</span>,
             <span class="prelude-val">Some</span>(val) =&gt; <span class="kw">match </span>StringType::from_str(val) {
                 <span class="prelude-val">Ok</span>(val) =&gt; <span class="prelude-val">Some</span>(val),
                 <span class="prelude-val">Err</span>(error_str) =&gt; {
                     <span class="macro">error!</span>(
-                        <span class="string">&quot;Error: {} for parameter for object {}&quot;</span>,
+                        <span class="string">"Error: {} for parameter for object {}"</span>,
                         error_str, object_name
                     );
                     <span class="prelude-val">None
@@ -1087,7 +1088,7 @@
             },
         };
         <span class="kw">let </span>callback_parameters =
-            CallbackParameters::parse(toml.lookup(<span class="string">&quot;callback_parameter&quot;</span>), object_name);
+            CallbackParameters::parse(toml.lookup(<span class="string">"callback_parameter"</span>), object_name);
 
         <span class="prelude-val">Some</span>(<span class="self">Self </span>{
             ident,
@@ -1141,55 +1142,55 @@
         <span class="kw">let </span>v = toml.unwrap();
         v.check_unwanted(
             <span class="kw-2">&amp;</span>[
-                <span class="string">&quot;nullable&quot;</span>,
-                <span class="string">&quot;mandatory&quot;</span>,
-                <span class="string">&quot;infallible&quot;</span>,
-                <span class="string">&quot;bool_return_is_error&quot;</span>,
-                <span class="string">&quot;nullable_return_is_error&quot;</span>,
-                <span class="string">&quot;use_return_for_result&quot;</span>,
-                <span class="string">&quot;string_type&quot;</span>,
-                <span class="string">&quot;type&quot;</span>,
+                <span class="string">"nullable"</span>,
+                <span class="string">"mandatory"</span>,
+                <span class="string">"infallible"</span>,
+                <span class="string">"bool_return_is_error"</span>,
+                <span class="string">"nullable_return_is_error"</span>,
+                <span class="string">"use_return_for_result"</span>,
+                <span class="string">"string_type"</span>,
+                <span class="string">"type"</span>,
             ],
-            <span class="string">&quot;return&quot;</span>,
+            <span class="string">"return"</span>,
         );
 
-        <span class="kw">let </span>nullable = v.lookup(<span class="string">&quot;nullable&quot;</span>).and_then(Value::as_bool).map(Nullable);
+        <span class="kw">let </span>nullable = v.lookup(<span class="string">"nullable"</span>).and_then(Value::as_bool).map(Nullable);
         <span class="kw">let </span>mandatory = v
-            .lookup(<span class="string">&quot;mandatory&quot;</span>)
+            .lookup(<span class="string">"mandatory"</span>)
             .and_then(Value::as_bool)
             .map(Mandatory);
         <span class="kw">let </span>infallible = v
-            .lookup(<span class="string">&quot;infallible&quot;</span>)
+            .lookup(<span class="string">"infallible"</span>)
             .and_then(Value::as_bool)
             .map(Infallible);
         <span class="kw">let </span>bool_return_is_error = v
-            .lookup(<span class="string">&quot;bool_return_is_error&quot;</span>)
+            .lookup(<span class="string">"bool_return_is_error"</span>)
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
         <span class="kw">let </span>nullable_return_is_error = v
-            .lookup(<span class="string">&quot;nullable_return_is_error&quot;</span>)
+            .lookup(<span class="string">"nullable_return_is_error"</span>)
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
-        <span class="kw">let </span>use_return_for_result = v.lookup(<span class="string">&quot;use_return_for_result&quot;</span>).and_then(Value::as_bool);
-        <span class="kw">let </span>string_type = v.lookup(<span class="string">&quot;string_type&quot;</span>).and_then(Value::as_str);
+        <span class="kw">let </span>use_return_for_result = v.lookup(<span class="string">"use_return_for_result"</span>).and_then(Value::as_bool);
+        <span class="kw">let </span>string_type = v.lookup(<span class="string">"string_type"</span>).and_then(Value::as_str);
         <span class="kw">let </span>string_type = <span class="kw">match </span>string_type {
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">None</span>,
             <span class="prelude-val">Some</span>(v) =&gt; <span class="kw">match </span>StringType::from_str(v) {
                 <span class="prelude-val">Ok</span>(v) =&gt; <span class="prelude-val">Some</span>(v),
                 <span class="prelude-val">Err</span>(error_str) =&gt; {
-                    <span class="macro">error!</span>(<span class="string">&quot;Error: {} for return&quot;</span>, error_str);
+                    <span class="macro">error!</span>(<span class="string">"Error: {} for return"</span>, error_str);
                     <span class="prelude-val">None
                 </span>}
             },
         };
         <span class="kw">let </span>type_name = v
-            .lookup(<span class="string">&quot;type&quot;</span>)
+            .lookup(<span class="string">"type"</span>)
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
         <span class="kw">if </span>string_type.is_some() &amp;&amp; type_name.is_some() {
             <span class="macro">error!</span>(
-                <span class="string">&quot;\&quot;string_type\&quot; and \&quot;type\&quot; parameters can&#39;t be passed at the same time for \
-                 object {}, only \&quot;type\&quot; will be applied in this case&quot;</span>,
+                <span class="string">"\"string_type\" and \"type\" parameters can't be passed at the same time for \
+                 object {}, only \"type\" will be applied in this case"</span>,
                 object_name
             );
         }
@@ -1209,10 +1210,10 @@
 
 <span class="kw">pub fn </span>check_rename(rename: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;String&gt;, object_name: <span class="kw-2">&amp;</span>str, function_name: <span class="kw-2">&amp;</span>Ident) -&gt; bool {
     <span class="kw">if let </span><span class="prelude-val">Some</span>(rename) = rename {
-        <span class="kw">for </span>c <span class="kw">in </span><span class="kw-2">&amp;</span>[<span class="string">&quot;\t&quot;</span>, <span class="string">&quot;\n&quot;</span>, <span class="string">&quot; &quot;</span>] {
+        <span class="kw">for </span>c <span class="kw">in </span><span class="kw-2">&amp;</span>[<span class="string">"\t"</span>, <span class="string">"\n"</span>, <span class="string">" "</span>] {
             <span class="kw">if </span>rename.contains(c) {
                 <span class="macro">error!</span>(
-                    <span class="string">&quot;Invalid &#39;rename&#39; value given to {}::{}: forbidden character &#39;{:?}&#39;&quot;</span>,
+                    <span class="string">"Invalid 'rename' value given to {}::{}: forbidden character '{:?}'"</span>,
                     object_name, function_name, c
                 );
                 <span class="kw">return </span><span class="bool-val">false</span>;
@@ -1247,49 +1248,49 @@
 
 <span class="kw">impl </span>Parse <span class="kw">for </span>Function {
     <span class="kw">fn </span>parse(toml: <span class="kw-2">&amp;</span>Value, object_name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">let </span><span class="prelude-val">Some</span>(ident) = Ident::parse(toml, object_name, <span class="string">&quot;function&quot;</span>) <span class="kw">else </span>{
+        <span class="kw">let </span><span class="prelude-val">Some</span>(ident) = Ident::parse(toml, object_name, <span class="string">"function"</span>) <span class="kw">else </span>{
             <span class="macro">error!</span>(
-                <span class="string">&quot;No &#39;name&#39; or &#39;pattern&#39; given for function for object {}&quot;</span>,
+                <span class="string">"No 'name' or 'pattern' given for function for object {}"</span>,
                 object_name
             );
             <span class="kw">return </span><span class="prelude-val">None</span>;
         };
         toml.check_unwanted(
             <span class="kw-2">&amp;</span>[
-                <span class="string">&quot;ignore&quot;</span>,
-                <span class="string">&quot;manual&quot;</span>,
-                <span class="string">&quot;version&quot;</span>,
-                <span class="string">&quot;cfg_condition&quot;</span>,
-                <span class="string">&quot;parameter&quot;</span>,
-                <span class="string">&quot;return&quot;</span>,
-                <span class="string">&quot;name&quot;</span>,
-                <span class="string">&quot;doc_hidden&quot;</span>,
-                <span class="string">&quot;doc_ignore_parameters&quot;</span>,
-                <span class="string">&quot;disable_length_detect&quot;</span>,
-                <span class="string">&quot;pattern&quot;</span>,
-                <span class="string">&quot;doc_trait_name&quot;</span>,
-                <span class="string">&quot;doc_struct_name&quot;</span>,
-                <span class="string">&quot;no_future&quot;</span>,
-                <span class="string">&quot;unsafe&quot;</span>,
-                <span class="string">&quot;rename&quot;</span>,
-                <span class="string">&quot;bypass_auto_rename&quot;</span>,
-                <span class="string">&quot;constructor&quot;</span>,
-                <span class="string">&quot;assertion&quot;</span>,
-                <span class="string">&quot;visibility&quot;</span>,
-                <span class="string">&quot;generate_doc&quot;</span>,
+                <span class="string">"ignore"</span>,
+                <span class="string">"manual"</span>,
+                <span class="string">"version"</span>,
+                <span class="string">"cfg_condition"</span>,
+                <span class="string">"parameter"</span>,
+                <span class="string">"return"</span>,
+                <span class="string">"name"</span>,
+                <span class="string">"doc_hidden"</span>,
+                <span class="string">"doc_ignore_parameters"</span>,
+                <span class="string">"disable_length_detect"</span>,
+                <span class="string">"pattern"</span>,
+                <span class="string">"doc_trait_name"</span>,
+                <span class="string">"doc_struct_name"</span>,
+                <span class="string">"no_future"</span>,
+                <span class="string">"unsafe"</span>,
+                <span class="string">"rename"</span>,
+                <span class="string">"bypass_auto_rename"</span>,
+                <span class="string">"constructor"</span>,
+                <span class="string">"assertion"</span>,
+                <span class="string">"visibility"</span>,
+                <span class="string">"generate_doc"</span>,
             ],
-            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;function {object_name}&quot;</span>),
+            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"function {object_name}"</span>),
         );
 
         <span class="kw">let </span>status = {
             <span class="kw">if </span>toml
-                .lookup(<span class="string">&quot;ignore&quot;</span>)
+                .lookup(<span class="string">"ignore"</span>)
                 .and_then(Value::as_bool)
                 .unwrap_or(<span class="bool-val">false</span>)
             {
                 GStatus::Ignore
             } <span class="kw">else if </span>toml
-                .lookup(<span class="string">&quot;manual&quot;</span>)
+                .lookup(<span class="string">"manual"</span>)
                 .and_then(Value::as_bool)
                 .unwrap_or(<span class="bool-val">false</span>)
             {
@@ -1299,18 +1300,18 @@
             }
         };
         <span class="kw">let </span>version = toml
-            .lookup(<span class="string">&quot;version&quot;</span>)
+            .lookup(<span class="string">"version"</span>)
             .and_then(Value::as_str)
             .and_then(|s| s.parse().ok());
         <span class="kw">let </span>cfg_condition = <span class="kw">super</span>::get_cfg_condition(toml, object_name);
-        <span class="kw">let </span>parameters = Parameters::parse(toml.lookup(<span class="string">&quot;parameter&quot;</span>), object_name);
-        <span class="kw">let </span>ret = Return::parse(toml.lookup(<span class="string">&quot;return&quot;</span>), object_name);
+        <span class="kw">let </span>parameters = Parameters::parse(toml.lookup(<span class="string">"parameter"</span>), object_name);
+        <span class="kw">let </span>ret = Return::parse(toml.lookup(<span class="string">"return"</span>), object_name);
         <span class="kw">let </span>doc_hidden = toml
-            .lookup(<span class="string">&quot;doc_hidden&quot;</span>)
+            .lookup(<span class="string">"doc_hidden"</span>)
             .and_then(Value::as_bool)
             .unwrap_or(<span class="bool-val">false</span>);
         <span class="kw">let </span>doc_ignore_parameters = toml
-            .lookup_vec(<span class="string">&quot;doc_ignore_parameters&quot;</span>, <span class="string">&quot;Invalid doc_ignore_parameters&quot;</span>)
+            .lookup_vec(<span class="string">"doc_ignore_parameters"</span>, <span class="string">"Invalid doc_ignore_parameters"</span>)
             .map(|v| {
                 v.iter()
                     .filter_map(|v| v.as_str().map(String::from))
@@ -1318,57 +1319,57 @@
             })
             .unwrap_or_default();
         <span class="kw">let </span>disable_length_detect = toml
-            .lookup(<span class="string">&quot;disable_length_detect&quot;</span>)
+            .lookup(<span class="string">"disable_length_detect"</span>)
             .and_then(Value::as_bool)
             .unwrap_or(<span class="bool-val">false</span>);
         <span class="kw">let </span>doc_trait_name = toml
-            .lookup(<span class="string">&quot;doc_trait_name&quot;</span>)
+            .lookup(<span class="string">"doc_trait_name"</span>)
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
         <span class="kw">let </span>doc_struct_name = toml
-            .lookup(<span class="string">&quot;doc_struct_name&quot;</span>)
+            .lookup(<span class="string">"doc_struct_name"</span>)
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
         <span class="kw">let </span>no_future = toml
-            .lookup(<span class="string">&quot;no_future&quot;</span>)
+            .lookup(<span class="string">"no_future"</span>)
             .and_then(Value::as_bool)
             .unwrap_or(<span class="bool-val">false</span>);
         <span class="kw">let </span>unsafe_ = toml
-            .lookup(<span class="string">&quot;unsafe&quot;</span>)
+            .lookup(<span class="string">"unsafe"</span>)
             .and_then(Value::as_bool)
             .unwrap_or(<span class="bool-val">false</span>);
         <span class="kw">let </span>rename = toml
-            .lookup(<span class="string">&quot;rename&quot;</span>)
+            .lookup(<span class="string">"rename"</span>)
             .and_then(Value::as_str)
             .map(ToOwned::to_owned);
         <span class="kw">if </span>!check_rename(<span class="kw-2">&amp;</span>rename, object_name, <span class="kw-2">&amp;</span>ident) {
             <span class="kw">return </span><span class="prelude-val">None</span>;
         }
         <span class="kw">let </span>bypass_auto_rename = toml
-            .lookup(<span class="string">&quot;bypass_auto_rename&quot;</span>)
+            .lookup(<span class="string">"bypass_auto_rename"</span>)
             .and_then(Value::as_bool)
             .unwrap_or(<span class="bool-val">false</span>);
-        <span class="kw">let </span>is_constructor = toml.lookup(<span class="string">&quot;constructor&quot;</span>).and_then(Value::as_bool);
+        <span class="kw">let </span>is_constructor = toml.lookup(<span class="string">"constructor"</span>).and_then(Value::as_bool);
         <span class="kw">let </span>assertion = toml
-            .lookup(<span class="string">&quot;assertion&quot;</span>)
+            .lookup(<span class="string">"assertion"</span>)
             .and_then(Value::as_str)
             .map(|s| s.parse::&lt;SafetyAssertionMode&gt;())
             .transpose();
         <span class="kw">if let </span><span class="prelude-val">Err</span>(<span class="kw-2">ref </span>err) = assertion {
-            <span class="macro">error!</span>(<span class="string">&quot;{}&quot;</span>, err);
+            <span class="macro">error!</span>(<span class="string">"{}"</span>, err);
         }
         <span class="kw">let </span>assertion = assertion.ok().flatten();
         <span class="kw">let </span>visibility = toml
-            .lookup(<span class="string">&quot;visibility&quot;</span>)
+            .lookup(<span class="string">"visibility"</span>)
             .and_then(Value::as_str)
             .map(std::str::FromStr::from_str)
             .transpose();
         <span class="kw">if let </span><span class="prelude-val">Err</span>(<span class="kw-2">ref </span>err) = visibility {
-            <span class="macro">error!</span>(<span class="string">&quot;{}&quot;</span>, err);
+            <span class="macro">error!</span>(<span class="string">"{}"</span>, err);
         }
         <span class="kw">let </span>visibility = visibility.ok().flatten();
         <span class="kw">let </span>generate_doc = toml
-            .lookup(<span class="string">&quot;generate_doc&quot;</span>)
+            .lookup(<span class="string">"generate_doc"</span>)
             .and_then(Value::as_bool)
             .unwrap_or(<span class="bool-val">true</span>);
         <span class="prelude-val">Some</span>(<span class="self">Self </span>{
@@ -1426,7 +1427,7 @@
 
     <span class="kw">fn </span>functions_toml(input: <span class="kw-2">&amp;</span>str) -&gt; ::toml::Value {
         <span class="kw">let </span><span class="kw-2">mut </span>value: ::toml::value::Table = ::toml::from_str(input).unwrap();
-        value.remove(<span class="string">&quot;f&quot;</span>).unwrap()
+        value.remove(<span class="string">"f"</span>).unwrap()
     }
 
     <span class="kw">fn </span>toml(input: <span class="kw-2">&amp;</span>str) -&gt; ::toml::Value {
@@ -1438,37 +1439,37 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>function_parse_ignore() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;func1&quot;
+            <span class="string">r#"
+name = "func1"
 ignore = true
-&quot;#</span>,
+"#</span>,
         );
-        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>).unwrap();
-        <span class="macro">assert_eq!</span>(f.ident, Ident::Name(<span class="string">&quot;func1&quot;</span>.into()));
+        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>).unwrap();
+        <span class="macro">assert_eq!</span>(f.ident, Ident::Name(<span class="string">"func1"</span>.into()));
         <span class="macro">assert!</span>(f.status.ignored());
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>function_parse_manual() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;func1&quot;
+            <span class="string">r#"
+name = "func1"
 manual = true
-&quot;#</span>,
+"#</span>,
         );
-        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>).unwrap();
-        <span class="macro">assert_eq!</span>(f.ident, Ident::Name(<span class="string">&quot;func1&quot;</span>.into()));
+        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>).unwrap();
+        <span class="macro">assert_eq!</span>(f.ident, Ident::Name(<span class="string">"func1"</span>.into()));
         <span class="macro">assert!</span>(f.status.manual());
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>function_parse_version_default() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;func1&quot;
-&quot;#</span>,
+            <span class="string">r#"
+name = "func1"
+"#</span>,
         );
-        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>).unwrap();
+        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>).unwrap();
         <span class="macro">assert_eq!</span>(f.version, <span class="prelude-val">None</span>);
         <span class="macro">assert!</span>(f.status.need_generate());
     }
@@ -1476,91 +1477,91 @@ name = &quot;func1&quot;
     <span class="attr">#[test]
     </span><span class="kw">fn </span>function_parse_version() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;func1&quot;
-version = &quot;3.20&quot;
-&quot;#</span>,
+            <span class="string">r#"
+name = "func1"
+version = "3.20"
+"#</span>,
         );
-        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>).unwrap();
+        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>).unwrap();
         <span class="macro">assert_eq!</span>(f.version, <span class="prelude-val">Some</span>(Version(<span class="number">3</span>, <span class="number">20</span>, <span class="number">0</span>)));
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>function_parse_cfg_condition_default() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;func1&quot;
-&quot;#</span>,
+            <span class="string">r#"
+name = "func1"
+"#</span>,
         );
-        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>).unwrap();
+        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>).unwrap();
         <span class="macro">assert_eq!</span>(f.cfg_condition, <span class="prelude-val">None</span>);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>function_parse_cfg_condition() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;func1&quot;
-cfg_condition = &#39;unix&#39;
-&quot;#</span>,
+            <span class="string">r#"
+name = "func1"
+cfg_condition = 'unix'
+"#</span>,
         );
-        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>).unwrap();
-        <span class="macro">assert_eq!</span>(f.cfg_condition, <span class="prelude-val">Some</span>(<span class="string">&quot;unix&quot;</span>.to_string()));
+        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>).unwrap();
+        <span class="macro">assert_eq!</span>(f.cfg_condition, <span class="prelude-val">Some</span>(<span class="string">"unix"</span>.to_string()));
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>function_parse_return_nullable_default1() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;func1&quot;
-&quot;#</span>,
+            <span class="string">r#"
+name = "func1"
+"#</span>,
         );
-        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>).unwrap();
+        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>).unwrap();
         <span class="macro">assert_eq!</span>(f.ret.nullable, <span class="prelude-val">None</span>);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>function_parse_return_nullable_default2() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;func1&quot;
+            <span class="string">r#"
+name = "func1"
 [return]
-&quot;#</span>,
+"#</span>,
         );
-        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>).unwrap();
+        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>).unwrap();
         <span class="macro">assert_eq!</span>(f.ret.nullable, <span class="prelude-val">None</span>);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>function_parse_parameters() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;func1&quot;
+            <span class="string">r#"
+name = "func1"
 [[parameter]]
-name = &quot;par1&quot;
+name = "par1"
 [[parameter]]
-name = &quot;par2&quot;
+name = "par2"
 const = false
 nullable = false
 [[parameter]]
-name = &quot;par3&quot;
+name = "par3"
 const = true
 nullable = true
 [[parameter]]
-pattern = &quot;par4&quot;
+pattern = "par4"
 const = true
-&quot;#</span>,
+"#</span>,
         );
-        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>).unwrap();
+        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>).unwrap();
         <span class="kw">let </span>pars = f.parameters;
         <span class="macro">assert_eq!</span>(pars.len(), <span class="number">4</span>);
-        <span class="macro">assert_eq!</span>(pars[<span class="number">0</span>].ident, Ident::Name(<span class="string">&quot;par1&quot;</span>.into()));
+        <span class="macro">assert_eq!</span>(pars[<span class="number">0</span>].ident, Ident::Name(<span class="string">"par1"</span>.into()));
         <span class="macro">assert!</span>(!pars[<span class="number">0</span>].constant);
         <span class="macro">assert_eq!</span>(pars[<span class="number">0</span>].nullable, <span class="prelude-val">None</span>);
-        <span class="macro">assert_eq!</span>(pars[<span class="number">1</span>].ident, Ident::Name(<span class="string">&quot;par2&quot;</span>.into()));
+        <span class="macro">assert_eq!</span>(pars[<span class="number">1</span>].ident, Ident::Name(<span class="string">"par2"</span>.into()));
         <span class="macro">assert!</span>(!pars[<span class="number">1</span>].constant);
         <span class="macro">assert_eq!</span>(pars[<span class="number">1</span>].nullable, <span class="prelude-val">Some</span>(Nullable(<span class="bool-val">false</span>)));
-        <span class="macro">assert_eq!</span>(pars[<span class="number">2</span>].ident, Ident::Name(<span class="string">&quot;par3&quot;</span>.into()));
+        <span class="macro">assert_eq!</span>(pars[<span class="number">2</span>].ident, Ident::Name(<span class="string">"par3"</span>.into()));
         <span class="macro">assert!</span>(pars[<span class="number">2</span>].constant);
         <span class="macro">assert_eq!</span>(pars[<span class="number">2</span>].nullable, <span class="prelude-val">Some</span>(Nullable(<span class="bool-val">true</span>)));
         <span class="macro">assert!</span>(<span class="macro">matches!</span>(pars[<span class="number">3</span>].ident, Ident::Pattern(<span class="kw">_</span>)));
@@ -1571,183 +1572,183 @@ const = true
     <span class="attr">#[test]
     </span><span class="kw">fn </span>function_parse_return_nullable_false() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;func1&quot;
+            <span class="string">r#"
+name = "func1"
 [return]
 nullable = false
-&quot;#</span>,
+"#</span>,
         );
-        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>).unwrap();
+        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>).unwrap();
         <span class="macro">assert_eq!</span>(f.ret.nullable, <span class="prelude-val">Some</span>(Nullable(<span class="bool-val">false</span>)));
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>function_parse_return_nullable_true() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;func1&quot;
+            <span class="string">r#"
+name = "func1"
 [return]
 nullable = true
-&quot;#</span>,
+"#</span>,
         );
-        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>).unwrap();
+        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>).unwrap();
         <span class="macro">assert_eq!</span>(f.ret.nullable, <span class="prelude-val">Some</span>(Nullable(<span class="bool-val">true</span>)));
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>function_parse_generate_doc() {
         <span class="kw">let </span>r = toml(
-            <span class="string">r#&quot;
-name = &quot;prop&quot;
+            <span class="string">r#"
+name = "prop"
 generate_doc = false
-&quot;#</span>,
+"#</span>,
         );
-        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>r, <span class="string">&quot;a&quot;</span>).unwrap();
+        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>r, <span class="string">"a"</span>).unwrap();
         <span class="macro">assert!</span>(!f.generate_doc);
 
-        <span class="comment">// Ensure that the default value is &quot;true&quot;.
+        <span class="comment">// Ensure that the default value is "true".
         </span><span class="kw">let </span>r = toml(
-            <span class="string">r#&quot;
-name = &quot;prop&quot;
-&quot;#</span>,
+            <span class="string">r#"
+name = "prop"
+"#</span>,
         );
-        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>r, <span class="string">&quot;a&quot;</span>).unwrap();
+        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>r, <span class="string">"a"</span>).unwrap();
         <span class="macro">assert!</span>(f.generate_doc);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>functions_parse_empty_for_none() {
-        <span class="kw">let </span>fns = Functions::parse(<span class="prelude-val">None</span>, <span class="string">&quot;a&quot;</span>);
+        <span class="kw">let </span>fns = Functions::parse(<span class="prelude-val">None</span>, <span class="string">"a"</span>);
         <span class="macro">assert!</span>(fns.is_empty());
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>functions_parse_ident() {
         <span class="kw">let </span>toml = functions_toml(
-            <span class="string">r#&quot;
+            <span class="string">r#"
 [[f]]
-name = &quot;func1&quot;
+name = "func1"
 [[f]]
-not_name = &quot;func1.5&quot;
+not_name = "func1.5"
 [[f]]
-name = &quot;func2&quot;
+name = "func2"
 [[f]]
-pattern = &#39;func3\w+&#39;
+pattern = 'func3\w+'
 [[f]]
-pattern = &#39;bad_func4[\w+&#39;
-&quot;#</span>,
+pattern = 'bad_func4[\w+'
+"#</span>,
         );
-        <span class="kw">let </span>fns = Functions::parse(<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>toml), <span class="string">&quot;a&quot;</span>);
+        <span class="kw">let </span>fns = Functions::parse(<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>toml), <span class="string">"a"</span>);
         <span class="macro">assert_eq!</span>(fns.len(), <span class="number">3</span>);
-        <span class="macro">assert_eq!</span>(fns[<span class="number">0</span>].ident, Ident::Name(<span class="string">&quot;func1&quot;</span>.into()));
-        <span class="macro">assert_eq!</span>(fns[<span class="number">1</span>].ident, Ident::Name(<span class="string">&quot;func2&quot;</span>.into()));
+        <span class="macro">assert_eq!</span>(fns[<span class="number">0</span>].ident, Ident::Name(<span class="string">"func1"</span>.into()));
+        <span class="macro">assert_eq!</span>(fns[<span class="number">1</span>].ident, Ident::Name(<span class="string">"func2"</span>.into()));
         <span class="macro">assert!</span>(<span class="macro">matches!</span>(fns[<span class="number">2</span>].ident, Ident::Pattern(<span class="kw">_</span>)));
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>functions_parse_matches() {
         <span class="kw">let </span>toml = functions_toml(
-            <span class="string">r#&quot;
+            <span class="string">r#"
 [[f]]
-name = &quot;func1&quot;
+name = "func1"
 [[f]]
-name = &quot;f1.5&quot;
+name = "f1.5"
 [[f]]
-name = &quot;func2&quot;
+name = "func2"
 [[f]]
-pattern = &#39;func\d+&#39;
-&quot;#</span>,
+pattern = 'func\d+'
+"#</span>,
         );
-        <span class="kw">let </span>fns = Functions::parse(<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>toml), <span class="string">&quot;a&quot;</span>);
+        <span class="kw">let </span>fns = Functions::parse(<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>toml), <span class="string">"a"</span>);
         <span class="macro">assert_eq!</span>(fns.len(), <span class="number">3</span>);
 
-        <span class="macro">assert_eq!</span>(fns.matched(<span class="string">&quot;func1&quot;</span>).len(), <span class="number">2</span>);
-        <span class="macro">assert_eq!</span>(fns.matched(<span class="string">&quot;func2&quot;</span>).len(), <span class="number">2</span>);
-        <span class="macro">assert_eq!</span>(fns.matched(<span class="string">&quot;func3&quot;</span>).len(), <span class="number">1</span>);
-        <span class="comment">// &quot;f1.5&quot; is not a valid name
-        </span><span class="macro">assert_eq!</span>(fns.matched(<span class="string">&quot;f1.5&quot;</span>).len(), <span class="number">0</span>);
-        <span class="macro">assert_eq!</span>(fns.matched(<span class="string">&quot;none&quot;</span>).len(), <span class="number">0</span>);
+        <span class="macro">assert_eq!</span>(fns.matched(<span class="string">"func1"</span>).len(), <span class="number">2</span>);
+        <span class="macro">assert_eq!</span>(fns.matched(<span class="string">"func2"</span>).len(), <span class="number">2</span>);
+        <span class="macro">assert_eq!</span>(fns.matched(<span class="string">"func3"</span>).len(), <span class="number">1</span>);
+        <span class="comment">// "f1.5" is not a valid name
+        </span><span class="macro">assert_eq!</span>(fns.matched(<span class="string">"f1.5"</span>).len(), <span class="number">0</span>);
+        <span class="macro">assert_eq!</span>(fns.matched(<span class="string">"none"</span>).len(), <span class="number">0</span>);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>functions_parse_matched_parameters() {
         <span class="kw">let </span>toml = functions_toml(
-            <span class="string">r#&quot;
+            <span class="string">r#"
 [[f]]
-name = &quot;func&quot;
+name = "func"
 [[f.parameter]]
-name=&quot;par1&quot;
+name="par1"
 [[f.parameter]]
-name=&quot;par2&quot;
+name="par2"
 [[f.parameter]]
-pattern=&#39;par\d+&#39;
+pattern='par\d+'
 [[f]]
-name = &quot;func&quot;
+name = "func"
 [[f.parameter]]
-name=&quot;par2&quot;
+name="par2"
 [[f.parameter]]
-name=&quot;par3&quot;
+name="par3"
 [[f.parameter]]
-pattern=&#39;par\d+&#39;
-&quot;#</span>,
+pattern='par\d+'
+"#</span>,
         );
-        <span class="kw">let </span>fns = Functions::parse(<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>toml), <span class="string">&quot;a&quot;</span>);
+        <span class="kw">let </span>fns = Functions::parse(<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>toml), <span class="string">"a"</span>);
         <span class="macro">assert_eq!</span>(fns.len(), <span class="number">2</span>);
-        <span class="kw">let </span>m = fns.matched(<span class="string">&quot;func&quot;</span>);
+        <span class="kw">let </span>m = fns.matched(<span class="string">"func"</span>);
         <span class="macro">assert_eq!</span>(m.len(), <span class="number">2</span>);
 
-        <span class="macro">assert_eq!</span>(m.matched_parameters(<span class="string">&quot;param&quot;</span>).len(), <span class="number">0</span>);
-        <span class="macro">assert_eq!</span>(m.matched_parameters(<span class="string">&quot;par1&quot;</span>).len(), <span class="number">3</span>);
-        <span class="macro">assert_eq!</span>(m.matched_parameters(<span class="string">&quot;par2&quot;</span>).len(), <span class="number">4</span>);
-        <span class="macro">assert_eq!</span>(m.matched_parameters(<span class="string">&quot;par3&quot;</span>).len(), <span class="number">3</span>);
-        <span class="macro">assert_eq!</span>(m.matched_parameters(<span class="string">&quot;par4&quot;</span>).len(), <span class="number">2</span>);
+        <span class="macro">assert_eq!</span>(m.matched_parameters(<span class="string">"param"</span>).len(), <span class="number">0</span>);
+        <span class="macro">assert_eq!</span>(m.matched_parameters(<span class="string">"par1"</span>).len(), <span class="number">3</span>);
+        <span class="macro">assert_eq!</span>(m.matched_parameters(<span class="string">"par2"</span>).len(), <span class="number">4</span>);
+        <span class="macro">assert_eq!</span>(m.matched_parameters(<span class="string">"par3"</span>).len(), <span class="number">3</span>);
+        <span class="macro">assert_eq!</span>(m.matched_parameters(<span class="string">"par4"</span>).len(), <span class="number">2</span>);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>functions_parse_rename() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;func1&quot;
-rename = &quot;another&quot;
-&quot;#</span>,
+            <span class="string">r#"
+name = "func1"
+rename = "another"
+"#</span>,
         );
-        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>).unwrap();
-        <span class="macro">assert_eq!</span>(f.rename, <span class="prelude-val">Some</span>(<span class="string">&quot;another&quot;</span>.to_owned()));
+        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>).unwrap();
+        <span class="macro">assert_eq!</span>(f.rename, <span class="prelude-val">Some</span>(<span class="string">"another"</span>.to_owned()));
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>functions_parse_rename_fail() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;func1&quot;
-rename = &quot;anoth er&quot;
-&quot;#</span>,
+            <span class="string">r#"
+name = "func1"
+rename = "anoth er"
+"#</span>,
         );
-        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>);
+        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>);
         <span class="macro">assert!</span>(f.is_none());
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>function_bypass_auto_rename() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;func1&quot;
+            <span class="string">r#"
+name = "func1"
 bypass_auto_rename = true
-&quot;#</span>,
+"#</span>,
         );
-        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>).unwrap();
-        <span class="macro">assert_eq!</span>(f.ident, Ident::Name(<span class="string">&quot;func1&quot;</span>.into()));
+        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>).unwrap();
+        <span class="macro">assert_eq!</span>(f.ident, Ident::Name(<span class="string">"func1"</span>.into()));
         <span class="macro">assert!</span>(f.bypass_auto_rename);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>parse_return_mandatory_default() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;func1&quot;
-&quot;#</span>,
+            <span class="string">r#"
+name = "func1"
+"#</span>,
         );
-        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>);
+        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>);
         <span class="kw">let </span>f = f.unwrap();
         <span class="macro">assert!</span>(f.ret.mandatory.is_none());
     }
@@ -1755,13 +1756,13 @@ name = &quot;func1&quot;
     <span class="attr">#[test]
     </span><span class="kw">fn </span>parse_return_mandatory() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;func1&quot;
+            <span class="string">r#"
+name = "func1"
     [return]
     mandatory = true
-&quot;#</span>,
+"#</span>,
         );
-        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>);
+        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>);
         <span class="kw">let </span>f = f.unwrap();
         <span class="macro">assert_eq!</span>(f.ret.mandatory, <span class="prelude-val">Some</span>(Mandatory(<span class="bool-val">true</span>)));
     }
@@ -1769,13 +1770,13 @@ name = &quot;func1&quot;
     <span class="attr">#[test]
     </span><span class="kw">fn </span>parse_return_non_mandatory() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;func1&quot;
+            <span class="string">r#"
+name = "func1"
     [return]
     mandatory = false
-&quot;#</span>,
+"#</span>,
         );
-        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>);
+        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>);
         <span class="kw">let </span>f = f.unwrap();
         <span class="macro">assert_eq!</span>(f.ret.mandatory, <span class="prelude-val">Some</span>(Mandatory(<span class="bool-val">false</span>)));
     }
@@ -1783,13 +1784,13 @@ name = &quot;func1&quot;
     <span class="attr">#[test]
     </span><span class="kw">fn </span>parse_parameter_mandatory_default() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;func1&quot;
+            <span class="string">r#"
+name = "func1"
     [[parameter]]
-    name = &quot;param1&quot;
-&quot;#</span>,
+    name = "param1"
+"#</span>,
         );
-        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>);
+        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>);
         <span class="kw">let </span>f = f.unwrap();
         <span class="kw">let </span>param1 = <span class="kw-2">&amp;</span>f.parameters[<span class="number">0</span>];
         <span class="macro">assert!</span>(param1.mandatory.is_none());
@@ -1798,14 +1799,14 @@ name = &quot;func1&quot;
     <span class="attr">#[test]
     </span><span class="kw">fn </span>parse_parameter_mandatory() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;func1&quot;
+            <span class="string">r#"
+name = "func1"
     [[parameter]]
-    name = &quot;param1&quot;
+    name = "param1"
     mandatory = true
-&quot;#</span>,
+"#</span>,
         );
-        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>);
+        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>);
         <span class="kw">let </span>f = f.unwrap();
         <span class="kw">let </span>param1 = <span class="kw-2">&amp;</span>f.parameters[<span class="number">0</span>];
         <span class="macro">assert_eq!</span>(param1.mandatory, <span class="prelude-val">Some</span>(Mandatory(<span class="bool-val">true</span>)));
@@ -1814,14 +1815,14 @@ name = &quot;func1&quot;
     <span class="attr">#[test]
     </span><span class="kw">fn </span>parse_parameter_non_mandatory() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;func1&quot;
+            <span class="string">r#"
+name = "func1"
     [[parameter]]
-    name = &quot;param1&quot;
+    name = "param1"
     mandatory = false
-&quot;#</span>,
+"#</span>,
         );
-        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>);
+        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>);
         <span class="kw">let </span>f = f.unwrap();
         <span class="kw">let </span>param1 = <span class="kw-2">&amp;</span>f.parameters[<span class="number">0</span>];
         <span class="macro">assert_eq!</span>(param1.mandatory, <span class="prelude-val">Some</span>(Mandatory(<span class="bool-val">false</span>)));
@@ -1830,11 +1831,11 @@ name = &quot;func1&quot;
     <span class="attr">#[test]
     </span><span class="kw">fn </span>parse_return_infallible_default() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;func1&quot;
-&quot;#</span>,
+            <span class="string">r#"
+name = "func1"
+"#</span>,
         );
-        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>);
+        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>);
         <span class="kw">let </span>f = f.unwrap();
         <span class="macro">assert!</span>(f.ret.infallible.is_none());
     }
@@ -1842,13 +1843,13 @@ name = &quot;func1&quot;
     <span class="attr">#[test]
     </span><span class="kw">fn </span>parse_return_infallible() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;func1&quot;
+            <span class="string">r#"
+name = "func1"
     [return]
     infallible = true
-&quot;#</span>,
+"#</span>,
         );
-        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>);
+        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>);
         <span class="kw">let </span>f = f.unwrap();
         <span class="macro">assert_eq!</span>(f.ret.infallible, <span class="prelude-val">Some</span>(Infallible(<span class="bool-val">true</span>)));
     }
@@ -1856,13 +1857,13 @@ name = &quot;func1&quot;
     <span class="attr">#[test]
     </span><span class="kw">fn </span>parse_return_faillible() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;func1&quot;
+            <span class="string">r#"
+name = "func1"
     [return]
     infallible = false
-&quot;#</span>,
+"#</span>,
         );
-        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>);
+        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>);
         <span class="kw">let </span>f = f.unwrap();
         <span class="macro">assert_eq!</span>(f.ret.infallible, <span class="prelude-val">Some</span>(Infallible(<span class="bool-val">false</span>)));
     }
@@ -1870,13 +1871,13 @@ name = &quot;func1&quot;
     <span class="attr">#[test]
     </span><span class="kw">fn </span>parse_parameter_infallible_default() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;func1&quot;
+            <span class="string">r#"
+name = "func1"
     [[parameter]]
-    name = &quot;param1&quot;
-&quot;#</span>,
+    name = "param1"
+"#</span>,
         );
-        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>);
+        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>);
         <span class="kw">let </span>f = f.unwrap();
         <span class="kw">let </span>param1 = <span class="kw-2">&amp;</span>f.parameters[<span class="number">0</span>];
         <span class="macro">assert!</span>(param1.infallible.is_none());
@@ -1885,14 +1886,14 @@ name = &quot;func1&quot;
     <span class="attr">#[test]
     </span><span class="kw">fn </span>parse_parameter_infallible() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;func1&quot;
+            <span class="string">r#"
+name = "func1"
     [[parameter]]
-    name = &quot;param1&quot;
+    name = "param1"
     infallible = true
-&quot;#</span>,
+"#</span>,
         );
-        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>);
+        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>);
         <span class="kw">let </span>f = f.unwrap();
         <span class="kw">let </span>param1 = <span class="kw-2">&amp;</span>f.parameters[<span class="number">0</span>];
         <span class="macro">assert_eq!</span>(param1.infallible, <span class="prelude-val">Some</span>(Infallible(<span class="bool-val">true</span>)));
@@ -1901,14 +1902,14 @@ name = &quot;func1&quot;
     <span class="attr">#[test]
     </span><span class="kw">fn </span>parse_parameter_faillible() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;func1&quot;
+            <span class="string">r#"
+name = "func1"
     [[parameter]]
-    name = &quot;param1&quot;
+    name = "param1"
     infallible = false
-&quot;#</span>,
+"#</span>,
         );
-        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">&quot;a&quot;</span>);
+        <span class="kw">let </span>f = Function::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>);
         <span class="kw">let </span>f = f.unwrap();
         <span class="kw">let </span>param1 = <span class="kw-2">&amp;</span>f.parameters[<span class="number">0</span>];
         <span class="macro">assert_eq!</span>(param1.infallible, <span class="prelude-val">Some</span>(Infallible(<span class="bool-val">false</span>)));

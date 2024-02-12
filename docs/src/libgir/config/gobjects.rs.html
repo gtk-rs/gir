@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/config/gobjects.rs`."><title>gobjects.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/config/gobjects.rs`."><title>gobjects.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -825,10 +826,10 @@
     <span class="kw">type </span><span class="prelude-val">Err </span>= String;
     <span class="kw">fn </span>from_str(s: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Err&gt; {
         <span class="kw">match </span>s {
-            <span class="string">&quot;manual&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Manual),
-            <span class="string">&quot;generate&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Generate),
-            <span class="string">&quot;ignore&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Ignore),
-            e =&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;Wrong object status: \&quot;{e}\&quot;&quot;</span>)),
+            <span class="string">"manual" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Manual),
+            <span class="string">"generate" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Generate),
+            <span class="string">"ignore" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Ignore),
+            e =&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"Wrong object status: \"{e}\""</span>)),
         }
     }
 }
@@ -875,7 +876,7 @@
 <span class="kw">impl </span>Default <span class="kw">for </span>GObject {
     <span class="kw">fn </span>default() -&gt; GObject {
         GObject {
-            name: <span class="string">&quot;Default&quot;</span>.into(),
+            name: <span class="string">"Default"</span>.into(),
             functions: Functions::new(),
             virtual_methods: VirtualMethods::new(),
             constants: Constants::new(),
@@ -939,29 +940,29 @@
     <span class="kw">use </span><span class="kw">crate</span>::analysis::conversion_type::ConversionType::<span class="kw-2">*</span>;
 
     <span class="kw">let </span>v = toml<span class="question-mark">?</span>;
-    v.check_unwanted(<span class="kw-2">&amp;</span>[<span class="string">&quot;variant&quot;</span>, <span class="string">&quot;ok_type&quot;</span>, <span class="string">&quot;err_type&quot;</span>], <span class="string">&quot;conversion_type&quot;</span>);
+    v.check_unwanted(<span class="kw-2">&amp;</span>[<span class="string">"variant"</span>, <span class="string">"ok_type"</span>, <span class="string">"err_type"</span>], <span class="string">"conversion_type"</span>);
 
     <span class="kw">let </span>(conversion_type, ok_type, err_type) = <span class="kw">match </span><span class="kw-2">&amp;</span>v {
         Value::Table(table) =&gt; {
-            <span class="kw">let </span>conversion_type = table.get(<span class="string">&quot;variant&quot;</span>).and_then(Value::as_str);
+            <span class="kw">let </span>conversion_type = table.get(<span class="string">"variant"</span>).and_then(Value::as_str);
             <span class="kw">if </span>conversion_type.is_none() {
-                <span class="macro">error!</span>(<span class="string">&quot;Missing `variant` for {}.conversion_type&quot;</span>, object_name);
+                <span class="macro">error!</span>(<span class="string">"Missing `variant` for {}.conversion_type"</span>, object_name);
                 <span class="kw">return </span><span class="prelude-val">None</span>;
             }
 
             <span class="kw">let </span>ok_type = <span class="prelude-val">Some</span>(Arc::from(
                 table
-                    .get(<span class="string">&quot;ok_type&quot;</span>)
+                    .get(<span class="string">"ok_type"</span>)
                     .and_then(Value::as_str)
                     .unwrap_or(object_name),
             ));
-            <span class="kw">let </span>err_type = table.get(<span class="string">&quot;err_type&quot;</span>).and_then(Value::as_str);
+            <span class="kw">let </span>err_type = table.get(<span class="string">"err_type"</span>).and_then(Value::as_str);
 
             (conversion_type.unwrap(), ok_type, err_type)
         }
         Value::String(conversion_type) =&gt; (conversion_type.as_str(), <span class="prelude-val">None</span>, <span class="prelude-val">None</span>),
         <span class="kw">_ </span>=&gt; {
-            <span class="macro">error!</span>(<span class="string">&quot;Unexpected toml item for {}.conversion_type&quot;</span>, object_name);
+            <span class="macro">error!</span>(<span class="string">"Unexpected toml item for {}.conversion_type"</span>, object_name);
             <span class="kw">return </span><span class="prelude-val">None</span>;
         }
     };
@@ -969,27 +970,27 @@
     <span class="kw">let </span>get_err_type = || -&gt; Arc&lt;str&gt; {
         err_type.map_or_else(
             || {
-                <span class="macro">error!</span>(<span class="string">&quot;Missing `err_type` for {}.conversion_type&quot;</span>, object_name);
-                Arc::from(<span class="string">&quot;MissingErrorType&quot;</span>)
+                <span class="macro">error!</span>(<span class="string">"Missing `err_type` for {}.conversion_type"</span>, object_name);
+                Arc::from(<span class="string">"MissingErrorType"</span>)
             },
             Arc::from,
         )
     };
 
     <span class="kw">match </span>conversion_type {
-        <span class="string">&quot;direct&quot; </span>=&gt; <span class="prelude-val">Some</span>(Direct),
-        <span class="string">&quot;scalar&quot; </span>=&gt; <span class="prelude-val">Some</span>(Scalar),
-        <span class="string">&quot;Option&quot; </span>=&gt; <span class="prelude-val">Some</span>(<span class="prelude-ty">Option</span>),
-        <span class="string">&quot;Result&quot; </span>=&gt; <span class="prelude-val">Some</span>(<span class="prelude-ty">Result </span>{
-            ok_type: ok_type.expect(<span class="string">&quot;Missing `ok_type`&quot;</span>),
+        <span class="string">"direct" </span>=&gt; <span class="prelude-val">Some</span>(Direct),
+        <span class="string">"scalar" </span>=&gt; <span class="prelude-val">Some</span>(Scalar),
+        <span class="string">"Option" </span>=&gt; <span class="prelude-val">Some</span>(<span class="prelude-ty">Option</span>),
+        <span class="string">"Result" </span>=&gt; <span class="prelude-val">Some</span>(<span class="prelude-ty">Result </span>{
+            ok_type: ok_type.expect(<span class="string">"Missing `ok_type`"</span>),
             err_type: get_err_type(),
         }),
-        <span class="string">&quot;pointer&quot; </span>=&gt; <span class="prelude-val">Some</span>(Pointer),
-        <span class="string">&quot;borrow&quot; </span>=&gt; <span class="prelude-val">Some</span>(Borrow),
-        <span class="string">&quot;unknown&quot; </span>=&gt; <span class="prelude-val">Some</span>(Unknown),
+        <span class="string">"pointer" </span>=&gt; <span class="prelude-val">Some</span>(Pointer),
+        <span class="string">"borrow" </span>=&gt; <span class="prelude-val">Some</span>(Borrow),
+        <span class="string">"unknown" </span>=&gt; <span class="prelude-val">Some</span>(Unknown),
         unexpected =&gt; {
             <span class="macro">error!</span>(
-                <span class="string">&quot;Unexpected {} for {}.conversion_type&quot;</span>,
+                <span class="string">"Unexpected {} for {}.conversion_type"</span>,
                 unexpected, object_name
             );
             <span class="prelude-val">None
@@ -1004,82 +1005,82 @@
     trust_return_value_nullability: bool,
 ) -&gt; GObject {
     <span class="kw">let </span>name: String = toml_object
-        .lookup(<span class="string">&quot;name&quot;</span>)
-        .expect(<span class="string">&quot;Object name not defined&quot;</span>)
+        .lookup(<span class="string">"name"</span>)
+        .expect(<span class="string">"Object name not defined"</span>)
         .as_str()
         .unwrap()
         .into();
     <span class="comment">// Also checks for ChildProperties
     </span>toml_object.check_unwanted(
         <span class="kw-2">&amp;</span>[
-            <span class="string">&quot;name&quot;</span>,
-            <span class="string">&quot;status&quot;</span>,
-            <span class="string">&quot;function&quot;</span>,
-            <span class="string">&quot;constant&quot;</span>,
-            <span class="string">&quot;signal&quot;</span>,
-            <span class="string">&quot;member&quot;</span>,
-            <span class="string">&quot;property&quot;</span>,
-            <span class="string">&quot;derive&quot;</span>,
-            <span class="string">&quot;module_name&quot;</span>,
-            <span class="string">&quot;version&quot;</span>,
-            <span class="string">&quot;concurrency&quot;</span>,
-            <span class="string">&quot;ref_mode&quot;</span>,
-            <span class="string">&quot;conversion_type&quot;</span>,
-            <span class="string">&quot;child_prop&quot;</span>,
-            <span class="string">&quot;child_name&quot;</span>,
-            <span class="string">&quot;child_type&quot;</span>,
-            <span class="string">&quot;final_type&quot;</span>,
-            <span class="string">&quot;fundamental_type&quot;</span>,
-            <span class="string">&quot;exhaustive&quot;</span>,
-            <span class="string">&quot;trait&quot;</span>,
-            <span class="string">&quot;trait_name&quot;</span>,
-            <span class="string">&quot;cfg_condition&quot;</span>,
-            <span class="string">&quot;must_use&quot;</span>,
-            <span class="string">&quot;trust_return_value_nullability&quot;</span>,
-            <span class="string">&quot;manual_traits&quot;</span>,
-            <span class="string">&quot;align&quot;</span>,
-            <span class="string">&quot;generate_builder&quot;</span>,
-            <span class="string">&quot;builder_postprocess&quot;</span>,
-            <span class="string">&quot;boxed_inline&quot;</span>,
-            <span class="string">&quot;init_function_expression&quot;</span>,
-            <span class="string">&quot;copy_into_function_expression&quot;</span>,
-            <span class="string">&quot;clear_function_expression&quot;</span>,
-            <span class="string">&quot;visibility&quot;</span>,
-            <span class="string">&quot;default_value&quot;</span>,
-            <span class="string">&quot;generate_doc&quot;</span>,
+            <span class="string">"name"</span>,
+            <span class="string">"status"</span>,
+            <span class="string">"function"</span>,
+            <span class="string">"constant"</span>,
+            <span class="string">"signal"</span>,
+            <span class="string">"member"</span>,
+            <span class="string">"property"</span>,
+            <span class="string">"derive"</span>,
+            <span class="string">"module_name"</span>,
+            <span class="string">"version"</span>,
+            <span class="string">"concurrency"</span>,
+            <span class="string">"ref_mode"</span>,
+            <span class="string">"conversion_type"</span>,
+            <span class="string">"child_prop"</span>,
+            <span class="string">"child_name"</span>,
+            <span class="string">"child_type"</span>,
+            <span class="string">"final_type"</span>,
+            <span class="string">"fundamental_type"</span>,
+            <span class="string">"exhaustive"</span>,
+            <span class="string">"trait"</span>,
+            <span class="string">"trait_name"</span>,
+            <span class="string">"cfg_condition"</span>,
+            <span class="string">"must_use"</span>,
+            <span class="string">"trust_return_value_nullability"</span>,
+            <span class="string">"manual_traits"</span>,
+            <span class="string">"align"</span>,
+            <span class="string">"generate_builder"</span>,
+            <span class="string">"builder_postprocess"</span>,
+            <span class="string">"boxed_inline"</span>,
+            <span class="string">"init_function_expression"</span>,
+            <span class="string">"copy_into_function_expression"</span>,
+            <span class="string">"clear_function_expression"</span>,
+            <span class="string">"visibility"</span>,
+            <span class="string">"default_value"</span>,
+            <span class="string">"generate_doc"</span>,
         ],
-        <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;object {name}&quot;</span>),
+        <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"object {name}"</span>),
     );
 
-    <span class="kw">let </span>status = <span class="kw">match </span>toml_object.lookup(<span class="string">&quot;status&quot;</span>) {
+    <span class="kw">let </span>status = <span class="kw">match </span>toml_object.lookup(<span class="string">"status"</span>) {
         <span class="prelude-val">Some</span>(value) =&gt; {
             GStatus::from_str(value.as_str().unwrap()).unwrap_or_else(|<span class="kw">_</span>| Default::default())
         }
         <span class="prelude-val">None </span>=&gt; Default::default(),
     };
 
-    <span class="kw">let </span>constants = Constants::parse(toml_object.lookup(<span class="string">&quot;constant&quot;</span>), <span class="kw-2">&amp;</span>name);
-    <span class="kw">let </span>functions = Functions::parse(toml_object.lookup(<span class="string">&quot;function&quot;</span>), <span class="kw-2">&amp;</span>name);
+    <span class="kw">let </span>constants = Constants::parse(toml_object.lookup(<span class="string">"constant"</span>), <span class="kw-2">&amp;</span>name);
+    <span class="kw">let </span>functions = Functions::parse(toml_object.lookup(<span class="string">"function"</span>), <span class="kw-2">&amp;</span>name);
     <span class="kw">let </span><span class="kw-2">mut </span>function_names = HashSet::new();
     <span class="kw">for </span>f <span class="kw">in </span><span class="kw-2">&amp;</span>functions {
         <span class="kw">if let </span>Ident::Name(name) = <span class="kw-2">&amp;</span>f.ident {
-            <span class="macro">assert!</span>(function_names.insert(name), <span class="string">&quot;{name} already defined!&quot;</span>);
+            <span class="macro">assert!</span>(function_names.insert(name), <span class="string">"{name} already defined!"</span>);
         }
     }
-    <span class="kw">let </span>virtual_methods = VirtualMethods::parse(toml_object.lookup(<span class="string">&quot;virtual_method&quot;</span>), <span class="kw-2">&amp;</span>name);
+    <span class="kw">let </span>virtual_methods = VirtualMethods::parse(toml_object.lookup(<span class="string">"virtual_method"</span>), <span class="kw-2">&amp;</span>name);
     <span class="kw">let </span><span class="kw-2">mut </span>virtual_methods_names = HashSet::new();
     <span class="kw">for </span>f <span class="kw">in </span><span class="kw-2">&amp;</span>virtual_methods {
         <span class="kw">if let </span>Ident::Name(name) = <span class="kw-2">&amp;</span>f.ident {
             <span class="macro">assert!</span>(
                 virtual_methods_names.insert(name),
-                <span class="string">&quot;{name} already defined!&quot;
+                <span class="string">"{name} already defined!"
             </span>);
         }
     }
 
     <span class="kw">let </span>signals = {
         <span class="kw">let </span><span class="kw-2">mut </span>v = Vec::new();
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(configs) = toml_object.lookup(<span class="string">&quot;signal&quot;</span>).and_then(Value::as_array) {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(configs) = toml_object.lookup(<span class="string">"signal"</span>).and_then(Value::as_array) {
             <span class="kw">for </span>config <span class="kw">in </span>configs {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(item) = Signal::parse(config, <span class="kw-2">&amp;</span>name, concurrency) {
                     v.push(item);
@@ -1089,68 +1090,68 @@
 
         v
     };
-    <span class="kw">let </span>members = Members::parse(toml_object.lookup(<span class="string">&quot;member&quot;</span>), <span class="kw-2">&amp;</span>name);
-    <span class="kw">let </span>properties = Properties::parse(toml_object.lookup(<span class="string">&quot;property&quot;</span>), <span class="kw-2">&amp;</span>name);
+    <span class="kw">let </span>members = Members::parse(toml_object.lookup(<span class="string">"member"</span>), <span class="kw-2">&amp;</span>name);
+    <span class="kw">let </span>properties = Properties::parse(toml_object.lookup(<span class="string">"property"</span>), <span class="kw-2">&amp;</span>name);
     <span class="kw">let </span>derives = toml_object
-        .lookup(<span class="string">&quot;derive&quot;</span>)
+        .lookup(<span class="string">"derive"</span>)
         .map(|derives| Derives::parse(<span class="prelude-val">Some</span>(derives), <span class="kw-2">&amp;</span>name));
     <span class="kw">let </span>module_name = toml_object
-        .lookup(<span class="string">&quot;module_name&quot;</span>)
+        .lookup(<span class="string">"module_name"</span>)
         .and_then(Value::as_str)
         .map(ToOwned::to_owned);
     <span class="kw">let </span>version = toml_object
-        .lookup(<span class="string">&quot;version&quot;</span>)
+        .lookup(<span class="string">"version"</span>)
         .and_then(Value::as_str)
         .and_then(|s| s.parse().ok());
     <span class="kw">let </span>cfg_condition = <span class="kw">super</span>::get_object_cfg_condition(toml_object, <span class="kw-2">&amp;</span>name);
-    <span class="kw">let </span>generate_trait = toml_object.lookup(<span class="string">&quot;trait&quot;</span>).and_then(Value::as_bool);
+    <span class="kw">let </span>generate_trait = toml_object.lookup(<span class="string">"trait"</span>).and_then(Value::as_bool);
     <span class="kw">let </span>final_type = toml_object
-        .lookup(<span class="string">&quot;final_type&quot;</span>)
+        .lookup(<span class="string">"final_type"</span>)
         .and_then(Value::as_bool)
         .or_else(|| generate_trait.map(|t| !t));
     <span class="kw">let </span>fundamental_type = toml_object
-        .lookup(<span class="string">&quot;fundamental_type&quot;</span>)
+        .lookup(<span class="string">"fundamental_type"</span>)
         .and_then(Value::as_bool);
     <span class="kw">let </span>exhaustive = toml_object
-        .lookup(<span class="string">&quot;exhaustive&quot;</span>)
+        .lookup(<span class="string">"exhaustive"</span>)
         .and_then(Value::as_bool)
         .unwrap_or(<span class="bool-val">false</span>);
     <span class="kw">let </span>trait_name = toml_object
-        .lookup(<span class="string">&quot;trait_name&quot;</span>)
+        .lookup(<span class="string">"trait_name"</span>)
         .and_then(Value::as_str)
         .map(ToOwned::to_owned);
     <span class="kw">let </span>concurrency = toml_object
-        .lookup(<span class="string">&quot;concurrency&quot;</span>)
+        .lookup(<span class="string">"concurrency"</span>)
         .and_then(Value::as_str)
         .and_then(|v| v.parse().ok())
         .unwrap_or(concurrency);
     <span class="kw">let </span>ref_mode = toml_object
-        .lookup(<span class="string">&quot;ref_mode&quot;</span>)
+        .lookup(<span class="string">"ref_mode"</span>)
         .and_then(Value::as_str)
         .and_then(|v| v.parse().ok());
-    <span class="kw">let </span>conversion_type = parse_conversion_type(toml_object.lookup(<span class="string">&quot;conversion_type&quot;</span>), <span class="kw-2">&amp;</span>name);
+    <span class="kw">let </span>conversion_type = parse_conversion_type(toml_object.lookup(<span class="string">"conversion_type"</span>), <span class="kw-2">&amp;</span>name);
     <span class="kw">let </span>child_properties = ChildProperties::parse(toml_object, <span class="kw-2">&amp;</span>name);
     <span class="kw">let </span>must_use = toml_object
-        .lookup(<span class="string">&quot;must_use&quot;</span>)
+        .lookup(<span class="string">"must_use"</span>)
         .and_then(Value::as_bool)
         .unwrap_or(<span class="bool-val">false</span>);
     <span class="kw">let </span>trust_return_value_nullability = toml_object
-        .lookup(<span class="string">&quot;trust_return_value_nullability&quot;</span>)
+        .lookup(<span class="string">"trust_return_value_nullability"</span>)
         .and_then(Value::as_bool)
         .unwrap_or(trust_return_value_nullability);
     <span class="kw">let </span>manual_traits = toml_object
-        .lookup_vec(<span class="string">&quot;manual_traits&quot;</span>, <span class="string">&quot;IGNORED ERROR&quot;</span>)
+        .lookup_vec(<span class="string">"manual_traits"</span>, <span class="string">"IGNORED ERROR"</span>)
         .into_iter()
         .flatten()
         .filter_map(|v| v.as_str().map(String::from))
         .collect();
     <span class="kw">let </span>align = toml_object
-        .lookup(<span class="string">&quot;align&quot;</span>)
+        .lookup(<span class="string">"align"</span>)
         .and_then(Value::as_integer)
         .and_then(|v| {
             <span class="kw">if </span>v.count_ones() != <span class="number">1 </span>|| v &gt; i64::from(u32::max_value()) || v &lt; <span class="number">0 </span>{
                 <span class="macro">warn!</span>(
-                    <span class="string">&quot;`align` configuration must be a power of two of type u32, found {}&quot;</span>,
+                    <span class="string">"`align` configuration must be a power of two of type u32, found {}"</span>,
                     v
                 );
                 <span class="prelude-val">None
@@ -1159,43 +1160,43 @@
             }
         });
     <span class="kw">let </span>generate_builder = toml_object
-        .lookup(<span class="string">&quot;generate_builder&quot;</span>)
+        .lookup(<span class="string">"generate_builder"</span>)
         .and_then(Value::as_bool)
         .unwrap_or(generate_builder);
 
     <span class="kw">let </span>boxed_inline = toml_object
-        .lookup(<span class="string">&quot;boxed_inline&quot;</span>)
+        .lookup(<span class="string">"boxed_inline"</span>)
         .and_then(Value::as_bool)
         .unwrap_or(<span class="bool-val">false</span>);
 
     <span class="kw">let </span>builder_postprocess = toml_object
-        .lookup(<span class="string">&quot;builder_postprocess&quot;</span>)
+        .lookup(<span class="string">"builder_postprocess"</span>)
         .and_then(Value::as_str)
         .map(String::from);
     <span class="kw">let </span>init_function_expression = toml_object
-        .lookup(<span class="string">&quot;init_function_expression&quot;</span>)
+        .lookup(<span class="string">"init_function_expression"</span>)
         .and_then(Value::as_str)
         .map(ToOwned::to_owned);
     <span class="kw">let </span>copy_into_function_expression = toml_object
-        .lookup(<span class="string">&quot;copy_into_function_expression&quot;</span>)
+        .lookup(<span class="string">"copy_into_function_expression"</span>)
         .and_then(Value::as_str)
         .map(ToOwned::to_owned);
     <span class="kw">let </span>clear_function_expression = toml_object
-        .lookup(<span class="string">&quot;clear_function_expression&quot;</span>)
+        .lookup(<span class="string">"clear_function_expression"</span>)
         .and_then(Value::as_str)
         .map(ToOwned::to_owned);
     <span class="kw">let </span>default_value = toml_object
-        .lookup(<span class="string">&quot;default_value&quot;</span>)
+        .lookup(<span class="string">"default_value"</span>)
         .and_then(Value::as_str)
         .map(ToOwned::to_owned);
 
     <span class="kw">let </span>visibility = toml_object
-        .lookup(<span class="string">&quot;visibility&quot;</span>)
+        .lookup(<span class="string">"visibility"</span>)
         .and_then(Value::as_str)
         .map(|v| v.parse())
         .transpose();
     <span class="kw">if let </span><span class="prelude-val">Err</span>(<span class="kw-2">ref </span>err) = visibility {
-        <span class="macro">error!</span>(<span class="string">&quot;{}&quot;</span>, err);
+        <span class="macro">error!</span>(<span class="string">"{}"</span>, err);
     }
     <span class="kw">let </span>visibility = visibility.ok().flatten().unwrap_or_default();
     <span class="kw">if </span>boxed_inline
@@ -1207,7 +1208,7 @@
                 &amp;&amp; clear_function_expression.is_some()))
     {
         <span class="macro">panic!</span>(
-            <span class="string">&quot;`init_function_expression`, `copy_into_function_expression` and `clear_function_expression` all have to be provided or neither&quot;
+            <span class="string">"`init_function_expression`, `copy_into_function_expression` and `clear_function_expression` all have to be provided or neither"
         </span>);
     }
 
@@ -1217,12 +1218,12 @@
             || clear_function_expression.is_some())
     {
         <span class="macro">panic!</span>(
-            <span class="string">&quot;`init_function_expression`, `copy_into_function_expression` and `clear_function_expression` can only be provided for BoxedInline types&quot;
+            <span class="string">"`init_function_expression`, `copy_into_function_expression` and `clear_function_expression` can only be provided for BoxedInline types"
         </span>);
     }
 
     <span class="kw">if </span>status != GStatus::Manual &amp;&amp; ref_mode.is_some() {
-        <span class="macro">warn!</span>(<span class="string">&quot;ref_mode configuration used for non-manual object {}&quot;</span>, name);
+        <span class="macro">warn!</span>(<span class="string">"ref_mode configuration used for non-manual object {}"</span>, name);
     }
 
     <span class="kw">if </span>status != GStatus::Manual
@@ -1231,19 +1232,19 @@
             .map_or(<span class="bool-val">true</span>, ConversionType::can_use_to_generate)
     {
         <span class="macro">warn!</span>(
-            <span class="string">&quot;unexpected conversion_type {:?} configuration used for non-manual object {}&quot;</span>,
+            <span class="string">"unexpected conversion_type {:?} configuration used for non-manual object {}"</span>,
             conversion_type, name
         );
     }
 
     <span class="kw">let </span>generate_doc = toml_object
-        .lookup(<span class="string">&quot;generate_doc&quot;</span>)
+        .lookup(<span class="string">"generate_doc"</span>)
         .and_then(Value::as_bool)
         .unwrap_or(<span class="bool-val">true</span>);
 
     <span class="kw">if </span>generate_trait.is_some() {
         <span class="macro">warn!</span>(
-            <span class="string">&quot;`trait` configuration is deprecated and replaced by `final_type` for object {}&quot;</span>,
+            <span class="string">"`trait` configuration is deprecated and replaced by `final_type` for object {}"</span>,
             name
         );
     }
@@ -1314,7 +1315,7 @@
     generate_builder: bool,
     trust_return_value_nullability: bool,
 ) {
-    <span class="kw">let </span>option_name = <span class="macro">format!</span>(<span class="string">&quot;options.{status:?}&quot;</span>).to_ascii_lowercase();
+    <span class="kw">let </span>option_name = <span class="macro">format!</span>(<span class="string">"options.{status:?}"</span>).to_ascii_lowercase();
     <span class="kw">if let </span><span class="prelude-val">Some</span>(a) = toml.lookup(<span class="kw-2">&amp;</span>option_name).map(|a| a.as_array().unwrap()) {
         <span class="kw">for </span>name <span class="kw">in </span>a.iter().map(|s| s.as_str().unwrap()) {
             <span class="kw">match </span>objects.get(name) {
@@ -1331,7 +1332,7 @@
                         },
                     );
                 }
-                <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Bad name in {option_name}: {name} already defined&quot;</span>),
+                <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; <span class="macro">panic!</span>(<span class="string">"Bad name in {option_name}: {name} already defined"</span>),
             }
         }
     }
@@ -1339,20 +1340,20 @@
 
 <span class="kw">pub fn </span>resolve_type_ids(objects: <span class="kw-2">&amp;mut </span>GObjects, library: <span class="kw-2">&amp;</span>Library) {
     <span class="kw">let </span>ns = library.namespace(MAIN_NAMESPACE);
-    <span class="kw">let </span>global_functions_name = <span class="macro">format!</span>(<span class="string">&quot;{}.*&quot;</span>, ns.name);
+    <span class="kw">let </span>global_functions_name = <span class="macro">format!</span>(<span class="string">"{}.*"</span>, ns.name);
 
     <span class="kw">for </span>(name, object) <span class="kw">in </span>objects.iter_mut() {
         <span class="kw">let </span>type_id = library.find_type(<span class="number">0</span>, name);
         <span class="kw">if </span>type_id.is_none() &amp;&amp; name != <span class="kw-2">&amp;</span>global_functions_name &amp;&amp; object.status != GStatus::Ignore {
-            <span class="macro">warn!</span>(<span class="string">&quot;Configured object `{}` missing from the library&quot;</span>, name);
+            <span class="macro">warn!</span>(<span class="string">"Configured object `{}` missing from the library"</span>, name);
         } <span class="kw">else if </span>object.generate_builder {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(type_id) = type_id {
                 <span class="kw">if </span>library.type_(type_id).is_abstract() {
                     <span class="macro">warn!</span>(
-                        <span class="string">&quot;Cannot generate builder for `{}` because it&#39;s a base class&quot;</span>,
+                        <span class="string">"Cannot generate builder for `{}` because it's a base class"</span>,
                         name
                     );
-                    <span class="comment">// We set this to `false` to avoid having the &quot;not_bound&quot; mode saying that this
+                    <span class="comment">// We set this to `false` to avoid having the "not_bound" mode saying that this
                     // builder should be generated.
                     </span>object.generate_builder = <span class="bool-val">false</span>;
                 }
@@ -1376,10 +1377,10 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>conversion_type_default() {
         <span class="kw">let </span>toml = <span class="kw-2">&amp;</span>toml(
-            <span class="string">r#&quot;
-name = &quot;Test&quot;
-status = &quot;generate&quot;
-&quot;#</span>,
+            <span class="string">r#"
+name = "Test"
+status = "generate"
+"#</span>,
         );
 
         <span class="kw">let </span>object = parse_object(toml, Concurrency::default(), <span class="bool-val">false</span>, <span class="bool-val">false</span>);
@@ -1389,11 +1390,11 @@ status = &quot;generate&quot;
     <span class="attr">#[test]
     </span><span class="kw">fn </span>conversion_type_option_str() {
         <span class="kw">let </span>toml = toml(
-            <span class="string">r#&quot;
-name = &quot;Test&quot;
-status = &quot;generate&quot;
-conversion_type = &quot;Option&quot;
-&quot;#</span>,
+            <span class="string">r#"
+name = "Test"
+status = "generate"
+conversion_type = "Option"
+"#</span>,
         );
 
         <span class="kw">let </span>object = parse_object(<span class="kw-2">&amp;</span>toml, Concurrency::default(), <span class="bool-val">false</span>, <span class="bool-val">false</span>);
@@ -1403,12 +1404,12 @@ conversion_type = &quot;Option&quot;
     <span class="attr">#[test]
     </span><span class="kw">fn </span>conversion_type_option_table() {
         <span class="kw">let </span>toml = <span class="kw-2">&amp;</span>toml(
-            <span class="string">r#&quot;
-name = &quot;Test&quot;
-status = &quot;generate&quot;
+            <span class="string">r#"
+name = "Test"
+status = "generate"
     [conversion_type]
-        variant = &quot;Option&quot;
-&quot;#</span>,
+        variant = "Option"
+"#</span>,
         );
 
         <span class="kw">let </span>object = parse_object(toml, Concurrency::default(), <span class="bool-val">false</span>, <span class="bool-val">false</span>);
@@ -1418,20 +1419,20 @@ status = &quot;generate&quot;
     <span class="attr">#[test]
     </span><span class="kw">fn </span>conversion_type_result_table_missing_err() {
         <span class="kw">let </span>toml = <span class="kw-2">&amp;</span>toml(
-            <span class="string">r#&quot;
-name = &quot;Test&quot;
-status = &quot;generate&quot;
+            <span class="string">r#"
+name = "Test"
+status = "generate"
     [conversion_type]
-        variant = &quot;Result&quot;
-&quot;#</span>,
+        variant = "Result"
+"#</span>,
         );
 
         <span class="kw">let </span>object = parse_object(toml, Concurrency::default(), <span class="bool-val">false</span>, <span class="bool-val">false</span>);
         <span class="macro">assert_eq!</span>(
             object.conversion_type,
             <span class="prelude-val">Some</span>(ConversionType::Result {
-                ok_type: Arc::from(<span class="string">&quot;Test&quot;</span>),
-                err_type: Arc::from(<span class="string">&quot;MissingErrorType&quot;</span>),
+                ok_type: Arc::from(<span class="string">"Test"</span>),
+                err_type: Arc::from(<span class="string">"MissingErrorType"</span>),
             }),
         );
     }
@@ -1439,21 +1440,21 @@ status = &quot;generate&quot;
     <span class="attr">#[test]
     </span><span class="kw">fn </span>conversion_type_result_table_with_err() {
         <span class="kw">let </span>toml = <span class="kw-2">&amp;</span>toml(
-            <span class="string">r#&quot;
-name = &quot;Test&quot;
-status = &quot;generate&quot;
+            <span class="string">r#"
+name = "Test"
+status = "generate"
     [conversion_type]
-        variant = &quot;Result&quot;
-        err_type = &quot;TryFromIntError&quot;
-&quot;#</span>,
+        variant = "Result"
+        err_type = "TryFromIntError"
+"#</span>,
         );
 
         <span class="kw">let </span>object = parse_object(toml, Concurrency::default(), <span class="bool-val">false</span>, <span class="bool-val">false</span>);
         <span class="macro">assert_eq!</span>(
             object.conversion_type,
             <span class="prelude-val">Some</span>(ConversionType::Result {
-                ok_type: Arc::from(<span class="string">&quot;Test&quot;</span>),
-                err_type: Arc::from(<span class="string">&quot;TryFromIntError&quot;</span>),
+                ok_type: Arc::from(<span class="string">"Test"</span>),
+                err_type: Arc::from(<span class="string">"TryFromIntError"</span>),
             }),
         );
     }
@@ -1461,22 +1462,22 @@ status = &quot;generate&quot;
     <span class="attr">#[test]
     </span><span class="kw">fn </span>conversion_type_result_table_with_ok_err() {
         <span class="kw">let </span>toml = <span class="kw-2">&amp;</span>toml(
-            <span class="string">r#&quot;
-name = &quot;Test&quot;
-status = &quot;generate&quot;
+            <span class="string">r#"
+name = "Test"
+status = "generate"
     [conversion_type]
-        variant = &quot;Result&quot;
-        ok_type = &quot;TestSuccess&quot;
-        err_type = &quot;TryFromIntError&quot;
-&quot;#</span>,
+        variant = "Result"
+        ok_type = "TestSuccess"
+        err_type = "TryFromIntError"
+"#</span>,
         );
 
         <span class="kw">let </span>object = parse_object(toml, Concurrency::default(), <span class="bool-val">false</span>, <span class="bool-val">false</span>);
         <span class="macro">assert_eq!</span>(
             object.conversion_type,
             <span class="prelude-val">Some</span>(ConversionType::Result {
-                ok_type: Arc::from(<span class="string">&quot;TestSuccess&quot;</span>),
-                err_type: Arc::from(<span class="string">&quot;TryFromIntError&quot;</span>),
+                ok_type: Arc::from(<span class="string">"TestSuccess"</span>),
+                err_type: Arc::from(<span class="string">"TryFromIntError"</span>),
             }),
         );
     }
@@ -1484,59 +1485,59 @@ status = &quot;generate&quot;
     <span class="attr">#[test]
     </span><span class="kw">fn </span>conversion_type_fields() {
         <span class="kw">let </span>toml = <span class="kw-2">&amp;</span>toml(
-            <span class="string">r#&quot;
+            <span class="string">r#"
 [[object]]
-name = &quot;Test&quot;
-status = &quot;generate&quot;
+name = "Test"
+status = "generate"
     [[object.constant]]
-    name = &quot;Const&quot;
+    name = "Const"
     [[object.function]]
-    name = &quot;Func&quot;
+    name = "Func"
     manual = true
 
-&quot;#</span>,
+"#</span>,
         );
 
         <span class="kw">let </span>object = toml
-            .lookup(<span class="string">&quot;object&quot;</span>)
+            .lookup(<span class="string">"object"</span>)
             .map(|t| parse_toml(t, Concurrency::default(), <span class="bool-val">false</span>, <span class="bool-val">false</span>))
-            .expect(<span class="string">&quot;parsing failed&quot;</span>);
+            .expect(<span class="string">"parsing failed"</span>);
         <span class="macro">assert_eq!</span>(
-            object[<span class="string">&quot;Test&quot;</span>].constants,
+            object[<span class="string">"Test"</span>].constants,
             <span class="macro">vec!</span>[<span class="kw">crate</span>::config::constants::Constant {
-                ident: Ident::Name(<span class="string">&quot;Const&quot;</span>.to_owned()),
+                ident: Ident::Name(<span class="string">"Const"</span>.to_owned()),
                 status: GStatus::Generate,
                 version: <span class="prelude-val">None</span>,
                 cfg_condition: <span class="prelude-val">None</span>,
                 generate_doc: <span class="bool-val">true</span>,
             }],
         );
-        <span class="macro">assert_eq!</span>(object[<span class="string">&quot;Test&quot;</span>].functions.len(), <span class="number">1</span>);
+        <span class="macro">assert_eq!</span>(object[<span class="string">"Test"</span>].functions.len(), <span class="number">1</span>);
         <span class="macro">assert_eq!</span>(
-            object[<span class="string">&quot;Test&quot;</span>].functions[<span class="number">0</span>].ident,
-            Ident::Name(<span class="string">&quot;Func&quot;</span>.to_owned()),
+            object[<span class="string">"Test"</span>].functions[<span class="number">0</span>].ident,
+            Ident::Name(<span class="string">"Func"</span>.to_owned()),
         );
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>conversion_type_generate_doc() {
         <span class="kw">let </span>r = <span class="kw-2">&amp;</span>toml(
-            <span class="string">r#&quot;
-name = &quot;Test&quot;
-status = &quot;generate&quot;
+            <span class="string">r#"
+name = "Test"
+status = "generate"
 generate_doc = false
-&quot;#</span>,
+"#</span>,
         );
 
         <span class="kw">let </span>object = parse_object(r, Concurrency::default(), <span class="bool-val">false</span>, <span class="bool-val">false</span>);
         <span class="macro">assert!</span>(!object.generate_doc);
 
-        <span class="comment">// Ensure that the default value is &quot;true&quot;.
+        <span class="comment">// Ensure that the default value is "true".
         </span><span class="kw">let </span>r = <span class="kw-2">&amp;</span>toml(
-            <span class="string">r#&quot;
-name = &quot;Test&quot;
-status = &quot;generate&quot;
-&quot;#</span>,
+            <span class="string">r#"
+name = "Test"
+status = "generate"
+"#</span>,
         );
         <span class="kw">let </span>object = parse_object(r, Concurrency::default(), <span class="bool-val">false</span>, <span class="bool-val">false</span>);
         <span class="macro">assert!</span>(object.generate_doc);

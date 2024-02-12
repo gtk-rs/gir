@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/main.rs`."><title>main.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="gir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/main.rs`."><title>main.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="gir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -222,10 +223,10 @@
 
 <span class="kw">fn </span>print_usage(program: <span class="kw-2">&amp;</span>str, opts: Options) {
     <span class="kw">let </span>brief = <span class="macro">format!</span>(
-        <span class="string">&quot;Usage: {program} [options] [&lt;library&gt; &lt;version&gt;]
-       {program} (-h | --help)&quot;
+        <span class="string">"Usage: {program} [options] [&lt;library&gt; &lt;version&gt;]
+       {program} (-h | --help)"
     </span>);
-    <span class="macro">print!</span>(<span class="string">&quot;{}&quot;</span>, opts.usage(<span class="kw-2">&amp;</span>brief));
+    <span class="macro">print!</span>(<span class="string">"{}"</span>, opts.usage(<span class="kw-2">&amp;</span>brief));
 }
 
 <span class="kw">trait </span>OptionStr {
@@ -249,69 +250,69 @@
 
     <span class="kw">let </span><span class="kw-2">mut </span>options = Options::new();
     options.optopt(
-        <span class="string">&quot;c&quot;</span>,
-        <span class="string">&quot;config&quot;</span>,
-        <span class="string">&quot;Config file path (default: Gir.toml)&quot;</span>,
-        <span class="string">&quot;CONFIG&quot;</span>,
+        <span class="string">"c"</span>,
+        <span class="string">"config"</span>,
+        <span class="string">"Config file path (default: Gir.toml)"</span>,
+        <span class="string">"CONFIG"</span>,
     );
-    options.optflag(<span class="string">&quot;h&quot;</span>, <span class="string">&quot;help&quot;</span>, <span class="string">&quot;Show this message&quot;</span>);
+    options.optflag(<span class="string">"h"</span>, <span class="string">"help"</span>, <span class="string">"Show this message"</span>);
     options.optmulti(
-        <span class="string">&quot;d&quot;</span>,
-        <span class="string">&quot;girs-directories&quot;</span>,
-        <span class="string">&quot;Directories for GIR files&quot;</span>,
-        <span class="string">&quot;GIRSPATH&quot;</span>,
+        <span class="string">"d"</span>,
+        <span class="string">"girs-directories"</span>,
+        <span class="string">"Directories for GIR files"</span>,
+        <span class="string">"GIRSPATH"</span>,
     );
     options.optopt(
-        <span class="string">&quot;m&quot;</span>,
-        <span class="string">&quot;mode&quot;</span>,
-        <span class="string">&quot;Work mode: doc, normal, sys or not_bound&quot;</span>,
-        <span class="string">&quot;MODE&quot;</span>,
+        <span class="string">"m"</span>,
+        <span class="string">"mode"</span>,
+        <span class="string">"Work mode: doc, normal, sys or not_bound"</span>,
+        <span class="string">"MODE"</span>,
     );
-    options.optopt(<span class="string">&quot;o&quot;</span>, <span class="string">&quot;target&quot;</span>, <span class="string">&quot;Target path&quot;</span>, <span class="string">&quot;PATH&quot;</span>);
-    options.optopt(<span class="string">&quot;p&quot;</span>, <span class="string">&quot;doc-target-path&quot;</span>, <span class="string">&quot;Doc target path&quot;</span>, <span class="string">&quot;PATH&quot;</span>);
-    options.optflag(<span class="string">&quot;b&quot;</span>, <span class="string">&quot;make-backup&quot;</span>, <span class="string">&quot;Make backup before generating&quot;</span>);
-    options.optflag(<span class="string">&quot;s&quot;</span>, <span class="string">&quot;stats&quot;</span>, <span class="string">&quot;Show statistics&quot;</span>);
-    options.optflag(<span class="string">&quot;&quot;</span>, <span class="string">&quot;disable-format&quot;</span>, <span class="string">&quot;Disable formatting generated code&quot;</span>);
+    options.optopt(<span class="string">"o"</span>, <span class="string">"target"</span>, <span class="string">"Target path"</span>, <span class="string">"PATH"</span>);
+    options.optopt(<span class="string">"p"</span>, <span class="string">"doc-target-path"</span>, <span class="string">"Doc target path"</span>, <span class="string">"PATH"</span>);
+    options.optflag(<span class="string">"b"</span>, <span class="string">"make-backup"</span>, <span class="string">"Make backup before generating"</span>);
+    options.optflag(<span class="string">"s"</span>, <span class="string">"stats"</span>, <span class="string">"Show statistics"</span>);
+    options.optflag(<span class="string">""</span>, <span class="string">"disable-format"</span>, <span class="string">"Disable formatting generated code"</span>);
     options.optopt(
-        <span class="string">&quot;&quot;</span>,
-        <span class="string">&quot;check-gir-file&quot;</span>,
-        <span class="string">&quot;Check if the given `.gir` file is valid&quot;</span>,
-        <span class="string">&quot;PATH&quot;</span>,
+        <span class="string">""</span>,
+        <span class="string">"check-gir-file"</span>,
+        <span class="string">"Check if the given `.gir` file is valid"</span>,
+        <span class="string">"PATH"</span>,
     );
 
     <span class="kw">let </span>matches = options.parse(<span class="kw-2">&amp;</span>args[<span class="number">1</span>..]).map_err(|e| e.to_string())<span class="question-mark">?</span>;
 
-    <span class="kw">if let </span><span class="prelude-val">Some</span>(check_gir_file) = matches.opt_str(<span class="string">&quot;check-gir-file&quot;</span>) {
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(check_gir_file) = matches.opt_str(<span class="string">"check-gir-file"</span>) {
         <span class="kw">return </span><span class="prelude-val">Ok</span>(RunKind::CheckGirFile(check_gir_file));
     }
 
-    <span class="kw">if </span>matches.opt_present(<span class="string">&quot;h&quot;</span>) {
+    <span class="kw">if </span>matches.opt_present(<span class="string">"h"</span>) {
         print_usage(<span class="kw-2">&amp;</span>program, options);
         process::exit(<span class="number">0</span>);
     }
 
-    <span class="kw">let </span>work_mode = <span class="kw">match </span>matches.opt_str(<span class="string">&quot;m&quot;</span>) {
+    <span class="kw">let </span>work_mode = <span class="kw">match </span>matches.opt_str(<span class="string">"m"</span>) {
         <span class="prelude-val">None </span>=&gt; <span class="prelude-val">None</span>,
         <span class="prelude-val">Some</span>(s) =&gt; <span class="kw">match </span>WorkMode::from_str(<span class="kw-2">&amp;</span>s) {
             <span class="prelude-val">Ok</span>(w) =&gt; <span class="prelude-val">Some</span>(w),
             <span class="prelude-val">Err</span>(e) =&gt; {
-                <span class="macro">eprintln!</span>(<span class="string">&quot;Error (switching to default work mode): {e}&quot;</span>);
+                <span class="macro">eprintln!</span>(<span class="string">"Error (switching to default work mode): {e}"</span>);
                 <span class="prelude-val">None
             </span>}
         },
     };
 
     Config::new(
-        matches.opt_str(<span class="string">&quot;c&quot;</span>).as_str_ref(),
+        matches.opt_str(<span class="string">"c"</span>).as_str_ref(),
         work_mode,
-        <span class="kw-2">&amp;</span>matches.opt_strs(<span class="string">&quot;d&quot;</span>),
+        <span class="kw-2">&amp;</span>matches.opt_strs(<span class="string">"d"</span>),
         matches.free.first().as_str_ref(),
         matches.free.get(<span class="number">1</span>).as_str_ref(),
-        matches.opt_str(<span class="string">&quot;o&quot;</span>).as_str_ref(),
-        matches.opt_str(<span class="string">&quot;doc-target-path&quot;</span>).as_str_ref(),
-        matches.opt_present(<span class="string">&quot;b&quot;</span>),
-        matches.opt_present(<span class="string">&quot;s&quot;</span>),
-        matches.opt_present(<span class="string">&quot;disable-format&quot;</span>),
+        matches.opt_str(<span class="string">"o"</span>).as_str_ref(),
+        matches.opt_str(<span class="string">"doc-target-path"</span>).as_str_ref(),
+        matches.opt_present(<span class="string">"b"</span>),
+        matches.opt_present(<span class="string">"s"</span>),
+        matches.opt_present(<span class="string">"disable-format"</span>),
     )
     .map(RunKind::Config)
 }
@@ -319,25 +320,25 @@
 <span class="kw">fn </span>run_check(check_gir_file: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
     <span class="kw">let </span>path = PathBuf::from(check_gir_file);
     <span class="kw">if </span>!path.is_file() {
-        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;`{check_gir_file}`: file not found&quot;</span>,));
+        <span class="kw">return </span><span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"`{check_gir_file}`: file not found"</span>,));
     }
     <span class="kw">let </span>lib_name = path
         .file_stem()
-        .ok_or(<span class="macro">format!</span>(<span class="string">&quot;Failed to get file stem from `{check_gir_file}`&quot;</span>,))<span class="question-mark">?</span>;
+        .ok_or(<span class="macro">format!</span>(<span class="string">"Failed to get file stem from `{check_gir_file}`"</span>,))<span class="question-mark">?</span>;
     <span class="kw">let </span>lib_name = lib_name
         .to_str()
-        .ok_or_else(|| <span class="string">&quot;failed to convert OsStr to str&quot;</span>.to_owned())<span class="question-mark">?</span>;
+        .ok_or_else(|| <span class="string">"failed to convert OsStr to str"</span>.to_owned())<span class="question-mark">?</span>;
     <span class="kw">let </span><span class="kw-2">mut </span>library = Library::new(lib_name);
     <span class="kw">let </span>parent = path.parent().ok_or(<span class="macro">format!</span>(
-        <span class="string">&quot;Failed to get parent directory from `{check_gir_file}`&quot;</span>,
+        <span class="string">"Failed to get parent directory from `{check_gir_file}`"</span>,
     ))<span class="question-mark">?</span>;
 
     library.read_file(<span class="kw-2">&amp;</span>[parent], <span class="kw-2">&amp;mut </span><span class="macro">vec!</span>[lib_name.to_owned()])
 }
 
 <span class="kw">fn </span>main() -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
-    <span class="kw">if </span>std::env::var_os(<span class="string">&quot;RUST_LOG&quot;</span>).is_none() {
-        std::env::set_var(<span class="string">&quot;RUST_LOG&quot;</span>, <span class="string">&quot;gir=warn,libgir=warn&quot;</span>);
+    <span class="kw">if </span>std::env::var_os(<span class="string">"RUST_LOG"</span>).is_none() {
+        std::env::set_var(<span class="string">"RUST_LOG"</span>, <span class="string">"gir=warn,libgir=warn"</span>);
     }
     env_logger::init();
 
@@ -348,13 +349,13 @@
     };
     cfg.check_disable_format();
 
-    <span class="kw">let </span>statistics = Profiler::new(<span class="string">&quot;Gir&quot;</span>);
+    <span class="kw">let </span>statistics = Profiler::new(<span class="string">"Gir"</span>);
     statistics.start_frame();
 
-    <span class="kw">let </span>watcher_total = statistics.enter(<span class="string">&quot;Total&quot;</span>);
+    <span class="kw">let </span>watcher_total = statistics.enter(<span class="string">"Total"</span>);
 
     <span class="kw">let </span><span class="kw-2">mut </span>library = {
-        <span class="kw">let </span>_watcher = statistics.enter(<span class="string">&quot;Loading&quot;</span>);
+        <span class="kw">let </span>_watcher = statistics.enter(<span class="string">"Loading"</span>);
 
         <span class="kw">let </span><span class="kw-2">mut </span>library = Library::new(<span class="kw-2">&amp;</span>cfg.library_name);
         library.read_file(<span class="kw-2">&amp;</span>cfg.girs_dirs, <span class="kw-2">&amp;mut </span><span class="macro">vec!</span>[cfg.library_full_name()])<span class="question-mark">?</span>;
@@ -362,32 +363,32 @@
     };
 
     {
-        <span class="kw">let </span>_watcher = statistics.enter(<span class="string">&quot;Preprocessing&quot;</span>);
+        <span class="kw">let </span>_watcher = statistics.enter(<span class="string">"Preprocessing"</span>);
         library.preprocessing(cfg.work_mode);
     }
 
     {
-        <span class="kw">let </span>_watcher = statistics.enter(<span class="string">&quot;Update library by config&quot;</span>);
+        <span class="kw">let </span>_watcher = statistics.enter(<span class="string">"Update library by config"</span>);
         gir::update_version::apply_config(<span class="kw-2">&amp;mut </span>library, <span class="kw-2">&amp;</span>cfg);
     }
 
     {
-        <span class="kw">let </span>_watcher = statistics.enter(<span class="string">&quot;Postprocessing&quot;</span>);
+        <span class="kw">let </span>_watcher = statistics.enter(<span class="string">"Postprocessing"</span>);
         library.postprocessing(<span class="kw-2">&amp;</span>cfg);
     }
 
     {
-        <span class="kw">let </span>_watcher = statistics.enter(<span class="string">&quot;Resolving type ids&quot;</span>);
+        <span class="kw">let </span>_watcher = statistics.enter(<span class="string">"Resolving type ids"</span>);
         cfg.resolve_type_ids(<span class="kw-2">&amp;</span>library);
     }
 
     {
-        <span class="kw">let </span>_watcher = statistics.enter(<span class="string">&quot;Checking versions&quot;</span>);
+        <span class="kw">let </span>_watcher = statistics.enter(<span class="string">"Checking versions"</span>);
         gir::update_version::check_function_real_version(<span class="kw-2">&amp;mut </span>library);
     }
 
     <span class="kw">let </span><span class="kw-2">mut </span>env = {
-        <span class="kw">let </span>_watcher = statistics.enter(<span class="string">&quot;Namespace/symbol/class analysis&quot;</span>);
+        <span class="kw">let </span>_watcher = statistics.enter(<span class="string">"Namespace/symbol/class analysis"</span>);
 
         <span class="kw">let </span>namespaces = gir::namespaces_run(<span class="kw-2">&amp;</span>library);
         <span class="kw">let </span>symbols = gir::symbols_run(<span class="kw-2">&amp;</span>library, <span class="kw-2">&amp;</span>namespaces);
@@ -404,17 +405,17 @@
     };
 
     <span class="kw">if </span>env.config.work_mode != WorkMode::Sys {
-        <span class="kw">let </span>_watcher = statistics.enter(<span class="string">&quot;Analyzing&quot;</span>);
+        <span class="kw">let </span>_watcher = statistics.enter(<span class="string">"Analyzing"</span>);
         gir::analysis_run(<span class="kw-2">&amp;mut </span>env);
     }
 
     <span class="kw">if </span>env.config.work_mode != WorkMode::DisplayNotBound {
-        <span class="kw">let </span>_watcher = statistics.enter(<span class="string">&quot;Generating&quot;</span>);
+        <span class="kw">let </span>_watcher = statistics.enter(<span class="string">"Generating"</span>);
         gir::codegen_generate(<span class="kw-2">&amp;</span>env);
     }
 
     <span class="kw">if </span>!env.config.disable_format &amp;&amp; env.config.work_mode.is_generate_rust_files() {
-        <span class="kw">let </span>_watcher = statistics.enter(<span class="string">&quot;Formatting&quot;</span>);
+        <span class="kw">let </span>_watcher = statistics.enter(<span class="string">"Formatting"</span>);
         gir::fmt::format(<span class="kw-2">&amp;</span>env.config.target_path);
     }
 

@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/flags.rs`."><title>flags.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/flags.rs`."><title>flags.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -412,13 +413,13 @@
         <span class="kw">return</span>;
     }
 
-    <span class="kw">let </span>path = root_path.join(<span class="string">&quot;flags.rs&quot;</span>);
+    <span class="kw">let </span>path = root_path.join(<span class="string">"flags.rs"</span>);
     file_saver::save_to_file(path, env.config.make_backup, |w| {
         general::start_comments(w, <span class="kw-2">&amp;</span>env.config)<span class="question-mark">?</span>;
         general::uses(w, env, <span class="kw-2">&amp;</span>env.analysis.flags_imports, <span class="prelude-val">None</span>)<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
 
-        mod_rs.push(<span class="string">&quot;\nmod flags;&quot;</span>.into());
+        mod_rs.push(<span class="string">"\nmod flags;"</span>.into());
         <span class="kw">for </span>flags_analysis <span class="kw">in </span><span class="kw-2">&amp;</span>env.analysis.flags {
             <span class="kw">let </span>config = <span class="kw-2">&amp;</span>env.config.objects[<span class="kw-2">&amp;</span>flags_analysis.full_name];
             <span class="kw">if </span>!config.status.need_generate() {
@@ -433,11 +434,11 @@
                 mod_rs.push(cfg);
             }
             mod_rs.push(<span class="macro">format!</span>(
-                <span class="string">&quot;{}{} use self::flags::{};&quot;</span>,
+                <span class="string">"{}{} use self::flags::{};"</span>,
                 flags
                     .deprecated_version
-                    .map(|<span class="kw">_</span>| <span class="string">&quot;#[allow(deprecated)]\n&quot;</span>)
-                    .unwrap_or(<span class="string">&quot;&quot;</span>),
+                    .map(|<span class="kw">_</span>| <span class="string">"#[allow(deprecated)]\n"</span>)
+                    .unwrap_or(<span class="string">""</span>),
                 flags_analysis.visibility.export_visibility(),
                 flags.name
             ));
@@ -458,7 +459,7 @@
     <span class="kw">let </span>sys_crate_name = env.main_sys_crate_name();
     cfg_condition_no_doc(w, config.cfg_condition.as_ref(), <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
     version_condition_no_doc(w, env, <span class="prelude-val">None</span>, flags.version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;bitflags! {{&quot;</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">"bitflags! {{"</span>)<span class="question-mark">?</span>;
     cfg_condition_doc(w, config.cfg_condition.as_ref(), <span class="bool-val">false</span>, <span class="number">1</span>)<span class="question-mark">?</span>;
     version_condition_doc(w, env, flags.version, <span class="bool-val">false</span>, <span class="number">1</span>)<span class="question-mark">?</span>;
     cfg_deprecated(
@@ -470,18 +471,18 @@
         <span class="number">1</span>,
     )<span class="question-mark">?</span>;
     <span class="kw">if </span>config.must_use {
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;    #[must_use]&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"    #[must_use]"</span>)<span class="question-mark">?</span>;
     }
 
     <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>d) = config.derives {
         derives(w, d, <span class="number">1</span>)<span class="question-mark">?</span>;
     }
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]&quot;</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">"    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]"</span>)<span class="question-mark">?</span>;
 
-    doc_alias(w, <span class="kw-2">&amp;</span>flags.c_type, <span class="string">&quot;&quot;</span>, <span class="number">1</span>)<span class="question-mark">?</span>;
+    doc_alias(w, <span class="kw-2">&amp;</span>flags.c_type, <span class="string">""</span>, <span class="number">1</span>)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(
         w,
-        <span class="string">&quot;    {} struct {}: u32 {{&quot;</span>,
+        <span class="string">"    {} struct {}: u32 {{"</span>,
         analysis.visibility, flags.name
     )<span class="question-mark">?</span>;
     <span class="kw">for </span>member <span class="kw">in </span><span class="kw-2">&amp;</span>flags.members {
@@ -504,19 +505,19 @@
         version_condition(w, env, <span class="prelude-val">None</span>, version, <span class="bool-val">false</span>, <span class="number">2</span>)<span class="question-mark">?</span>;
         cfg_condition(w, cfg_cond, <span class="bool-val">false</span>, <span class="number">2</span>)<span class="question-mark">?</span>;
         <span class="kw">if </span>member.c_identifier != member.name {
-            doc_alias(w, <span class="kw-2">&amp;</span>member.c_identifier, <span class="string">&quot;&quot;</span>, <span class="number">2</span>)<span class="question-mark">?</span>;
+            doc_alias(w, <span class="kw-2">&amp;</span>member.c_identifier, <span class="string">""</span>, <span class="number">2</span>)<span class="question-mark">?</span>;
         }
         <span class="macro">writeln!</span>(
             w,
-            <span class="string">&quot;\t\tconst {} = {}::{} as _;&quot;</span>,
+            <span class="string">"\t\tconst {} = {}::{} as _;"</span>,
             name, sys_crate_name, member.c_identifier,
         )<span class="question-mark">?</span>;
     }
 
     <span class="macro">writeln!</span>(
         w,
-        <span class="string">&quot;    }}
-}}&quot;
+        <span class="string">"    }}
+}}"
     </span>)<span class="question-mark">?</span>;
 
     <span class="kw">let </span>functions = analysis
@@ -530,7 +531,7 @@
         version_condition(w, env, <span class="prelude-val">None</span>, flags.version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
         allow_deprecated(w, flags.deprecated_version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
-        <span class="macro">write!</span>(w, <span class="string">&quot;impl {} {{&quot;</span>, analysis.name)<span class="question-mark">?</span>;
+        <span class="macro">write!</span>(w, <span class="string">"impl {} {{"</span>, analysis.name)<span class="question-mark">?</span>;
         <span class="kw">for </span>func_analysis <span class="kw">in </span>functions {
             function::generate(
                 w,
@@ -544,7 +545,7 @@
                 <span class="number">1</span>,
             )<span class="question-mark">?</span>;
         }
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;}}&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"}}"</span>)<span class="question-mark">?</span>;
     }
 
     trait_impls::generate(
@@ -586,7 +587,7 @@
     allow_deprecated(w, flags.deprecated_version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(
         w,
-        <span class="string">&quot;#[doc(hidden)]
+        <span class="string">"#[doc(hidden)]
 impl IntoGlib for {name} {{
     type GlibType = {sys_crate_name}::{ffi_name};
 
@@ -595,16 +596,16 @@ impl IntoGlib for {name} {{
         self.bits()
     }}
 }}
-&quot;</span>,
+"</span>,
         sys_crate_name = sys_crate_name,
         name = flags.name,
         ffi_name = flags.c_type
     )<span class="question-mark">?</span>;
 
     <span class="kw">let </span>assert = <span class="kw">if </span>env.config.generate_safety_asserts {
-        <span class="string">&quot;skip_assert_initialized!();\n\t\t&quot;
+        <span class="string">"skip_assert_initialized!();\n\t\t"
     </span>} <span class="kw">else </span>{
-        <span class="string">&quot;&quot;
+        <span class="string">""
     </span>};
 
     version_condition(w, env, <span class="prelude-val">None</span>, flags.version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
@@ -612,14 +613,14 @@ impl IntoGlib for {name} {{
     allow_deprecated(w, flags.deprecated_version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(
         w,
-        <span class="string">&quot;#[doc(hidden)]
+        <span class="string">"#[doc(hidden)]
 impl FromGlib&lt;{sys_crate_name}::{ffi_name}&gt; for {name} {{
     #[inline]
     unsafe fn from_glib(value: {sys_crate_name}::{ffi_name}) -&gt; Self {{
         {assert}Self::from_bits_truncate(value)
     }}
 }}
-&quot;</span>,
+"</span>,
         sys_crate_name = sys_crate_name,
         name = flags.name,
         ffi_name = flags.c_type,
@@ -627,7 +628,7 @@ impl FromGlib&lt;{sys_crate_name}::{ffi_name}&gt; for {name} {{
     )<span class="question-mark">?</span>;
 
     <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>get_type) = flags.glib_get_type {
-        <span class="kw">let </span>configured_functions = config.functions.matched(<span class="string">&quot;get_type&quot;</span>);
+        <span class="kw">let </span>configured_functions = config.functions.matched(<span class="string">"get_type"</span>);
         <span class="kw">let </span>version = std::iter::once(flags.version)
             .chain(configured_functions.iter().map(|f| f.version))
             .max()
@@ -638,20 +639,20 @@ impl FromGlib&lt;{sys_crate_name}::{ffi_name}&gt; for {name} {{
         allow_deprecated(w, flags.deprecated_version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(
             w,
-            <span class="string">&quot;impl StaticType for {name} {{
-                #[inline]&quot;</span>,
+            <span class="string">"impl StaticType for {name} {{
+                #[inline]"</span>,
             name = flags.name,
         )<span class="question-mark">?</span>;
-        doc_alias(w, get_type, <span class="string">&quot;&quot;</span>, <span class="number">1</span>)<span class="question-mark">?</span>;
+        doc_alias(w, get_type, <span class="string">""</span>, <span class="number">1</span>)<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(
             w,
-            <span class="string">&quot;   fn static_type() -&gt; {glib_type} {{
+            <span class="string">"   fn static_type() -&gt; {glib_type} {{
                     unsafe {{ from_glib({sys_crate_name}::{get_type}()) }}
                 }}
-            }}&quot;</span>,
+            }}"</span>,
             sys_crate_name = sys_crate_name,
             get_type = get_type,
-            glib_type = use_glib_type(env, <span class="string">&quot;Type&quot;</span>)
+            glib_type = use_glib_type(env, <span class="string">"Type"</span>)
         )<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
 
@@ -660,7 +661,7 @@ impl FromGlib&lt;{sys_crate_name}::{ffi_name}&gt; for {name} {{
         allow_deprecated(w, flags.deprecated_version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(
             w,
-            <span class="string">&quot;impl {has_param_spec} for {name} {{
+            <span class="string">"impl {has_param_spec} for {name} {{
                 type ParamSpec = {param_spec_flags};
                 type SetValue = Self;
                 type BuilderFn = fn(&amp;str) -&gt; {param_spec_builder}&lt;Self&gt;;
@@ -668,11 +669,11 @@ impl FromGlib&lt;{sys_crate_name}::{ffi_name}&gt; for {name} {{
                 fn param_spec_builder() -&gt; Self::BuilderFn {{
                     Self::ParamSpec::builder
                 }}
-}}&quot;</span>,
+}}"</span>,
             name = flags.name,
-            has_param_spec = use_glib_type(env, <span class="string">&quot;HasParamSpec&quot;</span>),
-            param_spec_flags = use_glib_type(env, <span class="string">&quot;ParamSpecFlags&quot;</span>),
-            param_spec_builder = use_glib_type(env, <span class="string">&quot;ParamSpecFlagsBuilder&quot;</span>),
+            has_param_spec = use_glib_type(env, <span class="string">"HasParamSpec"</span>),
+            param_spec_flags = use_glib_type(env, <span class="string">"ParamSpecFlags"</span>),
+            param_spec_builder = use_glib_type(env, <span class="string">"ParamSpecFlagsBuilder"</span>),
         )<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
 
@@ -681,11 +682,11 @@ impl FromGlib&lt;{sys_crate_name}::{ffi_name}&gt; for {name} {{
         allow_deprecated(w, flags.deprecated_version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(
             w,
-            <span class="string">&quot;impl {valuetype} for {name} {{
+            <span class="string">"impl {valuetype} for {name} {{
     type Type = Self;
-}}&quot;</span>,
+}}"</span>,
             name = flags.name,
-            valuetype = use_glib_type(env, <span class="string">&quot;value::ValueType&quot;</span>),
+            valuetype = use_glib_type(env, <span class="string">"value::ValueType"</span>),
         )<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
 
@@ -694,20 +695,20 @@ impl FromGlib&lt;{sys_crate_name}::{ffi_name}&gt; for {name} {{
         allow_deprecated(w, flags.deprecated_version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(
             w,
-            <span class="string">&quot;unsafe impl&lt;&#39;a&gt; {from_value_type}&lt;&#39;a&gt; for {name} {{
+            <span class="string">"unsafe impl&lt;'a&gt; {from_value_type}&lt;'a&gt; for {name} {{
     type Checker = {genericwrongvaluetypechecker}&lt;Self&gt;;
 
     #[inline]
-    unsafe fn from_value(value: &amp;&#39;a {gvalue}) -&gt; Self {{
+    unsafe fn from_value(value: &amp;'a {gvalue}) -&gt; Self {{
         {assert}from_glib({glib}(value.to_glib_none().0))
     }}
-}}&quot;</span>,
+}}"</span>,
             name = flags.name,
-            glib = use_glib_type(env, <span class="string">&quot;gobject_ffi::g_value_get_flags&quot;</span>),
-            gvalue = use_glib_type(env, <span class="string">&quot;Value&quot;</span>),
-            genericwrongvaluetypechecker = use_glib_type(env, <span class="string">&quot;value::GenericValueTypeChecker&quot;</span>),
+            glib = use_glib_type(env, <span class="string">"gobject_ffi::g_value_get_flags"</span>),
+            gvalue = use_glib_type(env, <span class="string">"Value"</span>),
+            genericwrongvaluetypechecker = use_glib_type(env, <span class="string">"value::GenericValueTypeChecker"</span>),
             assert = assert,
-            from_value_type = use_glib_type(env, <span class="string">&quot;value::FromValue&quot;</span>),
+            from_value_type = use_glib_type(env, <span class="string">"value::FromValue"</span>),
         )<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
 
@@ -716,7 +717,7 @@ impl FromGlib&lt;{sys_crate_name}::{ffi_name}&gt; for {name} {{
         allow_deprecated(w, flags.deprecated_version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(
             w,
-            <span class="string">&quot;impl ToValue for {name} {{
+            <span class="string">"impl ToValue for {name} {{
     #[inline]
     fn to_value(&amp;self) -&gt; {gvalue} {{
         let mut value = {gvalue}::for_value_type::&lt;Self&gt;();
@@ -730,11 +731,11 @@ impl FromGlib&lt;{sys_crate_name}::{ffi_name}&gt; for {name} {{
     fn value_type(&amp;self) -&gt; {gtype} {{
         Self::static_type()
     }}
-}}&quot;</span>,
+}}"</span>,
             name = flags.name,
-            glib = use_glib_type(env, <span class="string">&quot;gobject_ffi::g_value_set_flags&quot;</span>),
-            gvalue = use_glib_type(env, <span class="string">&quot;Value&quot;</span>),
-            gtype = use_glib_type(env, <span class="string">&quot;Type&quot;</span>),
+            glib = use_glib_type(env, <span class="string">"gobject_ffi::g_value_set_flags"</span>),
+            gvalue = use_glib_type(env, <span class="string">"Value"</span>),
+            gtype = use_glib_type(env, <span class="string">"Type"</span>),
         )<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
 
@@ -743,14 +744,14 @@ impl FromGlib&lt;{sys_crate_name}::{ffi_name}&gt; for {name} {{
         allow_deprecated(w, flags.deprecated_version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(
             w,
-            <span class="string">&quot;impl From&lt;{name}&gt; for {gvalue} {{
+            <span class="string">"impl From&lt;{name}&gt; for {gvalue} {{
     #[inline]
     fn from(v: {name}) -&gt; Self {{
         {assert}ToValue::to_value(&amp;v)
     }}
-}}&quot;</span>,
+}}"</span>,
             name = flags.name,
-            gvalue = use_glib_type(env, <span class="string">&quot;Value&quot;</span>),
+            gvalue = use_glib_type(env, <span class="string">"Value"</span>),
             assert = assert,
         )<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;

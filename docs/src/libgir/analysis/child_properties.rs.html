@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/analysis/child_properties.rs`."><title>child_properties.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/analysis/child_properties.rs`."><title>child_properties.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -229,7 +230,7 @@
         <span class="kw">return </span>properties;
     }
     <span class="kw">let </span>config = config.unwrap();
-    <span class="kw">let </span>child_name = config.child_name.as_ref().map_or(<span class="string">&quot;child&quot;</span>, |s| s.as_str());
+    <span class="kw">let </span>child_name = config.child_name.as_ref().map_or(<span class="string">"child"</span>, |s| s.as_str());
     <span class="kw">let </span>child_type = config
         .child_type
         .as_ref()
@@ -237,7 +238,7 @@
     <span class="kw">if </span>config.child_type.is_some() &amp;&amp; child_type.is_none() {
         <span class="kw">let </span>owner_name = RustType::try_new(env, type_tid).into_string();
         <span class="kw">let </span>child_type: <span class="kw-2">&amp;</span>str = config.child_type.as_ref().unwrap();
-        <span class="macro">error!</span>(<span class="string">&quot;Bad child type `{}` for `{}`&quot;</span>, child_type, owner_name);
+        <span class="macro">error!</span>(<span class="string">"Bad child type `{}` for `{}`"</span>, child_type, owner_name);
         <span class="kw">return </span>properties;
     }
 
@@ -250,7 +251,7 @@
     }
 
     <span class="kw">if </span>!properties.is_empty() {
-        imports.add(<span class="string">&quot;glib::prelude::*&quot;</span>);
+        imports.add(<span class="string">"glib::prelude::*"</span>);
         <span class="kw">if let </span><span class="prelude-val">Some</span>(rust_type) = child_type.and_then(|typ| RustType::try_new(env, typ).ok()) {
             imports.add_used_types(rust_type.used_types());
         }
@@ -281,7 +282,7 @@
     <span class="kw">if let </span><span class="prelude-val">Some</span>(typ) = env.library.find_type(<span class="number">0</span>, <span class="kw-2">&amp;</span>prop.type_name) {
         <span class="kw">let </span>doc_hidden = prop.doc_hidden;
 
-        imports.add(<span class="string">&quot;glib::prelude::*&quot;</span>);
+        imports.add(<span class="string">"glib::prelude::*"</span>);
         <span class="kw">if let </span><span class="prelude-val">Ok</span>(rust_type) = RustType::try_new(env, typ) {
             imports.add_used_types(rust_type.used_types());
         }
@@ -318,20 +319,20 @@
                 callback_modified: <span class="bool-val">false</span>,
             };
             <span class="comment">// TODO: bounds_str push?!?!
-            </span>bounds_str.push_str(<span class="string">&quot;TODO&quot;</span>);
-            <span class="macro">format!</span>(<span class="string">&quot;{prop_name}: {TYPE_PARAMETERS_START}&quot;</span>)
+            </span>bounds_str.push_str(<span class="string">"TODO"</span>);
+            <span class="macro">format!</span>(<span class="string">"{prop_name}: {TYPE_PARAMETERS_START}"</span>)
             <span class="comment">// let mut bounds = Bounds::default();
-            // bounds.add_parameter(&quot;P&quot;, &amp;r_type, bound, false);
+            // bounds.add_parameter("P", &amp;r_type, bound, false);
             // let (s_bounds, _) = function::bounds(&amp;bounds, &amp;[], false);
-            // // Because the bounds won&#39;t necessarily be added into the final
-            // function, we // only keep the &quot;inner&quot; part to make
+            // // Because the bounds won't necessarily be added into the final
+            // function, we // only keep the "inner" part to make
             // the string computation easier. So // `&lt;T: X&gt;` becomes
             // `T: X`. bounds_str.push_str(&amp;s_bounds[1..s_bounds.
-            // len() - 1]); format!(&quot;{}: {}&quot;, prop_name,
+            // len() - 1]); format!("{}: {}", prop_name,
             // bounds.iter().last().unwrap().alias)
         </span>} <span class="kw">else </span>{
             <span class="macro">format!</span>(
-                <span class="string">&quot;{}: {}&quot;</span>,
+                <span class="string">"{}: {}"</span>,
                 prop_name,
                 RustType::builder(env, typ)
                     .direction(dir)
@@ -360,7 +361,7 @@
     } <span class="kw">else </span>{
         <span class="kw">let </span>owner_name = RustType::try_new(env, type_tid).into_string();
         <span class="macro">error!</span>(
-            <span class="string">&quot;Bad type `{}` of child property `{}` for `{}`&quot;</span>,
+            <span class="string">"Bad type `{}` of child property `{}` for `{}`"</span>,
             <span class="kw-2">&amp;</span>prop.type_name, name, owner_name
         );
         <span class="prelude-val">None

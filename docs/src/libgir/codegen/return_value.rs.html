@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/return_value.rs`."><title>return_value.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/return_value.rs`."><title>return_value.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -310,10 +311,10 @@
             &amp;&amp; <span class="self">self</span>.direction == library::ParameterDirection::Return
             &amp;&amp; is_gstring(<span class="kw-2">&amp;</span>name)
         {
-            name = <span class="string">&quot;String&quot;</span>.to_owned();
+            name = <span class="string">"String"</span>.to_owned();
         }
         <span class="kw">let </span>type_str = <span class="kw">match </span>ConversionType::of(env, <span class="self">self</span>.typ) {
-            ConversionType::Unknown =&gt; <span class="macro">format!</span>(<span class="string">&quot;/*Unknown conversion*/{name}&quot;</span>),
+            ConversionType::Unknown =&gt; <span class="macro">format!</span>(<span class="string">"/*Unknown conversion*/{name}"</span>),
             <span class="comment">// TODO: records as in gtk_container_get_path_for_child
             </span><span class="kw">_ </span>=&gt; name,
         };
@@ -333,15 +334,15 @@
         par.lib_par
             .to_return_value(env, try_from_glib, is_trampoline)
             .map(|type_name| {
-                <span class="kw">if </span><span class="self">self</span>.nullable_return_is_error.is_some() &amp;&amp; type_name.starts_with(<span class="string">&quot;Option&lt;&quot;</span>) {
+                <span class="kw">if </span><span class="self">self</span>.nullable_return_is_error.is_some() &amp;&amp; type_name.starts_with(<span class="string">"Option&lt;"</span>) {
                     <span class="comment">// Change `Option&lt;T&gt;` to `Result&lt;T, glib::BoolError&gt;`
                     </span><span class="macro">format!</span>(
-                        <span class="string">&quot;Result&lt;{}, {}BoolError&gt;&quot;</span>,
+                        <span class="string">"Result&lt;{}, {}BoolError&gt;"</span>,
                         <span class="kw-2">&amp;</span>type_name[<span class="number">7</span>..(type_name.len() - <span class="number">1</span>)],
                         <span class="kw">if </span>env.namespaces.glib_ns_id == namespaces::MAIN {
-                            <span class="string">&quot;&quot;
+                            <span class="string">""
                         </span>} <span class="kw">else </span>{
-                            <span class="string">&quot;glib::&quot;
+                            <span class="string">"glib::"
                         </span>}
                     )
                 } <span class="kw">else </span>{
@@ -371,11 +372,11 @@
             .iter()
             .filter(|out| out.lib_par.array_length.is_some())
             .count();
-        <span class="comment">// We need to differentiate between array(s)&#39;s size arguments and normal ones.
-        // If we have 2 &quot;normal&quot; arguments and one &quot;size&quot; argument, we still
-        // need to wrap them into &quot;()&quot; so we take that into account. If the
+        <span class="comment">// We need to differentiate between array(s)'s size arguments and normal ones.
+        // If we have 2 "normal" arguments and one "size" argument, we still
+        // need to wrap them into "()" so we take that into account. If the
         // opposite, it means that there are two arguments in any case so
-        // we need &quot;()&quot; too.
+        // we need "()" too.
         </span><span class="kw">let </span>num_outs = std::cmp::max(num_out_args, num_out_sizes);
         <span class="kw">match </span>analysis.outs.mode {
             Mode::Normal | Mode::Combined =&gt; {
@@ -424,7 +425,7 @@
 <span class="kw">fn </span>out_parameter_as_return_parts(
     analysis: <span class="kw-2">&amp;</span>analysis::functions::Info,
     env: <span class="kw-2">&amp;</span>Env,
-) -&gt; (<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, String) {
+) -&gt; (<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, String) {
     <span class="kw">use </span><span class="kw">crate</span>::analysis::out_parameters::Mode::<span class="kw-2">*</span>;
     <span class="kw">let </span>num_out_args = analysis
         .outs
@@ -436,41 +437,41 @@
         .iter()
         .filter(|out| out.lib_par.array_length.is_some())
         .count();
-    <span class="comment">// We need to differentiate between array(s)&#39;s size arguments and normal ones.
-    // If we have 2 &quot;normal&quot; arguments and one &quot;size&quot; argument, we still need to
-    // wrap them into &quot;()&quot; so we take that into account. If the opposite, it
-    // means that there are two arguments in any case so we need &quot;()&quot; too.
+    <span class="comment">// We need to differentiate between array(s)'s size arguments and normal ones.
+    // If we have 2 "normal" arguments and one "size" argument, we still need to
+    // wrap them into "()" so we take that into account. If the opposite, it
+    // means that there are two arguments in any case so we need "()" too.
     </span><span class="kw">let </span>num_outs = cmp::max(num_out_args, num_out_sizes);
     <span class="kw">match </span>analysis.outs.mode {
         Normal | Combined =&gt; {
             <span class="kw">if </span>num_outs &gt; <span class="number">1 </span>{
-                (<span class="string">&quot;(&quot;</span>, <span class="string">&quot;)&quot;</span>.to_owned())
+                (<span class="string">"("</span>, <span class="string">")"</span>.to_owned())
             } <span class="kw">else </span>{
-                (<span class="string">&quot;&quot;</span>, String::new())
+                (<span class="string">""</span>, String::new())
             }
         }
         Optional =&gt; {
             <span class="kw">if </span>num_outs &gt; <span class="number">1 </span>{
                 <span class="kw">if </span>analysis.ret.nullable_return_is_error.is_some() {
                     (
-                        <span class="string">&quot;Result&lt;(&quot;</span>,
-                        <span class="macro">format!</span>(<span class="string">&quot;), {}&gt;&quot;</span>, use_glib_type(env, <span class="string">&quot;BoolError&quot;</span>)),
+                        <span class="string">"Result&lt;("</span>,
+                        <span class="macro">format!</span>(<span class="string">"), {}&gt;"</span>, use_glib_type(env, <span class="string">"BoolError"</span>)),
                     )
                 } <span class="kw">else </span>{
-                    (<span class="string">&quot;Option&lt;(&quot;</span>, <span class="string">&quot;)&gt;&quot;</span>.to_owned())
+                    (<span class="string">"Option&lt;("</span>, <span class="string">")&gt;"</span>.to_owned())
                 }
             } <span class="kw">else if </span>analysis.ret.nullable_return_is_error.is_some() {
-                (<span class="string">&quot;Result&lt;&quot;</span>, <span class="macro">format!</span>(<span class="string">&quot;, {}&gt;&quot;</span>, use_glib_type(env, <span class="string">&quot;BoolError&quot;</span>)))
+                (<span class="string">"Result&lt;"</span>, <span class="macro">format!</span>(<span class="string">", {}&gt;"</span>, use_glib_type(env, <span class="string">"BoolError"</span>)))
             } <span class="kw">else </span>{
-                (<span class="string">&quot;Option&lt;&quot;</span>, <span class="string">&quot;&gt;&quot;</span>.to_owned())
+                (<span class="string">"Option&lt;"</span>, <span class="string">"&gt;"</span>.to_owned())
             }
         }
         Throws(..) =&gt; {
             <span class="kw">if </span>num_outs == <span class="number">1 </span>+ <span class="number">1 </span>{
-                <span class="comment">// if only one parameter except &quot;glib::Error&quot;
-                </span>(<span class="string">&quot;Result&lt;&quot;</span>, <span class="macro">format!</span>(<span class="string">&quot;, {}&gt;&quot;</span>, use_glib_type(env, <span class="string">&quot;Error&quot;</span>)))
+                <span class="comment">// if only one parameter except "glib::Error"
+                </span>(<span class="string">"Result&lt;"</span>, <span class="macro">format!</span>(<span class="string">", {}&gt;"</span>, use_glib_type(env, <span class="string">"Error"</span>)))
             } <span class="kw">else </span>{
-                (<span class="string">&quot;Result&lt;(&quot;</span>, <span class="macro">format!</span>(<span class="string">&quot;), {}&gt;&quot;</span>, use_glib_type(env, <span class="string">&quot;Error&quot;</span>)))
+                (<span class="string">"Result&lt;("</span>, <span class="macro">format!</span>(<span class="string">"), {}&gt;"</span>, use_glib_type(env, <span class="string">"Error"</span>)))
             }
         }
         <span class="prelude-val">None </span>=&gt; <span class="macro">unreachable!</span>(),
@@ -480,7 +481,7 @@
 <span class="kw">pub fn </span>out_parameters_as_return(env: <span class="kw-2">&amp;</span>Env, analysis: <span class="kw-2">&amp;</span>analysis::functions::Info) -&gt; String {
     <span class="kw">let </span>(prefix, suffix) = out_parameter_as_return_parts(analysis, env);
     <span class="kw">let </span><span class="kw-2">mut </span>return_str = String::with_capacity(<span class="number">100</span>);
-    return_str.push_str(<span class="string">&quot; -&gt; &quot;</span>);
+    return_str.push_str(<span class="string">" -&gt; "</span>);
     return_str.push_str(prefix);
 
     <span class="kw">let </span>array_lengths: Vec&lt;<span class="kw">_</span>&gt; = analysis
@@ -519,7 +520,7 @@
         }
 
         <span class="kw">if </span>pos &gt; skip {
-            return_str.push_str(<span class="string">&quot;, &quot;</span>);
+            return_str.push_str(<span class="string">", "</span>);
         }
         <span class="kw">let </span>s = out_parameter_as_return(out, env);
         return_str.push_str(<span class="kw-2">&amp;</span>s);
@@ -538,7 +539,7 @@
         .try_build_param()
         .into_string();
     <span class="kw">match </span>ConversionType::of(env, out.lib_par.typ) {
-        ConversionType::Unknown =&gt; <span class="macro">format!</span>(<span class="string">&quot;/*Unknown conversion*/{name}&quot;</span>),
+        ConversionType::Unknown =&gt; <span class="macro">format!</span>(<span class="string">"/*Unknown conversion*/{name}"</span>),
         <span class="kw">_ </span>=&gt; name,
     }
 }

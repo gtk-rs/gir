@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/function_body_chunk.rs`."><title>function_body_chunk.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/function_body_chunk.rs`."><title>function_body_chunk.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1458,12 +1459,12 @@
 
 <span class="comment">// Key: user data index
 // Value: (global position used as id, type, callbacks)
-</span><span class="kw">type </span>FuncParameters&lt;<span class="lifetime">&#39;a</span>&gt; = BTreeMap&lt;usize, FuncParameter&lt;<span class="lifetime">&#39;a</span>&gt;&gt;;
+</span><span class="kw">type </span>FuncParameters&lt;<span class="lifetime">'a</span>&gt; = BTreeMap&lt;usize, FuncParameter&lt;<span class="lifetime">'a</span>&gt;&gt;;
 
-<span class="kw">struct </span>FuncParameter&lt;<span class="lifetime">&#39;a</span>&gt; {
+<span class="kw">struct </span>FuncParameter&lt;<span class="lifetime">'a</span>&gt; {
     pos: usize,
     full_type: <span class="prelude-ty">Option</span>&lt;(String, String)&gt;,
-    callbacks: Vec&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Trampoline&gt;,
+    callbacks: Vec&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Trampoline&gt;,
 }
 
 <span class="kw">impl </span>Builder {
@@ -1555,30 +1556,30 @@
                             <span class="kw">if </span>calls.iter().all(|c| c.scope.is_call()) {
                                 <span class="prelude-val">Some</span>((
                                     <span class="macro">format!</span>(
-                                        <span class="string">&quot;&amp;({})&quot;</span>,
+                                        <span class="string">"&amp;({})"</span>,
                                         calls
                                             .iter()
-                                            .map(|c| <span class="macro">format!</span>(<span class="string">&quot;&amp;{}&quot;</span>, c.bound_name))
+                                            .map(|c| <span class="macro">format!</span>(<span class="string">"&amp;{}"</span>, c.bound_name))
                                             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
-                                            .join(<span class="string">&quot;, &quot;</span>)
+                                            .join(<span class="string">", "</span>)
                                     ),
                                     <span class="macro">format!</span>(
-                                        <span class="string">&quot;&amp;mut ({})&quot;</span>,
+                                        <span class="string">"&amp;mut ({})"</span>,
                                         calls
                                             .iter()
-                                            .map(|c| <span class="macro">format!</span>(<span class="string">&quot;&amp;mut {}&quot;</span>, c.bound_name))
+                                            .map(|c| <span class="macro">format!</span>(<span class="string">"&amp;mut {}"</span>, c.bound_name))
                                             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
-                                            .join(<span class="string">&quot;, &quot;</span>)
+                                            .join(<span class="string">", "</span>)
                                     ),
                                 ))
                             } <span class="kw">else </span>{
                                 <span class="kw">let </span>s = <span class="macro">format!</span>(
-                                    <span class="string">&quot;Box_&lt;({})&gt;&quot;</span>,
+                                    <span class="string">"Box_&lt;({})&gt;"</span>,
                                     calls
                                         .iter()
-                                        .map(|c| <span class="macro">format!</span>(<span class="string">&quot;&amp;{}&quot;</span>, c.bound_name))
+                                        .map(|c| <span class="macro">format!</span>(<span class="string">"&amp;{}"</span>, c.bound_name))
                                         .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
-                                        .join(<span class="string">&quot;, &quot;</span>)
+                                        .join(<span class="string">", "</span>)
                                 );
                                 <span class="prelude-val">Some</span>((s.clone(), s))
                             }
@@ -1646,7 +1647,7 @@
                     <span class="kw-2">&amp;mut </span>chunks,
                     destroy,
                     <span class="kw-2">&amp;</span>group_by_user_data[<span class="kw-2">&amp;</span>destroy.user_data_index].full_type,
-                    <span class="prelude-val">None</span>, <span class="comment">// doesn&#39;t matter for destroy
+                    <span class="prelude-val">None</span>, <span class="comment">// doesn't matter for destroy
                     </span>bounds,
                     bounds_names,
                     <span class="bool-val">true</span>,
@@ -1660,34 +1661,34 @@
             {
                 <span class="kw">if </span>calls.len() &gt; <span class="number">1 </span>{
                     chunks.push(Chunk::Let {
-                        name: <span class="macro">format!</span>(<span class="string">&quot;super_callback{pos}&quot;</span>),
+                        name: <span class="macro">format!</span>(<span class="string">"super_callback{pos}"</span>),
                         is_mut: <span class="bool-val">false</span>,
                         value: Box::new(Chunk::Custom(<span class="kw">if </span>poses.is_empty() {
                             <span class="macro">format!</span>(
-                                <span class="string">&quot;Box_::new(Box_::new(({})))&quot;</span>,
+                                <span class="string">"Box_::new(Box_::new(({})))"</span>,
                                 calls
                                     .iter()
-                                    .map(|c| <span class="macro">format!</span>(<span class="string">&quot;{}_data&quot;</span>, c.name))
+                                    .map(|c| <span class="macro">format!</span>(<span class="string">"{}_data"</span>, c.name))
                                     .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
-                                    .join(<span class="string">&quot;, &quot;</span>)
+                                    .join(<span class="string">", "</span>)
                             )
                         } <span class="kw">else if </span>calls.iter().all(|c| c.scope.is_call()) {
                             <span class="macro">format!</span>(
-                                <span class="string">&quot;&amp;({})&quot;</span>,
+                                <span class="string">"&amp;({})"</span>,
                                 calls
                                     .iter()
-                                    .map(|c| <span class="macro">format!</span>(<span class="string">&quot;{}_data&quot;</span>, c.name))
+                                    .map(|c| <span class="macro">format!</span>(<span class="string">"{}_data"</span>, c.name))
                                     .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
-                                    .join(<span class="string">&quot;, &quot;</span>)
+                                    .join(<span class="string">", "</span>)
                             )
                         } <span class="kw">else </span>{
                             <span class="macro">format!</span>(
-                                <span class="string">&quot;Box_::new(({}))&quot;</span>,
+                                <span class="string">"Box_::new(({}))"</span>,
                                 calls
                                     .iter()
-                                    .map(|c| <span class="macro">format!</span>(<span class="string">&quot;{}_data&quot;</span>, c.name))
+                                    .map(|c| <span class="macro">format!</span>(<span class="string">"{}_data"</span>, c.name))
                                     .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
-                                    .join(<span class="string">&quot;, &quot;</span>)
+                                    .join(<span class="string">", "</span>)
                             )
                         })),
                         type_: <span class="prelude-val">Some</span>(Box::new(Chunk::Custom(
@@ -1696,17 +1697,17 @@
                     });
                 } <span class="kw">else if </span>!calls.is_empty() {
                     chunks.push(Chunk::Let {
-                        name: <span class="macro">format!</span>(<span class="string">&quot;super_callback{pos}&quot;</span>),
+                        name: <span class="macro">format!</span>(<span class="string">"super_callback{pos}"</span>),
                         is_mut: <span class="bool-val">false</span>,
                         value: Box::new(Chunk::Custom(<span class="macro">format!</span>(
-                            <span class="string">&quot;{}{}_data&quot;</span>,
-                            <span class="kw">if </span>calls[<span class="number">0</span>].scope.is_call() { <span class="string">&quot;&amp;&quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;&quot; </span>},
+                            <span class="string">"{}{}_data"</span>,
+                            <span class="kw">if </span>calls[<span class="number">0</span>].scope.is_call() { <span class="string">"&amp;" </span>} <span class="kw">else </span>{ <span class="string">"" </span>},
                             calls[<span class="number">0</span>].name
                         ))),
                         type_: <span class="prelude-val">Some</span>(Box::new(Chunk::Custom(<span class="kw">if </span>calls[<span class="number">0</span>].scope.is_call() {
-                            <span class="macro">format!</span>(<span class="string">&quot;&amp;{}&quot;</span>, calls[<span class="number">0</span>].bound_name)
+                            <span class="macro">format!</span>(<span class="string">"&amp;{}"</span>, calls[<span class="number">0</span>].bound_name)
                         } <span class="kw">else </span>{
-                            <span class="macro">format!</span>(<span class="string">&quot;Box_&lt;{}&gt;&quot;</span>, calls[<span class="number">0</span>].bound_name)
+                            <span class="macro">format!</span>(<span class="string">"Box_&lt;{}&gt;"</span>, calls[<span class="number">0</span>].bound_name)
                         }))),
                     });
                 }
@@ -1742,10 +1743,10 @@
     ) -&gt; Chunk {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(need_from_glib) = <span class="self">self</span>.is_uninitialized_var(name, uninitialized_vars) {
             Chunk::Custom(<span class="macro">format!</span>(
-                <span class="string">&quot;{}{}.assume_init(){}&quot;</span>,
-                <span class="kw">if </span>need_from_glib { <span class="string">&quot;from_glib(&quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;&quot; </span>},
+                <span class="string">"{}{}.assume_init(){}"</span>,
+                <span class="kw">if </span>need_from_glib { <span class="string">"from_glib(" </span>} <span class="kw">else </span>{ <span class="string">"" </span>},
                 name,
-                <span class="kw">if </span>need_from_glib { <span class="string">&quot;)&quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;&quot; </span>},
+                <span class="kw">if </span>need_from_glib { <span class="string">")" </span>} <span class="kw">else </span>{ <span class="string">"" </span>},
             ))
         } <span class="kw">else </span>{
             Chunk::Custom(name.to_string())
@@ -1778,23 +1779,23 @@
             <span class="kw">if </span>full_type.is_none() {
                 <span class="kw">if </span>trampoline.scope.is_call() {
                     chunks.push(Chunk::Custom(<span class="macro">format!</span>(
-                        <span class="string">&quot;let {0}_data: {1} = {0};&quot;</span>,
+                        <span class="string">"let {0}_data: {1} = {0};"</span>,
                         trampoline.name, trampoline.bound_name
                     )));
                 } <span class="kw">else </span>{
                     chunks.push(Chunk::Custom(<span class="macro">format!</span>(
-                        <span class="string">&quot;let {0}_data: Box_&lt;{1}&gt; = Box_::new({0});&quot;</span>,
+                        <span class="string">"let {0}_data: Box_&lt;{1}&gt; = Box_::new({0});"</span>,
                         trampoline.name, trampoline.bound_name
                     )));
                 }
             } <span class="kw">else if </span>trampoline.scope.is_call() {
                 chunks.push(Chunk::Custom(<span class="macro">format!</span>(
-                    <span class="string">&quot;let {0}_data: &amp;{1} = &amp;{0};&quot;</span>,
+                    <span class="string">"let {0}_data: &amp;{1} = &amp;{0};"</span>,
                     trampoline.name, trampoline.bound_name
                 )));
             } <span class="kw">else </span>{
                 chunks.push(Chunk::Custom(<span class="macro">format!</span>(
-                    <span class="string">&quot;let {0}_data: {1} = {0};&quot;</span>,
+                    <span class="string">"let {0}_data: {1} = {0};"</span>,
                     trampoline.name, trampoline.bound_name
                 )));
             }
@@ -1804,7 +1805,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>arguments = Vec::new();
 
         <span class="kw">for </span>par <span class="kw">in </span><span class="kw-2">&amp;</span>trampoline.parameters.transformations {
-            <span class="kw">if </span>par.name == <span class="string">&quot;this&quot;
+            <span class="kw">if </span>par.name == <span class="string">"this"
                 </span>|| trampoline.parameters.c_parameters[par.ind_c].is_real_gpointer(env)
             {
                 <span class="kw">continue</span>;
@@ -1818,21 +1819,21 @@
             <span class="kw">if </span>is_gstring(<span class="kw-2">&amp;</span>ty_name) {
                 <span class="kw">if </span><span class="kw-2">*</span>nullable {
                     arguments.push(Chunk::Name(<span class="macro">format!</span>(
-                        <span class="string">&quot;(*{}).as_ref().map(|s| s.as_str())&quot;</span>,
+                        <span class="string">"(*{}).as_ref().map(|s| s.as_str())"</span>,
                         par.name
                     )));
                 } <span class="kw">else </span>{
-                    arguments.push(Chunk::Name(<span class="macro">format!</span>(<span class="string">&quot;{}.as_str()&quot;</span>, par.name)));
+                    arguments.push(Chunk::Name(<span class="macro">format!</span>(<span class="string">"{}.as_str()"</span>, par.name)));
                 }
                 <span class="kw">continue</span>;
             }
             <span class="kw">if </span><span class="kw-2">*</span>nullable &amp;&amp; !is_basic {
-                arguments.push(Chunk::Name(<span class="macro">format!</span>(<span class="string">&quot;{}.as_ref().as_ref()&quot;</span>, par.name)));
+                arguments.push(Chunk::Name(<span class="macro">format!</span>(<span class="string">"{}.as_ref().as_ref()"</span>, par.name)));
                 <span class="kw">continue</span>;
             }
             arguments.push(Chunk::Name(<span class="macro">format!</span>(
-                <span class="string">&quot;{}{}&quot;</span>,
-                <span class="kw">if </span>is_basic { <span class="string">&quot;&quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;&amp;&quot; </span>},
+                <span class="string">"{}{}"</span>,
+                <span class="kw">if </span>is_basic { <span class="string">"" </span>} <span class="kw">else </span>{ <span class="string">"&amp;" </span>},
                 par.name
             )));
         }
@@ -1841,34 +1842,34 @@
             .parameters
             .c_parameters
             .last()
-            .map_or_else(|| <span class="string">&quot;Unknown&quot;</span>.to_owned(), |p| p.name.clone());
+            .map_or_else(|| <span class="string">"Unknown"</span>.to_owned(), |p| p.name.clone());
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(full_type) = full_type {
             <span class="kw">if </span>is_destroy || trampoline.scope.is_async() {
                 body.push(Chunk::Let {
-                    name: <span class="macro">format!</span>(<span class="string">&quot;{}callback&quot;</span>, <span class="kw">if </span>is_destroy { <span class="string">&quot;_&quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;&quot; </span>}),
+                    name: <span class="macro">format!</span>(<span class="string">"{}callback"</span>, <span class="kw">if </span>is_destroy { <span class="string">"_" </span>} <span class="kw">else </span>{ <span class="string">"" </span>}),
                     is_mut: <span class="bool-val">false</span>,
-                    value: Box::new(Chunk::Custom(<span class="macro">format!</span>(<span class="string">&quot;Box_::from_raw({func} as *mut _)&quot;</span>))),
+                    value: Box::new(Chunk::Custom(<span class="macro">format!</span>(<span class="string">"Box_::from_raw({func} as *mut _)"</span>))),
                     type_: <span class="prelude-val">Some</span>(Box::new(Chunk::Custom(full_type.<span class="number">1</span>.clone()))),
                 });
             } <span class="kw">else </span>{
                 body.push(Chunk::Let {
-                    name: <span class="string">&quot;callback&quot;</span>.to_owned(),
+                    name: <span class="string">"callback"</span>.to_owned(),
                     is_mut: <span class="bool-val">false</span>,
                     value: Box::new(Chunk::Custom(<span class="macro">format!</span>(
-                        <span class="string">&quot;{}*({} as *mut _)&quot;</span>,
+                        <span class="string">"{}*({} as *mut _)"</span>,
                         <span class="kw">if </span>!trampoline.scope.is_call() {
-                            <span class="string">&quot;&amp;&quot;
+                            <span class="string">"&amp;"
                         </span>} <span class="kw">else if </span>pos.is_some() {
-                            <span class="string">&quot;&amp;mut &quot;
+                            <span class="string">"&amp;mut "
                         </span>} <span class="kw">else </span>{
-                            <span class="string">&quot;&quot;
+                            <span class="string">""
                         </span>},
                         func
                     ))),
                     type_: <span class="prelude-val">Some</span>(Box::new(Chunk::Custom(
                         <span class="kw">if </span>!trampoline.scope.is_async() &amp;&amp; !trampoline.scope.is_call() {
-                            <span class="macro">format!</span>(<span class="string">&quot;&amp;{}&quot;</span>, full_type.<span class="number">1</span>)
+                            <span class="macro">format!</span>(<span class="string">"&amp;{}"</span>, full_type.<span class="number">1</span>)
                         } <span class="kw">else </span>{
                             full_type.<span class="number">1</span>.clone()
                         },
@@ -1876,33 +1877,33 @@
                 });
                 <span class="kw">if </span>trampoline.scope.is_async() {
                     body.push(Chunk::Custom(<span class="macro">format!</span>(
-                        <span class="string">&quot;let callback = callback{}{};&quot;</span>,
+                        <span class="string">"let callback = callback{}{};"</span>,
                         <span class="kw">if let </span><span class="prelude-val">Some</span>(pos) = pos {
-                            <span class="macro">format!</span>(<span class="string">&quot;.{pos}&quot;</span>)
+                            <span class="macro">format!</span>(<span class="string">".{pos}"</span>)
                         } <span class="kw">else </span>{
                             String::new()
                         },
                         <span class="kw">if </span><span class="kw-2">*</span>trampoline.nullable {
-                            <span class="string">&quot;.expect(\&quot;cannot get closure...\&quot;)&quot;
+                            <span class="string">".expect(\"cannot get closure...\")"
                         </span>} <span class="kw">else </span>{
-                            <span class="string">&quot;&quot;
+                            <span class="string">""
                         </span>}
                     )));
                 } <span class="kw">else if </span>!trampoline.scope.is_call() {
                     <span class="kw">if </span><span class="kw-2">*</span>trampoline.nullable {
                         body.push(Chunk::Custom(<span class="macro">format!</span>(
-                            <span class="string">&quot;if let Some(ref callback) = callback{} {{&quot;</span>,
+                            <span class="string">"if let Some(ref callback) = callback{} {{"</span>,
                             <span class="kw">if let </span><span class="prelude-val">Some</span>(pos) = pos {
-                                <span class="macro">format!</span>(<span class="string">&quot;.{pos}&quot;</span>)
+                                <span class="macro">format!</span>(<span class="string">".{pos}"</span>)
                             } <span class="kw">else </span>{
                                 String::new()
                             }
                         )));
                     } <span class="kw">else </span>{
                         body.push(Chunk::Custom(<span class="macro">format!</span>(
-                            <span class="string">&quot;let callback = callback{}&quot;</span>,
+                            <span class="string">"let callback = callback{}"</span>,
                             <span class="kw">if let </span><span class="prelude-val">Some</span>(pos) = pos {
-                                <span class="macro">format!</span>(<span class="string">&quot;.{pos}&quot;</span>)
+                                <span class="macro">format!</span>(<span class="string">".{pos}"</span>)
                             } <span class="kw">else </span>{
                                 String::new()
                             }
@@ -1910,31 +1911,31 @@
                     }
                 } <span class="kw">else if </span>!trampoline.scope.is_async() &amp;&amp; <span class="kw-2">*</span>trampoline.nullable {
                     body.push(Chunk::Custom(<span class="macro">format!</span>(
-                        <span class="string">&quot;if let Some(ref {}callback) = {} {{&quot;</span>,
+                        <span class="string">"if let Some(ref {}callback) = {} {{"</span>,
                         <span class="kw">if </span>trampoline.scope.is_call() {
-                            <span class="string">&quot;mut &quot;
+                            <span class="string">"mut "
                         </span>} <span class="kw">else </span>{
-                            <span class="string">&quot;&quot;
+                            <span class="string">""
                         </span>},
                         <span class="kw">if let </span><span class="prelude-val">Some</span>(pos) = pos {
-                            <span class="macro">format!</span>(<span class="string">&quot;(*callback).{pos}&quot;</span>)
+                            <span class="macro">format!</span>(<span class="string">"(*callback).{pos}"</span>)
                         } <span class="kw">else </span>{
-                            <span class="string">&quot;*callback&quot;</span>.to_owned()
+                            <span class="string">"*callback"</span>.to_owned()
                         }
                     )));
                 }
             }
         } <span class="kw">else </span>{
             body.push(Chunk::Let {
-                name: <span class="macro">format!</span>(<span class="string">&quot;{}callback&quot;</span>, <span class="kw">if </span>is_destroy { <span class="string">&quot;_&quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;&quot; </span>}),
+                name: <span class="macro">format!</span>(<span class="string">"{}callback"</span>, <span class="kw">if </span>is_destroy { <span class="string">"_" </span>} <span class="kw">else </span>{ <span class="string">"" </span>}),
                 is_mut: <span class="bool-val">false</span>,
                 value: Box::new(Chunk::Custom(
                     <span class="kw">if </span>is_destroy || trampoline.scope.is_async() {
-                        <span class="macro">format!</span>(<span class="string">&quot;Box_::from_raw({} as *mut {})&quot;</span>, func, trampoline.bound_name)
+                        <span class="macro">format!</span>(<span class="string">"Box_::from_raw({} as *mut {})"</span>, func, trampoline.bound_name)
                     } <span class="kw">else if </span>trampoline.scope.is_call() {
-                        <span class="macro">format!</span>(<span class="string">&quot;{} as *mut {}&quot;</span>, func, trampoline.bound_name)
+                        <span class="macro">format!</span>(<span class="string">"{} as *mut {}"</span>, func, trampoline.bound_name)
                     } <span class="kw">else </span>{
-                        <span class="macro">format!</span>(<span class="string">&quot;&amp;*({} as *mut {})&quot;</span>, func, trampoline.bound_name)
+                        <span class="macro">format!</span>(<span class="string">"&amp;*({} as *mut {})"</span>, func, trampoline.bound_name)
                     },
                 )),
                 type_: <span class="prelude-val">None</span>,
@@ -1942,20 +1943,20 @@
             <span class="kw">if </span>!is_destroy &amp;&amp; <span class="kw-2">*</span>trampoline.nullable {
                 <span class="kw">if </span>trampoline.scope.is_async() {
                     body.push(Chunk::Custom(
-                        <span class="string">&quot;let callback = (*callback).expect(\&quot;cannot get closure...\&quot;);&quot;</span>.to_owned(),
+                        <span class="string">"let callback = (*callback).expect(\"cannot get closure...\");"</span>.to_owned(),
                     ));
                 } <span class="kw">else </span>{
                     body.push(Chunk::Custom(<span class="macro">format!</span>(
-                        <span class="string">&quot;if let Some(ref {}callback) = {} {{&quot;</span>,
+                        <span class="string">"if let Some(ref {}callback) = {} {{"</span>,
                         <span class="kw">if </span>trampoline.scope.is_call() {
-                            <span class="string">&quot;mut &quot;
+                            <span class="string">"mut "
                         </span>} <span class="kw">else </span>{
-                            <span class="string">&quot;&quot;
+                            <span class="string">""
                         </span>},
                         <span class="kw">if let </span><span class="prelude-val">Some</span>(pos) = pos {
-                            <span class="macro">format!</span>(<span class="string">&quot;(*callback).{pos}&quot;</span>)
+                            <span class="macro">format!</span>(<span class="string">"(*callback).{pos}"</span>)
                         } <span class="kw">else </span>{
-                            <span class="string">&quot;*callback&quot;</span>.to_owned()
+                            <span class="string">"*callback"</span>.to_owned()
                         }
                     )));
                 }
@@ -1964,28 +1965,28 @@
         <span class="kw">if </span>!is_destroy {
             <span class="kw">use </span><span class="kw">crate</span>::writer::to_code::ToCode;
             body.push(Chunk::Custom(<span class="macro">format!</span>(
-                <span class="string">&quot;{}({})&quot;</span>,
+                <span class="string">"{}({})"</span>,
                 <span class="kw">if </span>!<span class="kw-2">*</span>trampoline.nullable {
-                    <span class="string">&quot;(*callback)&quot;
+                    <span class="string">"(*callback)"
                 </span>} <span class="kw">else if </span>trampoline.scope.is_async() {
-                    <span class="string">&quot;callback&quot;
+                    <span class="string">"callback"
                 </span>} <span class="kw">else </span>{
-                    <span class="string">&quot;\tcallback&quot;
+                    <span class="string">"\tcallback"
                 </span>},
                 arguments
                     .iter()
                     .flat_map(|arg| arg.to_code(env))
                     .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
-                    .join(<span class="string">&quot;, &quot;</span>),
+                    .join(<span class="string">", "</span>),
             )));
             <span class="kw">if </span>!trampoline.scope.is_async() &amp;&amp; <span class="kw-2">*</span>trampoline.nullable {
-                body.push(Chunk::Custom(<span class="string">&quot;} else {&quot;</span>.to_owned()));
+                body.push(Chunk::Custom(<span class="string">"} else {"</span>.to_owned()));
                 body.push(Chunk::Custom(
-                    <span class="string">&quot;\tpanic!(\&quot;cannot get closure...\&quot;)&quot;</span>.to_owned(),
+                    <span class="string">"\tpanic!(\"cannot get closure...\")"</span>.to_owned(),
                 ));
-                body.push(Chunk::Custom(<span class="string">&quot;}&quot;</span>.to_owned()));
+                body.push(Chunk::Custom(<span class="string">"}"</span>.to_owned()));
             }
-            <span class="kw">if </span>trampoline.ret.c_type != <span class="string">&quot;void&quot; </span>{
+            <span class="kw">if </span>trampoline.ret.c_type != <span class="string">"void" </span>{
                 <span class="kw">use </span><span class="kw">crate</span>::codegen::trampoline_to_glib::TrampolineToGlib;
 
                 body.push(Chunk::Custom(trampoline.ret.trampoline_to_glib(env)));
@@ -1993,7 +1994,7 @@
         }
 
         <span class="kw">let </span>extern_func = Chunk::ExternCFunc {
-            name: <span class="macro">format!</span>(<span class="string">&quot;{}_func&quot;</span>, trampoline.name),
+            name: <span class="macro">format!</span>(<span class="string">"{}_func"</span>, trampoline.name),
             parameters: trampoline
                 .parameters
                 .c_parameters
@@ -2003,24 +2004,24 @@
                     <span class="kw">if </span>p.is_real_gpointer(env) {
                         Param {
                             name: p.name.clone(),
-                            typ: use_glib_if_needed(env, <span class="string">&quot;ffi::gpointer&quot;</span>),
+                            typ: use_glib_if_needed(env, <span class="string">"ffi::gpointer"</span>),
                         }
                     } <span class="kw">else </span>{
                         Param {
                             name: p.name.clone(),
                             typ: <span class="kw">crate</span>::analysis::ffi_type::ffi_type(env, p.typ, <span class="kw-2">&amp;</span>p.c_type)
-                                .expect(<span class="string">&quot;failed to write c_type&quot;</span>)
+                                .expect(<span class="string">"failed to write c_type"</span>)
                                 .into_string(),
                         }
                     }
                 })
                 .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
             body: Box::new(Chunk::Chunks(body)),
-            return_value: <span class="kw">if </span>trampoline.ret.c_type != <span class="string">&quot;void&quot; </span>{
+            return_value: <span class="kw">if </span>trampoline.ret.c_type != <span class="string">"void" </span>{
                 <span class="kw">let </span>p = <span class="kw-2">&amp;</span>trampoline.ret;
                 <span class="prelude-val">Some</span>(
                     <span class="kw">crate</span>::analysis::ffi_type::ffi_type(env, p.typ, <span class="kw-2">&amp;</span>p.c_type)
-                        .expect(<span class="string">&quot;failed to write c_type&quot;</span>)
+                        .expect(<span class="string">"failed to write c_type"</span>)
                         .into_string(),
                 )
             } <span class="kw">else </span>{
@@ -2033,23 +2034,23 @@
         <span class="kw">let </span>bounds_str = <span class="kw">if </span>bounds_names.is_empty() {
             String::new()
         } <span class="kw">else </span>{
-            <span class="macro">format!</span>(<span class="string">&quot;::&lt;{bounds_names}&gt;&quot;</span>)
+            <span class="macro">format!</span>(<span class="string">"::&lt;{bounds_names}&gt;"</span>)
         };
         <span class="kw">if </span>!is_destroy {
             <span class="kw">if </span><span class="kw-2">*</span>trampoline.nullable {
                 chunks.push(Chunk::Custom(<span class="macro">format!</span>(
-                    <span class="string">&quot;let {0} = if {0}_data.is_some() {{ Some({0}_func{1} as _) }} else {{ None }};&quot;</span>,
+                    <span class="string">"let {0} = if {0}_data.is_some() {{ Some({0}_func{1} as _) }} else {{ None }};"</span>,
                     trampoline.name, bounds_str
                 )));
             } <span class="kw">else </span>{
                 chunks.push(Chunk::Custom(<span class="macro">format!</span>(
-                    <span class="string">&quot;let {0} = Some({0}_func{1} as _);&quot;</span>,
+                    <span class="string">"let {0} = Some({0}_func{1} as _);"</span>,
                     trampoline.name, bounds_str
                 )));
             }
         } <span class="kw">else </span>{
             chunks.push(Chunk::Custom(<span class="macro">format!</span>(
-                <span class="string">&quot;let destroy_call{} = Some({}_func{} as _);&quot;</span>,
+                <span class="string">"let destroy_call{} = Some({}_func{} as _);"</span>,
                 trampoline.destroy_index, trampoline.name, bounds_str
             )));
         }
@@ -2062,7 +2063,7 @@
         trampoline: <span class="kw-2">&amp;</span>AsyncTrampoline,
     ) {
         chunks.push(Chunk::Custom(String::from(
-            <span class="string">r#&quot;
+            <span class="string">r#"
                 let main_context = glib::MainContext::ref_thread_default();
                 let is_main_context_owner = main_context.is_owner();
                 let has_acquired_main_context = (!is_main_context_owner)
@@ -2070,21 +2071,21 @@
                     .flatten();
                 assert!(
                     is_main_context_owner || has_acquired_main_context.is_some(),
-                    &quot;Async operations only allowed if the thread is owning the MainContext&quot;
+                    "Async operations only allowed if the thread is owning the MainContext"
                 );
-        &quot;#</span>,
+        "#</span>,
         )));
 
         chunks.push(Chunk::Let {
-            name: <span class="string">&quot;user_data&quot;</span>.to_string(),
+            name: <span class="string">"user_data"</span>.to_string(),
             is_mut: <span class="bool-val">false</span>,
             value: Box::new(Chunk::Custom(<span class="macro">format!</span>(
-                <span class="string">&quot;Box_::new({}::new(callback))&quot;</span>,
-                use_glib_type(env, <span class="string">&quot;thread_guard::ThreadGuard&quot;</span>)
+                <span class="string">"Box_::new({}::new(callback))"</span>,
+                use_glib_type(env, <span class="string">"thread_guard::ThreadGuard"</span>)
             ))),
             type_: <span class="prelude-val">Some</span>(Box::new(Chunk::Custom(<span class="macro">format!</span>(
-                <span class="string">&quot;Box_&lt;{}&lt;{}&gt;&gt;&quot;</span>,
-                use_glib_type(env, <span class="string">&quot;thread_guard::ThreadGuard&quot;</span>),
+                <span class="string">"Box_&lt;{}&lt;{}&gt;&gt;"</span>,
+                use_glib_type(env, <span class="string">"thread_guard::ThreadGuard"</span>),
                 trampoline.bound_name
             )))),
         });
@@ -2093,8 +2094,8 @@
         <span class="kw">let </span><span class="kw-2">mut </span>uninitialized_vars = Vec::new();
         <span class="kw">if </span>trampoline.is_method {
             finish_args.push(Chunk::Cast {
-                name: <span class="string">&quot;_source_object&quot;</span>.to_string(),
-                type_: <span class="string">&quot;*mut _&quot;</span>.to_string(),
+                name: <span class="string">"_source_object"</span>.to_string(),
+                type_: <span class="string">"*mut _"</span>.to_string(),
             });
         }
         <span class="kw">let </span><span class="kw-2">mut </span>found_async_result = <span class="bool-val">false</span>;
@@ -2104,12 +2105,12 @@
                 .iter()
                 .filter(|out| {
                     out.lib_par.direction == ParameterDirection::Out
-                        || out.lib_par.typ.full_name(<span class="kw-2">&amp;</span>env.library) == <span class="string">&quot;Gio.AsyncResult&quot;
+                        || out.lib_par.typ.full_name(<span class="kw-2">&amp;</span>env.library) == <span class="string">"Gio.AsyncResult"
                 </span>})
                 .map(|out| {
-                    <span class="kw">if </span>out.lib_par.typ.full_name(<span class="kw-2">&amp;</span>env.library) == <span class="string">&quot;Gio.AsyncResult&quot; </span>{
+                    <span class="kw">if </span>out.lib_par.typ.full_name(<span class="kw-2">&amp;</span>env.library) == <span class="string">"Gio.AsyncResult" </span>{
                         found_async_result = <span class="bool-val">true</span>;
-                        <span class="kw">return </span>Chunk::Name(<span class="string">&quot;res&quot;</span>.to_string());
+                        <span class="kw">return </span>Chunk::Name(<span class="string">"res"</span>.to_string());
                     }
                     <span class="kw">let </span>kind = type_mem_mode(env, <span class="kw-2">&amp;</span>out.lib_par);
                     <span class="kw">let </span><span class="kw-2">mut </span>par: parameter_ffi_call_out::Parameter = out.into();
@@ -2125,7 +2126,7 @@
         );
         <span class="macro">assert!</span>(
             found_async_result,
-            <span class="string">&quot;The check *wasn&#39;t* performed in analysis part: Guillaume was wrong!&quot;
+            <span class="string">"The check *wasn't* performed in analysis part: Guillaume was wrong!"
         </span>);
         <span class="kw">let </span>index_to_ignore = find_index_to_ignore(
             trampoline.output_params.iter().map(|par| <span class="kw-2">&amp;</span>par.lib_par),
@@ -2137,7 +2138,7 @@
             .enumerate()
             .filter(|<span class="kw-2">&amp;</span>(index, out)| {
                 out.lib_par.direction == ParameterDirection::Out
-                    &amp;&amp; out.lib_par.name != <span class="string">&quot;error&quot;
+                    &amp;&amp; out.lib_par.name != <span class="string">"error"
                     </span>&amp;&amp; <span class="prelude-val">Some</span>(index) != index_to_ignore
             })
             .map(|(<span class="kw">_</span>, out)| {
@@ -2169,7 +2170,7 @@
                 ffi_ret.lib_par.caller_allocates,
                 ffi_ret.lib_par.transfer,
             );
-            <span class="kw">let </span>value = Chunk::Name(<span class="string">&quot;ret&quot;</span>.to_string());
+            <span class="kw">let </span>value = Chunk::Name(<span class="string">"ret"</span>.to_string());
             <span class="kw">if let </span>OutMemMode::UninitializedNamed(<span class="kw">_</span>) = mem_mode {
                 result.insert(<span class="number">0</span>, value);
             } <span class="kw">else </span>{
@@ -2185,7 +2186,7 @@
                 );
             }
         }
-        <span class="comment">// If the trampoline doesn&#39;t have a GError parameter
+        <span class="comment">// If the trampoline doesn't have a GError parameter
         </span><span class="kw">let </span>has_error_parameter = <span class="self">self
             </span>.async_trampoline
             .as_ref()
@@ -2196,7 +2197,7 @@
 
         <span class="kw">let </span><span class="kw-2">mut </span>body = <span class="kw">if </span>has_error_parameter {
             <span class="macro">vec!</span>[Chunk::Let {
-                name: <span class="string">&quot;error&quot;</span>.to_string(),
+                name: <span class="string">"error"</span>.to_string(),
                 is_mut: <span class="bool-val">true</span>,
                 value: Box::new(Chunk::NullMutPtr),
                 type_: <span class="prelude-val">None</span>,
@@ -2208,7 +2209,7 @@
             .output_params
             .iter()
             .filter(|out| {
-                out.lib_par.direction == ParameterDirection::Out &amp;&amp; out.lib_par.name != <span class="string">&quot;error&quot;
+                out.lib_par.direction == ParameterDirection::Out &amp;&amp; out.lib_par.name != <span class="string">"error"
             </span>})
             .map(|out| Chunk::Let {
                 name: out.lib_par.name.clone(),
@@ -2220,14 +2221,14 @@
 
         <span class="kw">let </span>ret_name = <span class="kw">if </span>trampoline.ffi_ret.is_some() {
             <span class="kw">if </span>has_error_parameter {
-                <span class="string">&quot;ret&quot;
+                <span class="string">"ret"
             </span>} <span class="kw">else </span>{
-                <span class="string">&quot;result&quot; </span><span class="comment">// Needed as in case of an error param we would have
+                <span class="string">"result" </span><span class="comment">// Needed as in case of an error param we would have
                          // let result = if error.is_null() { Ok()} else {
                          // Err()};
             </span>}
         } <span class="kw">else </span>{
-            <span class="string">&quot;_&quot;
+            <span class="string">"_"
         </span>};
 
         body.push(Chunk::Let {
@@ -2241,7 +2242,7 @@
         });
         <span class="kw">if </span>has_error_parameter {
             body.push(Chunk::Let {
-                name: <span class="string">&quot;result&quot;</span>.to_string(),
+                name: <span class="string">"result"</span>.to_string(),
                 is_mut: <span class="bool-val">false</span>,
                 value: Box::new(Chunk::ErrorResultReturn {
                     ret: <span class="prelude-val">None</span>,
@@ -2251,47 +2252,47 @@
             });
         }
         body.push(Chunk::Let {
-            name: <span class="string">&quot;callback&quot;</span>.to_string(),
+            name: <span class="string">"callback"</span>.to_string(),
             is_mut: <span class="bool-val">false</span>,
-            value: Box::new(Chunk::Custom(<span class="string">&quot;Box_::from_raw(user_data as *mut _)&quot;</span>.into())),
+            value: Box::new(Chunk::Custom(<span class="string">"Box_::from_raw(user_data as *mut _)"</span>.into())),
             type_: <span class="prelude-val">Some</span>(Box::new(Chunk::Custom(<span class="macro">format!</span>(
-                <span class="string">&quot;Box_&lt;{}&lt;{}&gt;&gt;&quot;</span>,
-                use_glib_type(env, <span class="string">&quot;thread_guard::ThreadGuard&quot;</span>),
+                <span class="string">"Box_&lt;{}&lt;{}&gt;&gt;"</span>,
+                use_glib_type(env, <span class="string">"thread_guard::ThreadGuard"</span>),
                 trampoline.bound_name
             )))),
         });
         body.push(Chunk::Let {
-            name: <span class="string">&quot;callback&quot;</span>.to_string(),
+            name: <span class="string">"callback"</span>.to_string(),
             is_mut: <span class="bool-val">false</span>,
-            value: Box::new(Chunk::Custom(<span class="string">&quot;callback.into_inner()&quot;</span>.into())),
+            value: Box::new(Chunk::Custom(<span class="string">"callback.into_inner()"</span>.into())),
             type_: <span class="prelude-val">Some</span>(Box::new(Chunk::Custom(<span class="macro">format!</span>(
-                <span class="string">&quot;{}&quot;</span>,
+                <span class="string">"{}"</span>,
                 trampoline.bound_name
             )))),
         });
         body.push(Chunk::Call {
-            func_name: <span class="string">&quot;callback&quot;</span>.to_string(),
-            arguments: <span class="macro">vec!</span>[Chunk::Name(<span class="string">&quot;result&quot;</span>.to_string())],
+            func_name: <span class="string">"callback"</span>.to_string(),
+            arguments: <span class="macro">vec!</span>[Chunk::Name(<span class="string">"result"</span>.to_string())],
         });
 
         <span class="kw">let </span>parameters = <span class="macro">vec!</span>[
             Param {
-                name: <span class="string">&quot;_source_object&quot;</span>.to_string(),
-                typ: <span class="macro">format!</span>(<span class="string">&quot;*mut {}&quot;</span>, use_glib_type(env, <span class="string">&quot;gobject_ffi::GObject&quot;</span>)),
+                name: <span class="string">"_source_object"</span>.to_string(),
+                typ: <span class="macro">format!</span>(<span class="string">"*mut {}"</span>, use_glib_type(env, <span class="string">"gobject_ffi::GObject"</span>)),
             },
             Param {
-                name: <span class="string">&quot;res&quot;</span>.to_string(),
-                typ: <span class="macro">format!</span>(<span class="string">&quot;*mut {}&quot;</span>, use_gio_type(env, <span class="string">&quot;ffi::GAsyncResult&quot;</span>)),
+                name: <span class="string">"res"</span>.to_string(),
+                typ: <span class="macro">format!</span>(<span class="string">"*mut {}"</span>, use_gio_type(env, <span class="string">"ffi::GAsyncResult"</span>)),
             },
             Param {
-                name: <span class="string">&quot;user_data&quot;</span>.to_string(),
-                typ: use_glib_if_needed(env, <span class="string">&quot;ffi::gpointer&quot;</span>),
+                name: <span class="string">"user_data"</span>.to_string(),
+                typ: use_glib_if_needed(env, <span class="string">"ffi::gpointer"</span>),
             },
         ];
 
         chunks.push(Chunk::ExternCFunc {
             name: <span class="macro">format!</span>(
-                <span class="string">&quot;{}&lt;{}: {}&gt;&quot;</span>,
+                <span class="string">"{}&lt;{}: {}&gt;"</span>,
                 trampoline.name, trampoline.bound_name, trampoline.callback_type
             ),
             parameters,
@@ -2300,10 +2301,10 @@
             bounds: String::new(),
         });
         <span class="kw">let </span>chunk = Chunk::Let {
-            name: <span class="string">&quot;callback&quot;</span>.to_string(),
+            name: <span class="string">"callback"</span>.to_string(),
             is_mut: <span class="bool-val">false</span>,
             value: Box::new(Chunk::Name(<span class="macro">format!</span>(
-                <span class="string">&quot;{}::&lt;{}&gt;&quot;</span>,
+                <span class="string">"{}::&lt;{}&gt;"</span>,
                 trampoline.name, trampoline.bound_name
             ))),
             type_: <span class="prelude-val">None</span>,
@@ -2336,7 +2337,7 @@
             } = trans.transformation_type
             {
                 <span class="kw">if let </span>In = <span class="self">self</span>.parameters[trans.ind_c] {
-                    <span class="kw">let </span>value = Chunk::Custom(<span class="macro">format!</span>(<span class="string">&quot;{array_name}.len() as _&quot;</span>));
+                    <span class="kw">let </span>value = Chunk::Custom(<span class="macro">format!</span>(<span class="string">"{array_name}.len() as _"</span>));
                     chunks.push(Chunk::Let {
                         name: array_length_name.clone(),
                         is_mut: <span class="bool-val">false</span>,
@@ -2348,7 +2349,7 @@
         }
     }
 
-    <span class="kw">fn </span>generate_call(<span class="kw-2">&amp;</span><span class="self">self</span>, calls: <span class="kw-2">&amp;</span>FuncParameters&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Chunk {
+    <span class="kw">fn </span>generate_call(<span class="kw-2">&amp;</span><span class="self">self</span>, calls: <span class="kw-2">&amp;</span>FuncParameters&lt;<span class="lifetime">'_</span>&gt;) -&gt; Chunk {
         <span class="kw">let </span>params = <span class="self">self</span>.generate_func_parameters(calls);
         Chunk::FfiCall {
             name: <span class="self">self</span>.glib_name.clone(),
@@ -2360,7 +2361,7 @@
         call: Chunk,
         uninitialized_vars: <span class="kw-2">&amp;mut </span>Vec&lt;(String, bool)&gt;,
     ) -&gt; Chunk {
-        <span class="kw">let </span>array_length_name = <span class="self">self</span>.find_array_length_name(<span class="string">&quot;&quot;</span>);
+        <span class="kw">let </span>array_length_name = <span class="self">self</span>.find_array_length_name(<span class="string">""</span>);
         <span class="self">self</span>.remove_extra_assume_init(<span class="kw-2">&amp;</span>array_length_name, uninitialized_vars);
         Chunk::FfiCallConversion {
             ret: <span class="self">self</span>.ret.ret.clone(),
@@ -2368,7 +2369,7 @@
             call: Box::new(call),
         }
     }
-    <span class="kw">fn </span>generate_func_parameters(<span class="kw-2">&amp;</span><span class="self">self</span>, calls: <span class="kw-2">&amp;</span>FuncParameters&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; Vec&lt;Chunk&gt; {
+    <span class="kw">fn </span>generate_func_parameters(<span class="kw-2">&amp;</span><span class="self">self</span>, calls: <span class="kw-2">&amp;</span>FuncParameters&lt;<span class="lifetime">'_</span>&gt;) -&gt; Vec&lt;Chunk&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>params = Vec::new();
         <span class="kw">for </span>trans <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.transformations {
             <span class="kw">if </span>!trans.transformation_type.is_to_glib() {
@@ -2393,9 +2394,9 @@
                 Chunk::FfiCallParameter {
                     transformation_type: TransformationType::ToGlibDirect {
                         name: <span class="kw">if </span>all_call {
-                            <span class="macro">format!</span>(<span class="string">&quot;super_callback{pos} as *const _ as *mut _&quot;</span>)
+                            <span class="macro">format!</span>(<span class="string">"super_callback{pos} as *const _ as *mut _"</span>)
                         } <span class="kw">else </span>{
-                            <span class="macro">format!</span>(<span class="string">&quot;Box_::into_raw(super_callback{pos}) as *mut _&quot;</span>)
+                            <span class="macro">format!</span>(<span class="string">"Box_::into_raw(super_callback{pos}) as *mut _"</span>)
                         },
                     },
                 },
@@ -2406,7 +2407,7 @@
                 destroy.destroy_index,
                 Chunk::FfiCallParameter {
                     transformation_type: TransformationType::ToGlibDirect {
-                        name: <span class="macro">format!</span>(<span class="string">&quot;destroy_call{}&quot;</span>, destroy.destroy_index),
+                        name: <span class="macro">format!</span>(<span class="string">"destroy_call{}"</span>, destroy.destroy_index),
                     },
                 },
             ));
@@ -2440,7 +2441,7 @@
         // glib::Pid?
         </span><span class="macro">matches!</span>(
             env.type_(typ),
-            library::Type::Alias(a) <span class="kw">if </span>a.c_identifier == <span class="string">&quot;GPid&quot;
+            library::Type::Alias(a) <span class="kw">if </span>a.c_identifier == <span class="string">"GPid"
         </span>)
     }
     <span class="kw">fn </span>write_out_variables(<span class="kw-2">&amp;</span><span class="self">self</span>, body: <span class="kw-2">&amp;mut </span>Vec&lt;Chunk&gt;, env: <span class="kw-2">&amp;</span>Env) -&gt; Vec&lt;(String, bool)&gt; {
@@ -2540,28 +2541,28 @@
             Normal =&gt; (call, ret),
             Optional =&gt; {
                 <span class="kw">let </span>call = Chunk::Let {
-                    name: <span class="string">&quot;ret&quot;</span>.into(),
+                    name: <span class="string">"ret"</span>.into(),
                     is_mut: <span class="bool-val">false</span>,
                     value: Box::new(call),
                     type_: Option::None,
                 };
-                <span class="kw">let </span>ret = ret.expect(<span class="string">&quot;No return in optional outs mode&quot;</span>);
+                <span class="kw">let </span>ret = ret.expect(<span class="string">"No return in optional outs mode"</span>);
                 <span class="kw">let </span>ret = Chunk::OptionalReturn {
-                    condition: <span class="string">&quot;ret&quot;</span>.into(),
+                    condition: <span class="string">"ret"</span>.into(),
                     value: Box::new(ret),
                 };
                 (call, <span class="prelude-val">Some</span>(ret))
             }
             Combined =&gt; {
                 <span class="kw">let </span>call = Chunk::Let {
-                    name: <span class="string">&quot;ret&quot;</span>.into(),
+                    name: <span class="string">"ret"</span>.into(),
                     is_mut: <span class="bool-val">false</span>,
                     value: Box::new(call),
                     type_: Option::None,
                 };
-                <span class="kw">let </span><span class="kw-2">mut </span>ret = ret.expect(<span class="string">&quot;No return in combined outs mode&quot;</span>);
+                <span class="kw">let </span><span class="kw-2">mut </span>ret = ret.expect(<span class="string">"No return in combined outs mode"</span>);
                 <span class="kw">if let </span>Chunk::Tuple(<span class="kw-2">ref mut </span>vec, <span class="kw">_</span>) = ret {
-                    vec.insert(<span class="number">0</span>, Chunk::Custom(<span class="string">&quot;ret&quot;</span>.into()));
+                    vec.insert(<span class="number">0</span>, Chunk::Custom(<span class="string">"ret"</span>.into()));
                 }
                 (call, <span class="prelude-val">Some</span>(ret))
             }
@@ -2575,15 +2576,15 @@
                 {
                     (inner, array_length_name, ret_info)
                 } <span class="kw">else </span>{
-                    <span class="macro">panic!</span>(<span class="string">&quot;Call without Chunk::FfiCallConversion&quot;</span>)
+                    <span class="macro">panic!</span>(<span class="string">"Call without Chunk::FfiCallConversion"</span>)
                 };
                 <span class="self">self</span>.remove_extra_assume_init(<span class="kw-2">&amp;</span>array_length_name, uninitialized_vars);
                 <span class="kw">let </span>(name, assert_safe_ret) = <span class="kw">match </span>return_strategy {
-                    ThrowFunctionReturnStrategy::ReturnResult =&gt; (<span class="string">&quot;ret&quot;</span>, Option::None),
+                    ThrowFunctionReturnStrategy::ReturnResult =&gt; (<span class="string">"ret"</span>, Option::None),
                     ThrowFunctionReturnStrategy::CheckError =&gt; {
-                        (<span class="string">&quot;is_ok&quot;</span>, <span class="prelude-val">Some</span>(Box::new(Chunk::AssertErrorSanity)))
+                        (<span class="string">"is_ok"</span>, <span class="prelude-val">Some</span>(Box::new(Chunk::AssertErrorSanity)))
                     }
-                    ThrowFunctionReturnStrategy::Void =&gt; (<span class="string">&quot;_&quot;</span>, Option::None),
+                    ThrowFunctionReturnStrategy::Void =&gt; (<span class="string">"_"</span>, Option::None),
                 };
                 <span class="kw">let </span>call = Chunk::Let {
                     name: name.into(),
@@ -2591,12 +2592,12 @@
                     value: boxed_call,
                     type_: Option::None,
                 };
-                <span class="kw">let </span><span class="kw-2">mut </span>ret = ret.expect(<span class="string">&quot;No return in throws outs mode&quot;</span>);
+                <span class="kw">let </span><span class="kw-2">mut </span>ret = ret.expect(<span class="string">"No return in throws outs mode"</span>);
 
                 <span class="kw">if let </span>Chunk::Tuple(vec, mode) = <span class="kw-2">&amp;mut </span>ret {
                     <span class="kw-2">*</span>mode = TupleMode::WithUnit;
                     <span class="kw">if </span>return_strategy == ThrowFunctionReturnStrategy::ReturnResult {
-                        <span class="kw">let </span>val = Chunk::Custom(<span class="string">&quot;ret&quot;</span>.into());
+                        <span class="kw">let </span>val = Chunk::Custom(<span class="string">"ret"</span>.into());
                         <span class="kw">let </span>conv = Chunk::FfiCallConversion {
                             call: Box::new(val),
                             array_length_name,
@@ -2605,7 +2606,7 @@
                         vec.insert(<span class="number">0</span>, conv);
                     }
                 } <span class="kw">else </span>{
-                    <span class="macro">panic!</span>(<span class="string">&quot;Return is not Tuple&quot;</span>)
+                    <span class="macro">panic!</span>(<span class="string">"Return is not Tuple"</span>)
                 }
                 ret = Chunk::ErrorResultReturn {
                     ret: assert_safe_ret,
@@ -2718,22 +2719,22 @@
         library::Type::Basic(x) <span class="kw">if </span>!x.requires_conversion() =&gt; <span class="bool-val">true</span>,
         library::Type::Basic(library::Basic::Boolean) =&gt; {
             body.push(Chunk::Custom(<span class="macro">format!</span>(
-                <span class="string">&quot;let {0} = from_glib({0});&quot;</span>,
+                <span class="string">"let {0} = from_glib({0});"</span>,
                 par.name
             )));
             <span class="bool-val">true
         </span>}
         library::Type::Basic(library::Basic::UniChar) =&gt; {
             body.push(Chunk::Custom(<span class="macro">format!</span>(
-                <span class="string">&quot;let {0} = std::convert::TryFrom::try_from({0})\
-                     .expect(\&quot;conversion from an invalid Unicode value attempted\&quot;);&quot;</span>,
+                <span class="string">"let {0} = std::convert::TryFrom::try_from({0})\
+                     .expect(\"conversion from an invalid Unicode value attempted\");"</span>,
                 par.name
             )));
             <span class="bool-val">true
         </span>}
-        library::Type::Alias(<span class="kw">_</span>) <span class="kw">if </span>ty_name == <span class="string">&quot;glib::Pid&quot; </span>=&gt; {
+        library::Type::Alias(<span class="kw">_</span>) <span class="kw">if </span>ty_name == <span class="string">"glib::Pid" </span>=&gt; {
             body.push(Chunk::Custom(<span class="macro">format!</span>(
-                <span class="string">&quot;let {0} = from_glib({0});&quot;</span>,
+                <span class="string">"let {0} = from_glib({0});"</span>,
                 par.name
             )));
             <span class="bool-val">true
@@ -2747,27 +2748,27 @@
             <span class="kw">if </span>is_gstring(ty_name) {
                 <span class="kw">if </span><span class="kw-2">*</span>nullable {
                     <span class="kw">if </span>par.conversion_type == ConversionType::Borrow {
-                        type_name = String::from(<span class="string">&quot;: Borrowed&lt;Option&lt;glib::GString&gt;&gt;&quot;</span>);
+                        type_name = String::from(<span class="string">": Borrowed&lt;Option&lt;glib::GString&gt;&gt;"</span>);
                     } <span class="kw">else </span>{
-                        type_name = String::from(<span class="string">&quot;: Option&lt;glib::GString&gt;&quot;</span>);
+                        type_name = String::from(<span class="string">": Option&lt;glib::GString&gt;"</span>);
                     }
                 } <span class="kw">else if </span>par.conversion_type == ConversionType::Borrow {
-                    type_name = String::from(<span class="string">&quot;: Borrowed&lt;glib::GString&gt;&quot;</span>);
+                    type_name = String::from(<span class="string">": Borrowed&lt;glib::GString&gt;"</span>);
                 } <span class="kw">else </span>{
-                    type_name = String::from(<span class="string">&quot;: GString&quot;</span>);
+                    type_name = String::from(<span class="string">": GString"</span>);
                 }
             } <span class="kw">else if </span>par.transfer == library::Transfer::None &amp;&amp; <span class="kw-2">*</span>nullable {
                 <span class="kw">if </span>par.conversion_type == ConversionType::Borrow {
-                    type_name = <span class="macro">format!</span>(<span class="string">&quot;: Borrowed&lt;Option&lt;{ty_name}&gt;&gt;&quot;</span>);
+                    type_name = <span class="macro">format!</span>(<span class="string">": Borrowed&lt;Option&lt;{ty_name}&gt;&gt;"</span>);
                 } <span class="kw">else </span>{
-                    type_name = <span class="macro">format!</span>(<span class="string">&quot;: Option&lt;{ty_name}&gt;&quot;</span>);
+                    type_name = <span class="macro">format!</span>(<span class="string">": Option&lt;{ty_name}&gt;"</span>);
                 }
             } <span class="kw">else </span>{
                 type_name = String::new();
             }
 
             body.push(Chunk::Custom(<span class="macro">format!</span>(
-                <span class="string">&quot;let {1}{3} = {0}{1}{2};&quot;</span>,
+                <span class="string">"let {1}{3} = {0}{1}{2};"</span>,
                 begin, par.name, end, type_name
             )));
             x.is_basic()

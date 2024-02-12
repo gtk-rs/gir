@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/sys/cargo_toml.rs`."><title>cargo_toml.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/sys/cargo_toml.rs`."><title>cargo_toml.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -252,9 +253,9 @@
 <span class="kw">use crate</span>::{config::Config, env::Env, file_saver::save_to_file, nameutil, version::Version};
 
 <span class="kw">pub fn </span>generate(env: <span class="kw-2">&amp;</span>Env) -&gt; String {
-    <span class="macro">info!</span>(<span class="string">&quot;Generating sys Cargo.toml for {}&quot;</span>, env.config.library_name);
+    <span class="macro">info!</span>(<span class="string">"Generating sys Cargo.toml for {}"</span>, env.config.library_name);
 
-    <span class="kw">let </span>path = env.config.target_path.join(<span class="string">&quot;Cargo.toml&quot;</span>);
+    <span class="kw">let </span>path = env.config.target_path.join(<span class="string">"Cargo.toml"</span>);
 
     <span class="kw">let </span><span class="kw-2">mut </span>toml_str = String::new();
     <span class="kw">if let </span><span class="prelude-val">Ok</span>(<span class="kw-2">mut </span>file) = File::open(<span class="kw-2">&amp;</span>path) {
@@ -280,93 +281,93 @@
     <span class="kw">let </span>package_name = nameutil::exported_crate_name(crate_name);
 
     {
-        <span class="kw">let </span>package = upsert_table(root, <span class="string">&quot;package&quot;</span>);
-        set_string(package, <span class="string">&quot;name&quot;</span>, package_name);
-        set_string(package, <span class="string">&quot;version&quot;</span>, <span class="string">&quot;0.0.1&quot;</span>);
-        set_string(package, <span class="string">&quot;edition&quot;</span>, <span class="string">&quot;2021&quot;</span>);
+        <span class="kw">let </span>package = upsert_table(root, <span class="string">"package"</span>);
+        set_string(package, <span class="string">"name"</span>, package_name);
+        set_string(package, <span class="string">"version"</span>, <span class="string">"0.0.1"</span>);
+        set_string(package, <span class="string">"edition"</span>, <span class="string">"2021"</span>);
     }
 
     {
-        <span class="kw">let </span>lib = upsert_table(root, <span class="string">&quot;lib&quot;</span>);
-        set_string(lib, <span class="string">&quot;name&quot;</span>, crate_name);
+        <span class="kw">let </span>lib = upsert_table(root, <span class="string">"lib"</span>);
+        set_string(lib, <span class="string">"name"</span>, crate_name);
     }
 
-    <span class="kw">let </span>deps = upsert_table(root, <span class="string">&quot;dependencies&quot;</span>);
+    <span class="kw">let </span>deps = upsert_table(root, <span class="string">"dependencies"</span>);
     <span class="kw">for </span>ext_lib <span class="kw">in </span><span class="kw-2">&amp;</span>env.config.external_libraries {
-        <span class="kw">let </span>ext_package = <span class="kw">if </span>ext_lib.crate_name == <span class="string">&quot;cairo&quot; </span>{
-            <span class="macro">format!</span>(<span class="string">&quot;{}-sys-rs&quot;</span>, ext_lib.crate_name)
-        } <span class="kw">else if </span>ext_lib.crate_name == <span class="string">&quot;gdk_pixbuf&quot; </span>{
-            <span class="string">&quot;gdk-pixbuf-sys&quot;</span>.into()
+        <span class="kw">let </span>ext_package = <span class="kw">if </span>ext_lib.crate_name == <span class="string">"cairo" </span>{
+            <span class="macro">format!</span>(<span class="string">"{}-sys-rs"</span>, ext_lib.crate_name)
+        } <span class="kw">else if </span>ext_lib.crate_name == <span class="string">"gdk_pixbuf" </span>{
+            <span class="string">"gdk-pixbuf-sys"</span>.into()
         } <span class="kw">else </span>{
-            <span class="macro">format!</span>(<span class="string">&quot;{}-sys&quot;</span>, ext_lib.crate_name)
+            <span class="macro">format!</span>(<span class="string">"{}-sys"</span>, ext_lib.crate_name)
         };
         <span class="kw">let </span>repo_url = <span class="kw">match </span>ext_package.as_str() {
-            <span class="string">&quot;cairo-sys-rs&quot; </span>| <span class="string">&quot;gdk-pixbuf-sys&quot; </span>| <span class="string">&quot;gio-sys&quot; </span>| <span class="string">&quot;gobject-sys&quot; </span>| <span class="string">&quot;glib-sys&quot;
-            </span>| <span class="string">&quot;graphene-sys&quot; </span>| <span class="string">&quot;pango-sys&quot; </span>| <span class="string">&quot;pangocairo-sys&quot; </span>=&gt; {
-                <span class="string">&quot;https://github.com/gtk-rs/gtk-rs-core&quot;
+            <span class="string">"cairo-sys-rs" </span>| <span class="string">"gdk-pixbuf-sys" </span>| <span class="string">"gio-sys" </span>| <span class="string">"gobject-sys" </span>| <span class="string">"glib-sys"
+            </span>| <span class="string">"graphene-sys" </span>| <span class="string">"pango-sys" </span>| <span class="string">"pangocairo-sys" </span>=&gt; {
+                <span class="string">"https://github.com/gtk-rs/gtk-rs-core"
             </span>}
-            <span class="string">&quot;atk-sys&quot; </span>| <span class="string">&quot;gdk-sys&quot; </span>| <span class="string">&quot;gdkwayland-sys&quot; </span>| <span class="string">&quot;gdkx11-sys&quot; </span>| <span class="string">&quot;gtk-sys&quot; </span>=&gt; {
-                <span class="string">&quot;https://github.com/gtk-rs/gtk3-rs&quot;
+            <span class="string">"atk-sys" </span>| <span class="string">"gdk-sys" </span>| <span class="string">"gdkwayland-sys" </span>| <span class="string">"gdkx11-sys" </span>| <span class="string">"gtk-sys" </span>=&gt; {
+                <span class="string">"https://github.com/gtk-rs/gtk3-rs"
             </span>}
-            <span class="string">&quot;gdk4-wayland-sys&quot; </span>| <span class="string">&quot;gdk4-x11-sys&quot; </span>| <span class="string">&quot;gdk4-sys&quot; </span>| <span class="string">&quot;gsk4-sys&quot; </span>| <span class="string">&quot;gtk4-sys&quot; </span>=&gt; {
-                <span class="string">&quot;https://github.com/gtk-rs/gtk4-rs&quot;
+            <span class="string">"gdk4-wayland-sys" </span>| <span class="string">"gdk4-x11-sys" </span>| <span class="string">"gdk4-sys" </span>| <span class="string">"gsk4-sys" </span>| <span class="string">"gtk4-sys" </span>=&gt; {
+                <span class="string">"https://github.com/gtk-rs/gtk4-rs"
             </span>}
-            <span class="string">&quot;gstreamer-sys&quot;
-            </span>| <span class="string">&quot;gstreamer-app-sys&quot;
-            </span>| <span class="string">&quot;gstreamer-audio-sys&quot;
-            </span>| <span class="string">&quot;gstreamer-base-sys&quot;
-            </span>| <span class="string">&quot;gstreamer-check-sys&quot;
-            </span>| <span class="string">&quot;gstreamer-controller-sys&quot;
-            </span>| <span class="string">&quot;gstreamer-editing-services-sys&quot;
-            </span>| <span class="string">&quot;gstreamer-gl-sys&quot;
-            </span>| <span class="string">&quot;gstreamer-gl-egl-sys&quot;
-            </span>| <span class="string">&quot;gstreamer-gl-wayland-sys&quot;
-            </span>| <span class="string">&quot;gstreamer-gl-x11-sys&quot;
-            </span>| <span class="string">&quot;gstreamer-mpegts-sys&quot;
-            </span>| <span class="string">&quot;gstreamer-net-sys&quot;
-            </span>| <span class="string">&quot;gstreamer-pbutils-sys&quot;
-            </span>| <span class="string">&quot;gstreamer-player-sys&quot;
-            </span>| <span class="string">&quot;gstreamer-rtp-sys&quot;
-            </span>| <span class="string">&quot;gstreamer-rtsp-sys&quot;
-            </span>| <span class="string">&quot;gstreamer-rtsp-server-sys&quot;
-            </span>| <span class="string">&quot;gstreamer-sdp-sys&quot;
-            </span>| <span class="string">&quot;gstreamer-tag-sys&quot;
-            </span>| <span class="string">&quot;gstreamer-video-sys&quot;
-            </span>| <span class="string">&quot;gstreamer-webrtc-sys&quot;
-            </span>| <span class="string">&quot;gstreamer-allocators-sys&quot; </span>=&gt; <span class="string">&quot;https://gitlab.freedesktop.org/gstreamer/gstreamer-rs&quot;</span>,
-            <span class="kw-2">&amp;</span><span class="kw">_ </span>=&gt; <span class="string">&quot;ADD GIT REPOSITORY URL HERE&quot;</span>,
+            <span class="string">"gstreamer-sys"
+            </span>| <span class="string">"gstreamer-app-sys"
+            </span>| <span class="string">"gstreamer-audio-sys"
+            </span>| <span class="string">"gstreamer-base-sys"
+            </span>| <span class="string">"gstreamer-check-sys"
+            </span>| <span class="string">"gstreamer-controller-sys"
+            </span>| <span class="string">"gstreamer-editing-services-sys"
+            </span>| <span class="string">"gstreamer-gl-sys"
+            </span>| <span class="string">"gstreamer-gl-egl-sys"
+            </span>| <span class="string">"gstreamer-gl-wayland-sys"
+            </span>| <span class="string">"gstreamer-gl-x11-sys"
+            </span>| <span class="string">"gstreamer-mpegts-sys"
+            </span>| <span class="string">"gstreamer-net-sys"
+            </span>| <span class="string">"gstreamer-pbutils-sys"
+            </span>| <span class="string">"gstreamer-player-sys"
+            </span>| <span class="string">"gstreamer-rtp-sys"
+            </span>| <span class="string">"gstreamer-rtsp-sys"
+            </span>| <span class="string">"gstreamer-rtsp-server-sys"
+            </span>| <span class="string">"gstreamer-sdp-sys"
+            </span>| <span class="string">"gstreamer-tag-sys"
+            </span>| <span class="string">"gstreamer-video-sys"
+            </span>| <span class="string">"gstreamer-webrtc-sys"
+            </span>| <span class="string">"gstreamer-allocators-sys" </span>=&gt; <span class="string">"https://gitlab.freedesktop.org/gstreamer/gstreamer-rs"</span>,
+            <span class="kw-2">&amp;</span><span class="kw">_ </span>=&gt; <span class="string">"ADD GIT REPOSITORY URL HERE"</span>,
         };
         <span class="kw">let </span>dep = upsert_table(deps, ext_package);
-        set_string(dep, <span class="string">&quot;git&quot;</span>, repo_url);
+        set_string(dep, <span class="string">"git"</span>, repo_url);
     }
 }
 
 <span class="kw">fn </span>fill_in(root: <span class="kw-2">&amp;mut </span>Table, env: <span class="kw-2">&amp;</span>Env) {
     {
-        <span class="kw">let </span>package = upsert_table(root, <span class="string">&quot;package&quot;</span>);
-        set_string(package, <span class="string">&quot;build&quot;</span>, <span class="string">&quot;build.rs&quot;</span>);
-        <span class="comment">// set_string(package, &quot;version&quot;, &quot;0.2.0&quot;);
+        <span class="kw">let </span>package = upsert_table(root, <span class="string">"package"</span>);
+        set_string(package, <span class="string">"build"</span>, <span class="string">"build.rs"</span>);
+        <span class="comment">// set_string(package, "version", "0.2.0");
     </span>}
 
     {
-        <span class="kw">let </span>deps = upsert_table(root, <span class="string">&quot;dependencies&quot;</span>);
-        set_string(deps, <span class="string">&quot;libc&quot;</span>, <span class="string">&quot;0.2&quot;</span>);
+        <span class="kw">let </span>deps = upsert_table(root, <span class="string">"dependencies"</span>);
+        set_string(deps, <span class="string">"libc"</span>, <span class="string">"0.2"</span>);
     }
 
     {
-        <span class="kw">let </span>build_deps = upsert_table(root, <span class="string">&quot;build-dependencies&quot;</span>);
-        set_string(build_deps, <span class="string">&quot;system-deps&quot;</span>, <span class="string">&quot;6&quot;</span>);
+        <span class="kw">let </span>build_deps = upsert_table(root, <span class="string">"build-dependencies"</span>);
+        set_string(build_deps, <span class="string">"system-deps"</span>, <span class="string">"6"</span>);
     }
 
     {
-        <span class="kw">let </span>dev_deps = upsert_table(root, <span class="string">&quot;dev-dependencies&quot;</span>);
-        set_string(dev_deps, <span class="string">&quot;shell-words&quot;</span>, <span class="string">&quot;1.0.0&quot;</span>);
-        set_string(dev_deps, <span class="string">&quot;tempfile&quot;</span>, <span class="string">&quot;3&quot;</span>);
-        unset(dev_deps, <span class="string">&quot;tempdir&quot;</span>);
+        <span class="kw">let </span>dev_deps = upsert_table(root, <span class="string">"dev-dependencies"</span>);
+        set_string(dev_deps, <span class="string">"shell-words"</span>, <span class="string">"1.0.0"</span>);
+        set_string(dev_deps, <span class="string">"tempfile"</span>, <span class="string">"3"</span>);
+        unset(dev_deps, <span class="string">"tempdir"</span>);
     }
 
     {
-        <span class="kw">let </span>features = upsert_table(root, <span class="string">&quot;features&quot;</span>);
+        <span class="kw">let </span>features = upsert_table(root, <span class="string">"features"</span>);
         <span class="kw">let </span>versions = collect_versions(env);
         versions.keys().fold(<span class="prelude-val">None</span>::&lt;Version&gt;, |prev, <span class="kw-2">&amp;</span>version| {
             <span class="kw">let </span>prev_array: Vec&lt;Value&gt; =
@@ -380,21 +381,21 @@
     }
 
     {
-        <span class="kw">let </span>meta = upsert_table(root, <span class="string">&quot;package&quot;</span>);
-        <span class="kw">let </span>meta = upsert_table(meta, <span class="string">&quot;metadata&quot;</span>);
-        <span class="kw">let </span>meta = upsert_table(meta, <span class="string">&quot;system-deps&quot;</span>);
+        <span class="kw">let </span>meta = upsert_table(root, <span class="string">"package"</span>);
+        <span class="kw">let </span>meta = upsert_table(meta, <span class="string">"metadata"</span>);
+        <span class="kw">let </span>meta = upsert_table(meta, <span class="string">"system-deps"</span>);
 
         <span class="kw">let </span>ns = env.namespaces.main();
         <span class="kw">if let </span><span class="prelude-val">Some</span>(lib_name) = ns.package_names.first() {
             <span class="kw">let </span>meta = upsert_table(meta, nameutil::lib_name_to_toml(lib_name));
             <span class="comment">// Allow both the name and version of a system dep to be overridden by hand
-            </span>meta.entry(<span class="string">&quot;name&quot;</span>)
+            </span>meta.entry(<span class="string">"name"</span>)
                 .or_insert_with(|| Value::String(lib_name.clone()));
-            meta.entry(<span class="string">&quot;version&quot;</span>)
+            meta.entry(<span class="string">"version"</span>)
                 .or_insert_with(|| Value::String(env.config.min_cfg_version.to_string()));
 
             <span class="comment">// Old version API
-            </span>unset(meta, <span class="string">&quot;feature-versions&quot;</span>);
+            </span>unset(meta, <span class="string">"feature-versions"</span>);
 
             collect_versions(env)
                 .iter()
@@ -403,38 +404,38 @@
                     <span class="kw">let </span>version_section = upsert_table(meta, <span class="kw-2">&amp;</span>v.to_feature());
                     <span class="comment">// Allow system-deps version for this feature level to be overridden by hand
                     </span>version_section
-                        .entry(<span class="string">&quot;version&quot;</span>)
+                        .entry(<span class="string">"version"</span>)
                         .or_insert_with(|| Value::String(lib_version.to_string()));
                 });
         }
     }
 
     {
-        <span class="comment">// Small trick to prevent having double quotes around it since toml doesn&#39;t like
-        // having &#39;.&#39;
-        </span><span class="kw">let </span>docs_rs_metadata = upsert_table(root, <span class="string">&quot;package&quot;</span>);
-        <span class="kw">let </span>docs_rs_metadata = upsert_table(docs_rs_metadata, <span class="string">&quot;metadata&quot;</span>);
-        <span class="kw">let </span>docs_rs_metadata = upsert_table(docs_rs_metadata, <span class="string">&quot;docs&quot;</span>);
-        <span class="kw">let </span>docs_rs_metadata = upsert_table(docs_rs_metadata, <span class="string">&quot;rs&quot;</span>);
+        <span class="comment">// Small trick to prevent having double quotes around it since toml doesn't like
+        // having '.'
+        </span><span class="kw">let </span>docs_rs_metadata = upsert_table(root, <span class="string">"package"</span>);
+        <span class="kw">let </span>docs_rs_metadata = upsert_table(docs_rs_metadata, <span class="string">"metadata"</span>);
+        <span class="kw">let </span>docs_rs_metadata = upsert_table(docs_rs_metadata, <span class="string">"docs"</span>);
+        <span class="kw">let </span>docs_rs_metadata = upsert_table(docs_rs_metadata, <span class="string">"rs"</span>);
 
         <span class="comment">// Set the rustc and rustdoc args to be able to build the docs on docs.rs without the libraries
-        </span>docs_rs_metadata.entry(<span class="string">&quot;rustc-args&quot;</span>).or_insert_with(|| {
+        </span>docs_rs_metadata.entry(<span class="string">"rustc-args"</span>).or_insert_with(|| {
             Value::Array(<span class="macro">vec!</span>[
-                Value::String(<span class="string">&quot;--cfg&quot;</span>.to_string()),
-                Value::String(<span class="string">&quot;docsrs&quot;</span>.to_string()),
+                Value::String(<span class="string">"--cfg"</span>.to_string()),
+                Value::String(<span class="string">"docsrs"</span>.to_string()),
             ])
         });
-        docs_rs_metadata.entry(<span class="string">&quot;rustdoc-args&quot;</span>).or_insert_with(|| {
+        docs_rs_metadata.entry(<span class="string">"rustdoc-args"</span>).or_insert_with(|| {
             Value::Array(<span class="macro">vec!</span>[
-                Value::String(<span class="string">&quot;--cfg&quot;</span>.to_string()),
-                Value::String(<span class="string">&quot;docsrs&quot;</span>.to_string()),
-                Value::String(<span class="string">&quot;--generate-link-to-definition&quot;</span>.to_string()),
+                Value::String(<span class="string">"--cfg"</span>.to_string()),
+                Value::String(<span class="string">"docsrs"</span>.to_string()),
+                Value::String(<span class="string">"--generate-link-to-definition"</span>.to_string()),
             ])
         });
 
         <span class="comment">// Generate docs for all features unless a list of features to be activated on docs.rs was specified
-        </span><span class="kw">if let </span>toml::map::Entry::Vacant(<span class="kw">_</span>) = docs_rs_metadata.entry(<span class="string">&quot;features&quot;</span>) {
-            docs_rs_metadata.insert(<span class="string">&quot;all-features&quot;</span>.to_string(), Value::Boolean(<span class="bool-val">true</span>));
+        </span><span class="kw">if let </span>toml::map::Entry::Vacant(<span class="kw">_</span>) = docs_rs_metadata.entry(<span class="string">"features"</span>) {
+            docs_rs_metadata.insert(<span class="string">"all-features"</span>.to_string(), Value::Boolean(<span class="bool-val">true</span>));
         }
     }
 }
@@ -456,18 +457,18 @@
 
 <span class="doccomment">/// Returns the name of crate being currently generated.
 </span><span class="kw">fn </span>get_crate_name(config: <span class="kw-2">&amp;</span>Config, root: <span class="kw-2">&amp;</span>Table) -&gt; String {
-    <span class="kw">if let </span><span class="prelude-val">Some</span>(Value::Table(lib)) = root.get(<span class="string">&quot;lib&quot;</span>) {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(Value::String(lib_name)) = lib.get(<span class="string">&quot;name&quot;</span>) {
-            <span class="comment">// Converting don&#39;t needed as library target names cannot contain hyphens
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(Value::Table(lib)) = root.get(<span class="string">"lib"</span>) {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(Value::String(lib_name)) = lib.get(<span class="string">"name"</span>) {
+            <span class="comment">// Converting don't needed as library target names cannot contain hyphens
             </span><span class="kw">return </span>lib_name.clone();
         }
     }
-    <span class="kw">if let </span><span class="prelude-val">Some</span>(Value::Table(package)) = root.get(<span class="string">&quot;package&quot;</span>) {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(Value::String(package_name)) = package.get(<span class="string">&quot;name&quot;</span>) {
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(Value::Table(package)) = root.get(<span class="string">"package"</span>) {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(Value::String(package_name)) = package.get(<span class="string">"name"</span>) {
             <span class="kw">return </span>nameutil::crate_name(package_name);
         }
     }
-    <span class="macro">format!</span>(<span class="string">&quot;{}_sys&quot;</span>, nameutil::crate_name(<span class="kw-2">&amp;</span>config.library_name))
+    <span class="macro">format!</span>(<span class="string">"{}_sys"</span>, nameutil::crate_name(<span class="kw-2">&amp;</span>config.library_name))
 }
 
 <span class="kw">fn </span>set_string&lt;S: Into&lt;String&gt;&gt;(table: <span class="kw-2">&amp;mut </span>Table, name: <span class="kw-2">&amp;</span>str, new_value: S) {

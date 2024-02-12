@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/doc/format.rs`."><title>format.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/doc/format.rs`."><title>format.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -632,20 +633,20 @@
     nameutil, Env,
 };
 
-<span class="kw">const </span>LANGUAGE_SEP_BEGIN: <span class="kw-2">&amp;</span>str = <span class="string">&quot;&lt;!-- language=\&quot;&quot;</span>;
-<span class="kw">const </span>LANGUAGE_SEP_END: <span class="kw-2">&amp;</span>str = <span class="string">&quot;\&quot; --&gt;&quot;</span>;
-<span class="kw">const </span>LANGUAGE_BLOCK_BEGIN: <span class="kw-2">&amp;</span>str = <span class="string">&quot;|[&quot;</span>;
-<span class="kw">const </span>LANGUAGE_BLOCK_END: <span class="kw-2">&amp;</span>str = <span class="string">&quot;\n]|&quot;</span>;
+<span class="kw">const </span>LANGUAGE_SEP_BEGIN: <span class="kw-2">&amp;</span>str = <span class="string">"&lt;!-- language=\""</span>;
+<span class="kw">const </span>LANGUAGE_SEP_END: <span class="kw-2">&amp;</span>str = <span class="string">"\" --&gt;"</span>;
+<span class="kw">const </span>LANGUAGE_BLOCK_BEGIN: <span class="kw-2">&amp;</span>str = <span class="string">"|["</span>;
+<span class="kw">const </span>LANGUAGE_BLOCK_END: <span class="kw-2">&amp;</span>str = <span class="string">"\n]|"</span>;
 
-<span class="comment">// A list of function names that are ignored when warning about a &quot;not found
-// function&quot;
+<span class="comment">// A list of function names that are ignored when warning about a "not found
+// function"
 </span><span class="kw">const </span>IGNORE_C_WARNING_FUNCS: [<span class="kw-2">&amp;</span>str; <span class="number">6</span>] = [
-    <span class="string">&quot;g_object_unref&quot;</span>,
-    <span class="string">&quot;g_object_ref&quot;</span>,
-    <span class="string">&quot;g_free&quot;</span>,
-    <span class="string">&quot;g_list_free&quot;</span>,
-    <span class="string">&quot;g_strfreev&quot;</span>,
-    <span class="string">&quot;printf&quot;</span>,
+    <span class="string">"g_object_unref"</span>,
+    <span class="string">"g_object_ref"</span>,
+    <span class="string">"g_free"</span>,
+    <span class="string">"g_list_free"</span>,
+    <span class="string">"g_strfreev"</span>,
+    <span class="string">"printf"</span>,
 ];
 
 <span class="kw">pub fn </span>reformat_doc(
@@ -656,7 +657,7 @@
     code_blocks_transformation(input, env, in_type)
 }
 
-<span class="kw">fn </span>try_split&lt;<span class="lifetime">&#39;a</span>&gt;(src: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str, needle: <span class="kw-2">&amp;</span>str) -&gt; (<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str&gt;) {
+<span class="kw">fn </span>try_split&lt;<span class="lifetime">'a</span>&gt;(src: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, needle: <span class="kw-2">&amp;</span>str) -&gt; (<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str&gt;) {
     <span class="kw">match </span>src.find(needle) {
         <span class="prelude-val">Some</span>(pos) =&gt; (<span class="kw-2">&amp;</span>src[..pos], <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>src[pos + needle.len()..])),
         <span class="prelude-val">None </span>=&gt; (src, <span class="prelude-val">None</span>),
@@ -678,7 +679,7 @@
                     try_split(get_language(after, <span class="kw-2">&amp;mut </span>out), LANGUAGE_BLOCK_END)
                 {
                     out.push_str(before);
-                    out.push_str(<span class="string">&quot;\n```&quot;</span>);
+                    out.push_str(<span class="string">"\n```"</span>);
                     after
                 } <span class="kw">else </span>{
                     after
@@ -692,29 +693,29 @@
     }
 }
 
-<span class="kw">fn </span>get_language&lt;<span class="lifetime">&#39;a</span>&gt;(entry: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str, out: <span class="kw-2">&amp;mut </span>String) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str {
+<span class="kw">fn </span>get_language&lt;<span class="lifetime">'a</span>&gt;(entry: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, out: <span class="kw-2">&amp;mut </span>String) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str {
     <span class="kw">if let </span>(<span class="kw">_</span>, <span class="prelude-val">Some</span>(after)) = try_split(entry, LANGUAGE_SEP_BEGIN) {
         <span class="kw">if let </span>(before, <span class="prelude-val">Some</span>(after)) = try_split(after, LANGUAGE_SEP_END) {
-            <span class="kw">if </span>![<span class="string">&quot;text&quot;</span>, <span class="string">&quot;rust&quot;</span>].contains(<span class="kw-2">&amp;</span>before) {
-                <span class="macro">write!</span>(out, <span class="string">&quot;\n\n**⚠️ The following code is in {before} ⚠️**&quot;</span>).unwrap();
+            <span class="kw">if </span>![<span class="string">"text"</span>, <span class="string">"rust"</span>].contains(<span class="kw-2">&amp;</span>before) {
+                <span class="macro">write!</span>(out, <span class="string">"\n\n**⚠️ The following code is in {before} ⚠️**"</span>).unwrap();
             }
-            <span class="macro">write!</span>(out, <span class="string">&quot;\n\n```{before}&quot;</span>).unwrap();
+            <span class="macro">write!</span>(out, <span class="string">"\n\n```{before}"</span>).unwrap();
             <span class="kw">return </span>after;
         }
     }
-    out.push_str(<span class="string">&quot;\n```text&quot;</span>);
+    out.push_str(<span class="string">"\n```text"</span>);
     entry
 }
 
 <span class="comment">// try to get the language if any is defined or fallback to text
 </span><span class="kw">fn </span>get_markdown_language(input: <span class="kw-2">&amp;</span>str) -&gt; (<span class="kw-2">&amp;</span>str, <span class="kw-2">&amp;</span>str) {
-    <span class="kw">let </span>(lang, after) = <span class="kw">if let </span><span class="prelude-val">Some</span>((lang, after)) = input.split_once(<span class="string">&#39;\n&#39;</span>) {
+    <span class="kw">let </span>(lang, after) = <span class="kw">if let </span><span class="prelude-val">Some</span>((lang, after)) = input.split_once(<span class="string">'\n'</span>) {
         <span class="kw">let </span>lang = <span class="kw">if </span>lang.is_empty() { <span class="prelude-val">None </span>} <span class="kw">else </span>{ <span class="prelude-val">Some</span>(lang) };
         (lang, after)
     } <span class="kw">else </span>{
         (<span class="prelude-val">None</span>, input)
     };
-    (lang.unwrap_or(<span class="string">&quot;text&quot;</span>), after)
+    (lang.unwrap_or(<span class="string">"text"</span>), after)
 }
 
 <span class="comment">// Re-format codeblocks &amp; replaces the C types and GI-docgen with proper links
@@ -725,22 +726,22 @@
 ) -&gt; String {
     <span class="kw">let </span><span class="kw-2">mut </span>ret = String::with_capacity(input.len());
     <span class="kw">loop </span>{
-        input = <span class="kw">match </span>try_split(input, <span class="string">&quot;```&quot;</span>) {
+        input = <span class="kw">match </span>try_split(input, <span class="string">"```"</span>) {
             (before, <span class="prelude-val">Some</span>(after)) =&gt; {
                 <span class="comment">// if we are inside a codeblock
                 </span>ret.push_str(<span class="kw-2">&amp;</span>replace_symbols(before, env, in_type));
 
                 <span class="kw">let </span>(lang, after) = get_markdown_language(after);
-                <span class="kw">if </span>![<span class="string">&quot;text&quot;</span>, <span class="string">&quot;rust&quot;</span>, <span class="string">&quot;xml&quot;</span>, <span class="string">&quot;css&quot;</span>, <span class="string">&quot;json&quot;</span>, <span class="string">&quot;html&quot;</span>].contains(<span class="kw-2">&amp;</span>lang)
+                <span class="kw">if </span>![<span class="string">"text"</span>, <span class="string">"rust"</span>, <span class="string">"xml"</span>, <span class="string">"css"</span>, <span class="string">"json"</span>, <span class="string">"html"</span>].contains(<span class="kw-2">&amp;</span>lang)
                     &amp;&amp; after.lines().count() &gt; <span class="number">1
                 </span>{
-                    <span class="macro">write!</span>(ret, <span class="string">&quot;**⚠️ The following code is in {lang} ⚠️**\n\n&quot;</span>).unwrap();
+                    <span class="macro">write!</span>(ret, <span class="string">"**⚠️ The following code is in {lang} ⚠️**\n\n"</span>).unwrap();
                 }
-                <span class="macro">writeln!</span>(ret, <span class="string">&quot;```{lang}&quot;</span>).unwrap();
+                <span class="macro">writeln!</span>(ret, <span class="string">"```{lang}"</span>).unwrap();
 
-                <span class="kw">if let </span>(before, <span class="prelude-val">Some</span>(after)) = try_split(after, <span class="string">&quot;```&quot;</span>) {
+                <span class="kw">if let </span>(before, <span class="prelude-val">Some</span>(after)) = try_split(after, <span class="string">"```"</span>) {
                     ret.push_str(before);
-                    ret.push_str(<span class="string">&quot;```&quot;</span>);
+                    ret.push_str(<span class="string">"```"</span>);
                     after
                 } <span class="kw">else </span>{
                     after
@@ -761,18 +762,18 @@
 ) -&gt; String {
     <span class="kw">if </span>env.config.use_gi_docgen {
         <span class="kw">let </span>out = gi_docgen::replace_c_types(input, env, in_type);
-        <span class="kw">let </span>out = gi_docgen_symbol().replace_all(<span class="kw-2">&amp;</span>out, |caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;| <span class="kw">match </span><span class="kw-2">&amp;</span>caps[<span class="number">2</span>] {
-            <span class="string">&quot;TRUE&quot; </span>=&gt; <span class="string">&quot;[`true`]&quot;</span>.to_string(),
-            <span class="string">&quot;FALSE&quot; </span>=&gt; <span class="string">&quot;[`false`]&quot;</span>.to_string(),
-            <span class="string">&quot;NULL&quot; </span>=&gt; <span class="string">&quot;[`None`]&quot;</span>.to_string(),
+        <span class="kw">let </span>out = gi_docgen_symbol().replace_all(<span class="kw-2">&amp;</span>out, |caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">'_</span>&gt;| <span class="kw">match </span><span class="kw-2">&amp;</span>caps[<span class="number">2</span>] {
+            <span class="string">"TRUE" </span>=&gt; <span class="string">"[`true`]"</span>.to_string(),
+            <span class="string">"FALSE" </span>=&gt; <span class="string">"[`false`]"</span>.to_string(),
+            <span class="string">"NULL" </span>=&gt; <span class="string">"[`None`]"</span>.to_string(),
             symbol_name =&gt; <span class="kw">match </span><span class="kw-2">&amp;</span>caps[<span class="number">1</span>] {
                 <span class="comment">// Opt-in only for the %SYMBOLS, @/# causes breakages
-                </span><span class="string">&quot;%&quot; </span>=&gt; find_constant_or_variant_wrapper(symbol_name, env, in_type),
-                s =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Unknown symbol prefix `{s}`&quot;</span>),
+                </span><span class="string">"%" </span>=&gt; find_constant_or_variant_wrapper(symbol_name, env, in_type),
+                s =&gt; <span class="macro">panic!</span>(<span class="string">"Unknown symbol prefix `{s}`"</span>),
             },
         });
-        <span class="kw">let </span>out = gdk_gtk().replace_all(<span class="kw-2">&amp;</span>out, |caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;| {
-            find_type(<span class="kw-2">&amp;</span>caps[<span class="number">2</span>], env).unwrap_or_else(|| <span class="macro">format!</span>(<span class="string">&quot;`{}`&quot;</span>, <span class="kw-2">&amp;</span>caps[<span class="number">2</span>]))
+        <span class="kw">let </span>out = gdk_gtk().replace_all(<span class="kw-2">&amp;</span>out, |caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">'_</span>&gt;| {
+            find_type(<span class="kw-2">&amp;</span>caps[<span class="number">2</span>], env).unwrap_or_else(|| <span class="macro">format!</span>(<span class="string">"`{}`"</span>, <span class="kw-2">&amp;</span>caps[<span class="number">2</span>]))
         });
 
         out.to_string()
@@ -781,41 +782,41 @@
     }
 }
 
-<span class="kw">fn </span>symbol() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Regex {
+<span class="kw">fn </span>symbol() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Regex {
     <span class="kw">static </span>REGEX: OnceLock&lt;Regex&gt; = OnceLock::new();
-    REGEX.get_or_init(|| Regex::new(<span class="string">r&quot;([@#%])(\w+\b)([:.]+[\w-]+\b)?&quot;</span>).unwrap())
+    REGEX.get_or_init(|| Regex::new(<span class="string">r"([@#%])(\w+\b)([:.]+[\w-]+\b)?"</span>).unwrap())
 }
 
-<span class="kw">fn </span>gi_docgen_symbol() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Regex {
+<span class="kw">fn </span>gi_docgen_symbol() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Regex {
     <span class="kw">static </span>REGEX: OnceLock&lt;Regex&gt; = OnceLock::new();
-    REGEX.get_or_init(|| Regex::new(<span class="string">r&quot;([%])(\w+\b)([:.]+[\w-]+\b)?&quot;</span>).unwrap())
+    REGEX.get_or_init(|| Regex::new(<span class="string">r"([%])(\w+\b)([:.]+[\w-]+\b)?"</span>).unwrap())
 }
 
-<span class="kw">fn </span>function() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Regex {
+<span class="kw">fn </span>function() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Regex {
     <span class="kw">static </span>REGEX: OnceLock&lt;Regex&gt; = OnceLock::new();
-    REGEX.get_or_init(|| Regex::new(<span class="string">r&quot;([@#%])?(\w+\b[:.]+)?(\b[a-z0-9_]+)\(\)&quot;</span>).unwrap())
+    REGEX.get_or_init(|| Regex::new(<span class="string">r"([@#%])?(\w+\b[:.]+)?(\b[a-z0-9_]+)\(\)"</span>).unwrap())
 }
 
-<span class="kw">fn </span>gdk_gtk() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Regex {
+<span class="kw">fn </span>gdk_gtk() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Regex {
     <span class="comment">// **note**
     // The optional . at the end is to make the regex more relaxed for some weird
-    // broken cases on gtk3&#39;s docs it doesn&#39;t hurt other docs so please don&#39;t drop
+    // broken cases on gtk3's docs it doesn't hurt other docs so please don't drop
     // it
     </span><span class="kw">static </span>REGEX: OnceLock&lt;Regex&gt; = OnceLock::new();
     REGEX.get_or_init(|| {
-        Regex::new(<span class="string">r&quot;`([^\(:])?((G[dts]k|Pango|cairo_|graphene_|Adw|Hdy|GtkSource)\w+\b)(\.)?`&quot;</span>)
+        Regex::new(<span class="string">r"`([^\(:])?((G[dts]k|Pango|cairo_|graphene_|Adw|Hdy|GtkSource)\w+\b)(\.)?`"</span>)
             .unwrap()
     })
 }
 
-<span class="kw">fn </span>tags() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Regex {
+<span class="kw">fn </span>tags() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Regex {
     <span class="kw">static </span>REGEX: OnceLock&lt;Regex&gt; = OnceLock::new();
-    REGEX.get_or_init(|| Regex::new(<span class="string">r&quot;&lt;[\w/-]+&gt;&quot;</span>).unwrap())
+    REGEX.get_or_init(|| Regex::new(<span class="string">r"&lt;[\w/-]+&gt;"</span>).unwrap())
 }
 
-<span class="kw">fn </span>spaces() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Regex {
+<span class="kw">fn </span>spaces() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Regex {
     <span class="kw">static </span>REGEX: OnceLock&lt;Regex&gt; = OnceLock::new();
-    REGEX.get_or_init(|| Regex::new(<span class="string">r&quot;[ ]{2,}&quot;</span>).unwrap())
+    REGEX.get_or_init(|| Regex::new(<span class="string">r"[ ]{2,}"</span>).unwrap())
 }
 
 <span class="kw">fn </span>replace_c_types(
@@ -823,28 +824,28 @@
     env: <span class="kw-2">&amp;</span>Env,
     in_type: <span class="prelude-ty">Option</span>&lt;(<span class="kw-2">&amp;</span>TypeId, <span class="prelude-ty">Option</span>&lt;LocationInObject&gt;)&gt;,
 ) -&gt; String {
-    <span class="kw">let </span>out = function().replace_all(entry, |caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;| {
+    <span class="kw">let </span>out = function().replace_all(entry, |caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">'_</span>&gt;| {
         <span class="kw">let </span>name = <span class="kw-2">&amp;</span>caps[<span class="number">3</span>];
         find_method_or_function_by_ctype(<span class="prelude-val">None</span>, name, env, in_type).unwrap_or_else(|| {
             <span class="kw">if </span>!IGNORE_C_WARNING_FUNCS.contains(<span class="kw-2">&amp;</span>name) {
-                <span class="macro">info!</span>(<span class="string">&quot;No function found for `{}()`&quot;</span>, name);
+                <span class="macro">info!</span>(<span class="string">"No function found for `{}()`"</span>, name);
             }
-            <span class="macro">format!</span>(<span class="string">&quot;`{}{}()`&quot;</span>, caps.get(<span class="number">2</span>).map_or(<span class="string">&quot;&quot;</span>, |m| m.as_str()), name)
+            <span class="macro">format!</span>(<span class="string">"`{}{}()`"</span>, caps.get(<span class="number">2</span>).map_or(<span class="string">""</span>, |m| m.as_str()), name)
         })
     });
 
-    <span class="kw">let </span>out = symbol().replace_all(<span class="kw-2">&amp;</span>out, |caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;| <span class="kw">match </span><span class="kw-2">&amp;</span>caps[<span class="number">2</span>] {
-        <span class="string">&quot;TRUE&quot; </span>=&gt; <span class="string">&quot;[`true`]&quot;</span>.to_string(),
-        <span class="string">&quot;FALSE&quot; </span>=&gt; <span class="string">&quot;[`false`]&quot;</span>.to_string(),
-        <span class="string">&quot;NULL&quot; </span>=&gt; <span class="string">&quot;[`None`]&quot;</span>.to_string(),
+    <span class="kw">let </span>out = symbol().replace_all(<span class="kw-2">&amp;</span>out, |caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">'_</span>&gt;| <span class="kw">match </span><span class="kw-2">&amp;</span>caps[<span class="number">2</span>] {
+        <span class="string">"TRUE" </span>=&gt; <span class="string">"[`true`]"</span>.to_string(),
+        <span class="string">"FALSE" </span>=&gt; <span class="string">"[`false`]"</span>.to_string(),
+        <span class="string">"NULL" </span>=&gt; <span class="string">"[`None`]"</span>.to_string(),
         symbol_name =&gt; <span class="kw">match </span><span class="kw-2">&amp;</span>caps[<span class="number">1</span>] {
-            <span class="string">&quot;%&quot; </span>=&gt; find_constant_or_variant_wrapper(symbol_name, env, in_type),
-            <span class="string">&quot;#&quot; </span>=&gt; {
+            <span class="string">"%" </span>=&gt; find_constant_or_variant_wrapper(symbol_name, env, in_type),
+            <span class="string">"#" </span>=&gt; {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(member_path) = caps.get(<span class="number">3</span>).map(|m| m.as_str()) {
-                    <span class="kw">let </span>method_name = member_path.trim_start_matches(<span class="string">&#39;.&#39;</span>);
+                    <span class="kw">let </span>method_name = member_path.trim_start_matches(<span class="string">'.'</span>);
                     find_member(symbol_name, method_name, env, in_type).unwrap_or_else(|| {
-                        <span class="macro">info!</span>(<span class="string">&quot;`#{}` not found as method&quot;</span>, symbol_name);
-                        <span class="macro">format!</span>(<span class="string">&quot;`{symbol_name}{member_path}`&quot;</span>)
+                        <span class="macro">info!</span>(<span class="string">"`#{}` not found as method"</span>, symbol_name);
+                        <span class="macro">format!</span>(<span class="string">"`{symbol_name}{member_path}`"</span>)
                     })
                 } <span class="kw">else if let </span><span class="prelude-val">Some</span>(type_) = find_type(symbol_name, env) {
                     type_
@@ -852,21 +853,21 @@
                     find_constant_or_variant(symbol_name, env, in_type)
                 {
                     <span class="macro">warn!</span>(
-                        <span class="string">&quot;`{}` matches a constant/variant and should use `%` prefix instead of `#`&quot;</span>,
+                        <span class="string">"`{}` matches a constant/variant and should use `%` prefix instead of `#`"</span>,
                         symbol_name
                     );
                     constant_or_variant
                 } <span class="kw">else </span>{
-                    <span class="macro">info!</span>(<span class="string">&quot;Type `#{}` not found&quot;</span>, symbol_name);
-                    <span class="macro">format!</span>(<span class="string">&quot;`{symbol_name}`&quot;</span>)
+                    <span class="macro">info!</span>(<span class="string">"Type `#{}` not found"</span>, symbol_name);
+                    <span class="macro">format!</span>(<span class="string">"`{symbol_name}`"</span>)
                 }
             }
-            <span class="string">&quot;@&quot; </span>=&gt; {
+            <span class="string">"@" </span>=&gt; {
                 <span class="comment">// XXX: Theoretically this code should check if the resulting
                 // symbol truly belongs to `in_type`!
                 </span><span class="kw">if let </span><span class="prelude-val">Some</span>(type_) = find_type(symbol_name, env) {
                     <span class="macro">warn!</span>(
-                        <span class="string">&quot;`{}` matches a type and should use `#` prefix instead of `%`&quot;</span>,
+                        <span class="string">"`{}` matches a type and should use `#` prefix instead of `%`"</span>,
                         symbol_name
                     );
                     type_
@@ -880,17 +881,17 @@
                     function
                 } <span class="kw">else </span>{
                     <span class="comment">// `@` is often used to refer to fields and function parameters.
-                    </span><span class="macro">format!</span>(<span class="string">&quot;`{symbol_name}`&quot;</span>)
+                    </span><span class="macro">format!</span>(<span class="string">"`{symbol_name}`"</span>)
                 }
             }
-            s =&gt; <span class="macro">panic!</span>(<span class="string">&quot;Unknown symbol prefix `{s}`&quot;</span>),
+            s =&gt; <span class="macro">panic!</span>(<span class="string">"Unknown symbol prefix `{s}`"</span>),
         },
     });
-    <span class="kw">let </span>out = gdk_gtk().replace_all(<span class="kw-2">&amp;</span>out, |caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;| {
-        find_type(<span class="kw-2">&amp;</span>caps[<span class="number">2</span>], env).unwrap_or_else(|| <span class="macro">format!</span>(<span class="string">&quot;`{}`&quot;</span>, <span class="kw-2">&amp;</span>caps[<span class="number">2</span>]))
+    <span class="kw">let </span>out = gdk_gtk().replace_all(<span class="kw-2">&amp;</span>out, |caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">'_</span>&gt;| {
+        find_type(<span class="kw-2">&amp;</span>caps[<span class="number">2</span>], env).unwrap_or_else(|| <span class="macro">format!</span>(<span class="string">"`{}`"</span>, <span class="kw-2">&amp;</span>caps[<span class="number">2</span>]))
     });
-    <span class="kw">let </span>out = tags().replace_all(<span class="kw-2">&amp;</span>out, <span class="string">&quot;`$0`&quot;</span>);
-    spaces().replace_all(<span class="kw-2">&amp;</span>out, <span class="string">&quot; &quot;</span>).into_owned()
+    <span class="kw">let </span>out = tags().replace_all(<span class="kw-2">&amp;</span>out, <span class="string">"`$0`"</span>);
+    spaces().replace_all(<span class="kw-2">&amp;</span>out, <span class="string">" "</span>).into_owned()
 }
 
 <span class="doccomment">/// Wrapper around [`find_constant_or_variant`] that fallbacks to returning
@@ -901,8 +902,8 @@
     in_type: <span class="prelude-ty">Option</span>&lt;(<span class="kw-2">&amp;</span>TypeId, <span class="prelude-ty">Option</span>&lt;LocationInObject&gt;)&gt;,
 ) -&gt; String {
     find_constant_or_variant(symbol_name, env, in_type).unwrap_or_else(|| {
-        <span class="macro">info!</span>(<span class="string">&quot;Constant or variant `%{}` not found&quot;</span>, symbol_name);
-        <span class="macro">format!</span>(<span class="string">&quot;`{symbol_name}`&quot;</span>)
+        <span class="macro">info!</span>(<span class="string">"Constant or variant `%{}` not found"</span>, symbol_name);
+        <span class="macro">format!</span>(<span class="string">"`{symbol_name}`"</span>)
     })
 }
 
@@ -913,8 +914,8 @@
     in_type: <span class="prelude-ty">Option</span>&lt;(<span class="kw-2">&amp;</span>TypeId, <span class="prelude-ty">Option</span>&lt;LocationInObject&gt;)&gt;,
 ) -&gt; <span class="prelude-ty">Option</span>&lt;String&gt; {
     <span class="kw">let </span>symbols = env.symbols.borrow();
-    <span class="kw">let </span>is_signal = method_name.starts_with(<span class="string">&quot;::&quot;</span>);
-    <span class="kw">let </span>is_property = !is_signal &amp;&amp; method_name.starts_with(<span class="string">&#39;:&#39;</span>);
+    <span class="kw">let </span>is_signal = method_name.starts_with(<span class="string">"::"</span>);
+    <span class="kw">let </span>is_property = !is_signal &amp;&amp; method_name.starts_with(<span class="string">':'</span>);
     <span class="kw">if </span>!is_signal &amp;&amp; !is_property {
         find_method_or_function_by_ctype(<span class="prelude-val">Some</span>(type_), method_name, env, in_type)
     } <span class="kw">else </span>{
@@ -924,7 +925,7 @@
             .find(|o| o.c_type == type_)
             .map(|info| {
                 <span class="kw">let </span>sym = symbols.by_tid(info.type_id).unwrap(); <span class="comment">// we are sure the object exists
-                </span><span class="kw">let </span>name = method_name.trim_start_matches(<span class="string">&#39;:&#39;</span>);
+                </span><span class="kw">let </span>name = method_name.trim_start_matches(<span class="string">':'</span>);
                 <span class="kw">if </span>is_property {
                     gen_property_doc_link(<span class="kw-2">&amp;</span>sym.full_rust_name(), name)
                 } <span class="kw">else </span>{
@@ -979,12 +980,12 @@
 
 <span class="comment">// A list of types that are automatically ignored by the `find_type` function
 </span><span class="kw">const </span>IGNORED_C_TYPES: [<span class="kw-2">&amp;</span>str; <span class="number">6</span>] = [
-    <span class="string">&quot;gconstpointer&quot;</span>,
-    <span class="string">&quot;guint16&quot;</span>,
-    <span class="string">&quot;guint&quot;</span>,
-    <span class="string">&quot;gunicode&quot;</span>,
-    <span class="string">&quot;gchararray&quot;</span>,
-    <span class="string">&quot;GList&quot;</span>,
+    <span class="string">"gconstpointer"</span>,
+    <span class="string">"guint16"</span>,
+    <span class="string">"guint"</span>,
+    <span class="string">"gunicode"</span>,
+    <span class="string">"gchararray"</span>,
+    <span class="string">"GList"</span>,
 ];
 <span class="doccomment">/// either an object/interface, record, enum or a flag
 </span><span class="kw">fn </span>find_type(type_: <span class="kw-2">&amp;</span>str, env: <span class="kw-2">&amp;</span>Env) -&gt; <span class="prelude-ty">Option</span>&lt;String&gt; {
@@ -1036,7 +1037,7 @@
         |r| c_type.map_or(<span class="bool-val">true</span>, |t| r.type_(<span class="kw-2">&amp;</span>env.library).c_type == t),
         |r| c_type.map_or(<span class="bool-val">true</span>, |t| r.type_(<span class="kw-2">&amp;</span>env.library).c_type == t),
         |r| c_type.map_or(<span class="bool-val">true</span>, |t| r.type_(<span class="kw-2">&amp;</span>env.library).c_type == t),
-        c_type.map_or(<span class="bool-val">false</span>, |t| t.ends_with(<span class="string">&quot;Class&quot;</span>)),
+        c_type.map_or(<span class="bool-val">false</span>, |t| t.ends_with(<span class="string">"Class"</span>)),
         <span class="bool-val">false</span>,
     )
 }
@@ -1085,8 +1086,8 @@
             <span class="kw">let </span>object = env.config.objects.get(<span class="kw-2">&amp;</span>record_info.full_name);
             <span class="kw">let </span>visible_parent = object
                 .and_then(|o| o.trait_name.clone())
-                .unwrap_or_else(|| <span class="macro">format!</span>(<span class="string">&quot;{}Ext&quot;</span>, record_info.name));
-            <span class="kw">let </span>parent = <span class="macro">format!</span>(<span class="string">&quot;subclass::prelude::{}&quot;</span>, visible_parent);
+                .unwrap_or_else(|| <span class="macro">format!</span>(<span class="string">"{}Ext"</span>, record_info.name));
+            <span class="kw">let </span>parent = <span class="macro">format!</span>(<span class="string">"subclass::prelude::{}"</span>, visible_parent);
             <span class="kw">let </span>is_self = in_type == <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>record_info.type_id, <span class="prelude-val">None</span>));
             <span class="prelude-val">Some</span>(fn_info.doc_link(<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>parent), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>visible_parent), is_self))
         } <span class="kw">else </span>{
@@ -1199,45 +1200,45 @@
     <span class="kw">let </span>is_self = in_type == <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>type_id, <span class="prelude-val">None</span>));
 
     <span class="kw">if </span>is_self {
-        <span class="macro">format!</span>(<span class="string">&quot;[`{member_name}`][Self::{member_name}]&quot;</span>)
+        <span class="macro">format!</span>(<span class="string">"[`{member_name}`][Self::{member_name}]"</span>)
     } <span class="kw">else </span>{
-        <span class="macro">format!</span>(<span class="string">&quot;[`{sym}::{member_name}`][crate::{sym}::{member_name}]&quot;</span>)
+        <span class="macro">format!</span>(<span class="string">"[`{sym}::{member_name}`][crate::{sym}::{member_name}]"</span>)
     }
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>gen_const_doc_link(const_info: <span class="kw-2">&amp;</span><span class="kw">crate</span>::analysis::constants::Info) -&gt; String {
     <span class="comment">// for whatever reason constants are not part of the symbols list
-    </span><span class="macro">format!</span>(<span class="string">&quot;[`{n}`][crate::{n}]&quot;</span>, n = const_info.name)
+    </span><span class="macro">format!</span>(<span class="string">"[`{n}`][crate::{n}]"</span>, n = const_info.name)
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>gen_signal_doc_link(symbol: <span class="kw-2">&amp;</span>str, signal: <span class="kw-2">&amp;</span>str) -&gt; String {
-    <span class="macro">format!</span>(<span class="string">&quot;[`{signal}`][struct@crate::{symbol}#{signal}]&quot;</span>)
+    <span class="macro">format!</span>(<span class="string">"[`{signal}`][struct@crate::{symbol}#{signal}]"</span>)
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>gen_property_doc_link(symbol: <span class="kw-2">&amp;</span>str, property: <span class="kw-2">&amp;</span>str) -&gt; String {
-    <span class="macro">format!</span>(<span class="string">&quot;[`{property}`][struct@crate::{symbol}#{property}]&quot;</span>)
+    <span class="macro">format!</span>(<span class="string">"[`{property}`][struct@crate::{symbol}#{property}]"</span>)
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>gen_vfunc_doc_link(symbol: <span class="kw-2">&amp;</span>str, vfunc: <span class="kw-2">&amp;</span>str) -&gt; String {
-    <span class="macro">format!</span>(<span class="string">&quot;`vfunc::{symbol}::{vfunc}`&quot;</span>)
+    <span class="macro">format!</span>(<span class="string">"`vfunc::{symbol}::{vfunc}`"</span>)
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>gen_callback_doc_link(callback: <span class="kw-2">&amp;</span>str) -&gt; String {
-    <span class="macro">format!</span>(<span class="string">&quot;`callback::{callback}&quot;</span>)
+    <span class="macro">format!</span>(<span class="string">"`callback::{callback}"</span>)
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>gen_alias_doc_link(alias: <span class="kw-2">&amp;</span>str) -&gt; String {
-    <span class="macro">format!</span>(<span class="string">&quot;`alias::{alias}`&quot;</span>)
+    <span class="macro">format!</span>(<span class="string">"`alias::{alias}`"</span>)
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>gen_symbol_doc_link(type_id: TypeId, env: <span class="kw-2">&amp;</span>Env) -&gt; String {
     <span class="kw">let </span>symbols = env.symbols.borrow();
     <span class="kw">let </span>sym = symbols.by_tid(type_id).unwrap();
     <span class="comment">// Workaround the case of glib::Variant being a derive macro and a struct
-    </span><span class="kw">if </span>sym.name() == <span class="string">&quot;Variant&quot; </span>&amp;&amp; (sym.crate_name().is_none() || sym.crate_name() == <span class="prelude-val">Some</span>(<span class="string">&quot;glib&quot;</span>)) {
-        <span class="macro">format!</span>(<span class="string">&quot;[`{n}`][struct@crate::{n}]&quot;</span>, n = sym.full_rust_name())
+    </span><span class="kw">if </span>sym.name() == <span class="string">"Variant" </span>&amp;&amp; (sym.crate_name().is_none() || sym.crate_name() == <span class="prelude-val">Some</span>(<span class="string">"glib"</span>)) {
+        <span class="macro">format!</span>(<span class="string">"[`{n}`][struct@crate::{n}]"</span>, n = sym.full_rust_name())
     } <span class="kw">else </span>{
-        <span class="macro">format!</span>(<span class="string">&quot;[`{n}`][crate::{n}]&quot;</span>, n = sym.full_rust_name())
+        <span class="macro">format!</span>(<span class="string">"[`{n}`][crate::{n}]"</span>, n = sym.full_rust_name())
     }
 }
 </code></pre></div></section></main></body></html>

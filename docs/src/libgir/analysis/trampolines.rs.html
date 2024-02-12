@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/analysis/trampolines.rs`."><title>trampolines.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/analysis/trampolines.rs`."><title>trampolines.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -280,7 +281,7 @@
     <span class="kw">pub </span>ret: library::Parameter,
     <span class="comment">// This field is used for user callbacks in `codegen::function_body_chunk` when generating
     // inner C functions. We need to have the bound name in order to create variables and also to
-    // pass to the C function bounds (otherwise it won&#39;t compile because it doesn&#39;t know how to
+    // pass to the C function bounds (otherwise it won't compile because it doesn't know how to
     // infer the bounds).
     </span><span class="kw">pub </span>bound_name: String,
     <span class="kw">pub </span>bounds: Bounds,
@@ -289,11 +290,11 @@
     <span class="kw">pub </span>concurrency: library::Concurrency,
     <span class="kw">pub </span>is_notify: bool,
     <span class="kw">pub </span>scope: library::ParameterScope,
-    <span class="doccomment">/// It&#39;s used to group callbacks
+    <span class="doccomment">/// It's used to group callbacks
     </span><span class="kw">pub </span>user_data_index: usize,
     <span class="kw">pub </span>destroy_index: usize,
     <span class="kw">pub </span>nullable: library::Nullable,
-    <span class="doccomment">/// This field is used to give the type name when generating the &quot;IsA&lt;X&gt;&quot;
+    <span class="doccomment">/// This field is used to give the type name when generating the "IsA&lt;X&gt;"
     /// part.
     </span><span class="kw">pub </span>type_name: String,
 }
@@ -315,21 +316,21 @@
     <span class="kw">if </span>!errors.is_empty() {
         <span class="macro">warn_main!</span>(
             type_tid,
-            <span class="string">&quot;Can&#39;t generate {} trampoline for signal &#39;{}&#39;&quot;</span>,
+            <span class="string">"Can't generate {} trampoline for signal '{}'"</span>,
             type_tid.full_name(<span class="kw-2">&amp;</span>env.library),
             signal.name
         );
         <span class="kw">return </span><span class="prelude-val">Err</span>(errors);
     }
 
-    <span class="kw">let </span>is_notify = signal.name.starts_with(<span class="string">&quot;notify::&quot;</span>);
+    <span class="kw">let </span>is_notify = signal.name.starts_with(<span class="string">"notify::"</span>);
 
-    <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">&quot;{}_trampoline&quot;</span>, signal_to_snake(<span class="kw-2">&amp;</span>signal.name));
+    <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">"{}_trampoline"</span>, signal_to_snake(<span class="kw-2">&amp;</span>signal.name));
 
     <span class="comment">// TODO: move to object.signal.return config
     </span><span class="kw">let </span>inhibit = configured_signals.iter().any(|f| f.inhibit);
     <span class="kw">if </span>inhibit &amp;&amp; signal.ret.typ != library::TypeId::tid_bool() {
-        <span class="macro">error!</span>(<span class="string">&quot;Wrong return type for Inhibit for signal &#39;{}&#39;&quot;</span>, signal.name);
+        <span class="macro">error!</span>(<span class="string">"Wrong return type for Inhibit for signal '{}'"</span>, signal.name);
     }
 
     <span class="kw">let </span><span class="kw-2">mut </span>bounds: Bounds = Default::default();
@@ -340,14 +341,14 @@
             .try_build();
         <span class="kw">if </span>fundamental_type {
             bounds.add_parameter(
-                <span class="string">&quot;this&quot;</span>,
+                <span class="string">"this"</span>,
                 <span class="kw-2">&amp;</span>type_name.into_string(),
                 BoundType::AsRef(<span class="prelude-val">None</span>),
                 <span class="bool-val">false</span>,
             );
         } <span class="kw">else </span>{
             bounds.add_parameter(
-                <span class="string">&quot;this&quot;</span>,
+                <span class="string">"this"</span>,
                 <span class="kw-2">&amp;</span>type_name.into_string(),
                 BoundType::IsA(<span class="prelude-val">None</span>),
                 <span class="bool-val">false</span>,
@@ -359,12 +360,12 @@
         <span class="kw">let </span><span class="kw-2">mut </span>parameters = trampoline_parameters::Parameters::new(<span class="number">1</span>);
 
         <span class="kw">let </span>owner = env.type_(type_tid);
-        <span class="kw">let </span>c_type = <span class="macro">format!</span>(<span class="string">&quot;{}*&quot;</span>, owner.get_glib_name().unwrap());
+        <span class="kw">let </span>c_type = <span class="macro">format!</span>(<span class="string">"{}*"</span>, owner.get_glib_name().unwrap());
 
         <span class="kw">let </span>transform = parameters.prepare_transformation(
             env,
             type_tid,
-            <span class="string">&quot;this&quot;</span>.to_owned(),
+            <span class="string">"this"</span>.to_owned(),
             c_type,
             library::ParameterDirection::In,
             library::Transfer::None,
@@ -385,14 +386,14 @@
             .try_build();
         <span class="kw">if </span>fundamental_type {
             bounds.add_parameter(
-                <span class="string">&quot;this&quot;</span>,
+                <span class="string">"this"</span>,
                 <span class="kw-2">&amp;</span>type_name.into_string(),
                 BoundType::AsRef(<span class="prelude-val">None</span>),
                 <span class="bool-val">false</span>,
             );
         } <span class="kw">else </span>{
             bounds.add_parameter(
-                <span class="string">&quot;this&quot;</span>,
+                <span class="string">"this"</span>,
                 <span class="kw-2">&amp;</span>type_name.into_string(),
                 BoundType::IsA(<span class="prelude-val">None</span>),
                 <span class="bool-val">false</span>,
@@ -470,7 +471,7 @@
     <span class="kw">for </span>par <span class="kw">in </span><span class="kw-2">&amp;</span>signal.parameters {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(error) = type_error(env, par) {
             errors.push(<span class="macro">format!</span>(
-                <span class="string">&quot;{} {}: {}&quot;</span>,
+                <span class="string">"{} {}: {}"</span>,
                 error,
                 par.name,
                 par.typ.full_name(<span class="kw-2">&amp;</span>env.library)
@@ -480,7 +481,7 @@
     <span class="kw">if </span>signal.ret.typ != Default::default() {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(error) = type_error(env, <span class="kw-2">&amp;</span>signal.ret) {
             errors.push(<span class="macro">format!</span>(
-                <span class="string">&quot;{} return value {}&quot;</span>,
+                <span class="string">"{} return value {}"</span>,
                 error,
                 signal.ret.typ.full_name(<span class="kw-2">&amp;</span>env.library)
             ));
@@ -489,21 +490,21 @@
     errors
 }
 
-<span class="kw">pub fn </span>type_error(env: <span class="kw-2">&amp;</span>Env, par: <span class="kw-2">&amp;</span>library::Parameter) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str&gt; {
+<span class="kw">pub fn </span>type_error(env: <span class="kw-2">&amp;</span>Env, par: <span class="kw-2">&amp;</span>library::Parameter) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str&gt; {
     <span class="kw">use </span><span class="kw">super</span>::rust_type::TypeError::<span class="kw-2">*</span>;
     <span class="kw">if </span>par.direction == library::ParameterDirection::Out {
-        <span class="prelude-val">Some</span>(<span class="string">&quot;Out&quot;</span>)
+        <span class="prelude-val">Some</span>(<span class="string">"Out"</span>)
     } <span class="kw">else if </span>par.direction == library::ParameterDirection::InOut {
-        <span class="prelude-val">Some</span>(<span class="string">&quot;InOut&quot;</span>)
+        <span class="prelude-val">Some</span>(<span class="string">"InOut"</span>)
     } <span class="kw">else if </span>is_empty_c_type(<span class="kw-2">&amp;</span>par.c_type) {
-        <span class="prelude-val">Some</span>(<span class="string">&quot;Empty ctype&quot;</span>)
+        <span class="prelude-val">Some</span>(<span class="string">"Empty ctype"</span>)
     } <span class="kw">else if </span>ConversionType::of(env, par.typ) == ConversionType::Unknown {
-        <span class="prelude-val">Some</span>(<span class="string">&quot;Unknown conversion&quot;</span>)
+        <span class="prelude-val">Some</span>(<span class="string">"Unknown conversion"</span>)
     } <span class="kw">else </span>{
         <span class="kw">match </span>RustType::try_new(env, par.typ) {
-            <span class="prelude-val">Err</span>(Ignored(<span class="kw">_</span>)) =&gt; <span class="prelude-val">Some</span>(<span class="string">&quot;Ignored&quot;</span>),
-            <span class="prelude-val">Err</span>(Mismatch(<span class="kw">_</span>)) =&gt; <span class="prelude-val">Some</span>(<span class="string">&quot;Mismatch&quot;</span>),
-            <span class="prelude-val">Err</span>(Unimplemented(<span class="kw">_</span>)) =&gt; <span class="prelude-val">Some</span>(<span class="string">&quot;Unimplemented&quot;</span>),
+            <span class="prelude-val">Err</span>(Ignored(<span class="kw">_</span>)) =&gt; <span class="prelude-val">Some</span>(<span class="string">"Ignored"</span>),
+            <span class="prelude-val">Err</span>(Mismatch(<span class="kw">_</span>)) =&gt; <span class="prelude-val">Some</span>(<span class="string">"Mismatch"</span>),
+            <span class="prelude-val">Err</span>(Unimplemented(<span class="kw">_</span>)) =&gt; <span class="prelude-val">Some</span>(<span class="string">"Unimplemented"</span>),
             <span class="prelude-val">Ok</span>(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
         }
     }

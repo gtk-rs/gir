@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/analysis/bounds.rs`."><title>bounds.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/analysis/bounds.rs`."><title>bounds.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -479,7 +480,7 @@
     NoWrapper,
     <span class="comment">// lifetime
     </span>IsA(<span class="prelude-ty">Option</span>&lt;char&gt;),
-    <span class="comment">// lifetime &lt;- shouldn&#39;t be used but just in case...
+    <span class="comment">// lifetime &lt;- shouldn't be used but just in case...
     </span>AsRef(<span class="prelude-ty">Option</span>&lt;char&gt;),
 }
 
@@ -518,7 +519,7 @@
     <span class="kw">fn </span>default() -&gt; Bounds {
         Bounds {
             unused: (TYPE_PARAMETERS_START..)
-                .take_while(|x| <span class="kw-2">*</span>x &lt;= <span class="string">&#39;Z&#39;</span>)
+                .take_while(|x| <span class="kw-2">*</span>x &lt;= <span class="string">'Z'</span>)
                 .collect(),
             used: Vec::new(),
             lifetimes: Vec::new(),
@@ -563,7 +564,7 @@
                     par.instance_parameter,
                     par.move_,
                 ));
-                <span class="kw">if </span>r#async &amp;&amp; (par.name == <span class="string">&quot;callback&quot; </span>|| par.name.ends_with(<span class="string">&quot;_callback&quot;</span>)) {
+                <span class="kw">if </span>r#async &amp;&amp; (par.name == <span class="string">"callback" </span>|| par.name.ends_with(<span class="string">"_callback"</span>)) {
                     <span class="kw">let </span>func_name = func.c_identifier.as_ref().unwrap();
                     <span class="kw">let </span>finish_func_name = finish_function_name(func_name);
                     <span class="kw">if let </span><span class="prelude-val">Some</span>(function) = find_function(env, <span class="kw-2">&amp;</span>finish_func_name) {
@@ -596,9 +597,9 @@
                         <span class="kw">let </span>error_type = find_error_type(env, function);
                         <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>error) = error_type {
                             type_string =
-                                <span class="macro">format!</span>(<span class="string">&quot;FnOnce(Result&lt;{parameters}, {error}&gt;) + &#39;static&quot;</span>);
+                                <span class="macro">format!</span>(<span class="string">"FnOnce(Result&lt;{parameters}, {error}&gt;) + 'static"</span>);
                         } <span class="kw">else </span>{
-                            type_string = <span class="macro">format!</span>(<span class="string">&quot;FnOnce({parameters}) + &#39;static&quot;</span>);
+                            type_string = <span class="macro">format!</span>(<span class="string">"FnOnce({parameters}) + 'static"</span>);
                         }
                         <span class="kw">let </span>bound_name = <span class="kw-2">*</span><span class="self">self</span>.unused.front().unwrap();
                         callback_info = <span class="prelude-val">Some</span>(CallbackInfo {
@@ -608,9 +609,9 @@
                             bound_name,
                         });
                     }
-                } <span class="kw">else if </span>par.c_type == <span class="string">&quot;GDestroyNotify&quot; </span>|| env.library.type_(par.typ).is_function()
+                } <span class="kw">else if </span>par.c_type == <span class="string">"GDestroyNotify" </span>|| env.library.type_(par.typ).is_function()
                 {
-                    need_is_into_check = par.c_type != <span class="string">&quot;GDestroyNotify&quot;</span>;
+                    need_is_into_check = par.c_type != <span class="string">"GDestroyNotify"</span>;
                     <span class="kw">if let </span>Type::Function(<span class="kw">_</span>) = env.library.type_(par.typ) {
                         <span class="kw">let </span>callback_parameters_config =
                             configured_functions.iter().find_map(|f| {
@@ -641,7 +642,7 @@
                         });
                     }
                 }
-                <span class="kw">if </span>(!need_is_into_check || !<span class="kw-2">*</span>par.nullable) &amp;&amp; par.c_type != <span class="string">&quot;GDestroyNotify&quot; </span>{
+                <span class="kw">if </span>(!need_is_into_check || !<span class="kw-2">*</span>par.nullable) &amp;&amp; par.c_type != <span class="string">"GDestroyNotify" </span>{
                     <span class="self">self</span>.add_parameter(<span class="kw-2">&amp;</span>par.name, <span class="kw-2">&amp;</span>type_string, bound_type, r#async);
                 }
             }
@@ -688,14 +689,14 @@
     ) -&gt; String {
         <span class="kw">use </span><span class="self">self</span>::BoundType::<span class="kw-2">*</span>;
         <span class="kw">match </span>bound_type {
-            AsRef(<span class="kw">_</span>) <span class="kw">if </span>move_ &amp;&amp; nullable =&gt; <span class="string">&quot;.map(|p| p.as_ref().clone().upcast())&quot;</span>.to_owned(),
-            AsRef(<span class="kw">_</span>) <span class="kw">if </span>nullable =&gt; <span class="string">&quot;.as_ref().map(|p| p.as_ref())&quot;</span>.to_owned(),
-            AsRef(<span class="kw">_</span>) <span class="kw">if </span>move_ =&gt; <span class="string">&quot;.upcast()&quot;</span>.to_owned(),
-            AsRef(<span class="kw">_</span>) =&gt; <span class="string">&quot;.as_ref()&quot;</span>.to_owned(),
-            IsA(<span class="kw">_</span>) <span class="kw">if </span>move_ &amp;&amp; nullable =&gt; <span class="string">&quot;.map(|p| p.upcast())&quot;</span>.to_owned(),
-            IsA(<span class="kw">_</span>) <span class="kw">if </span>nullable &amp;&amp; !instance_parameter =&gt; <span class="string">&quot;.map(|p| p.as_ref())&quot;</span>.to_owned(),
-            IsA(<span class="kw">_</span>) <span class="kw">if </span>move_ =&gt; <span class="string">&quot;.upcast()&quot;</span>.to_owned(),
-            IsA(<span class="kw">_</span>) =&gt; <span class="string">&quot;.as_ref()&quot;</span>.to_owned(),
+            AsRef(<span class="kw">_</span>) <span class="kw">if </span>move_ &amp;&amp; nullable =&gt; <span class="string">".map(|p| p.as_ref().clone().upcast())"</span>.to_owned(),
+            AsRef(<span class="kw">_</span>) <span class="kw">if </span>nullable =&gt; <span class="string">".as_ref().map(|p| p.as_ref())"</span>.to_owned(),
+            AsRef(<span class="kw">_</span>) <span class="kw">if </span>move_ =&gt; <span class="string">".upcast()"</span>.to_owned(),
+            AsRef(<span class="kw">_</span>) =&gt; <span class="string">".as_ref()"</span>.to_owned(),
+            IsA(<span class="kw">_</span>) <span class="kw">if </span>move_ &amp;&amp; nullable =&gt; <span class="string">".map(|p| p.upcast())"</span>.to_owned(),
+            IsA(<span class="kw">_</span>) <span class="kw">if </span>nullable &amp;&amp; !instance_parameter =&gt; <span class="string">".map(|p| p.as_ref())"</span>.to_owned(),
+            IsA(<span class="kw">_</span>) <span class="kw">if </span>move_ =&gt; <span class="string">".upcast()"</span>.to_owned(),
+            IsA(<span class="kw">_</span>) =&gt; <span class="string">".as_ref()"</span>.to_owned(),
             <span class="kw">_ </span>=&gt; String::new(),
         }
     }
@@ -707,7 +708,7 @@
         <span class="kw-2">mut </span>bound_type: BoundType,
         r#async: bool,
     ) {
-        <span class="kw">if </span>r#async &amp;&amp; name == <span class="string">&quot;callback&quot; </span>{
+        <span class="kw">if </span>r#async &amp;&amp; name == <span class="string">"callback" </span>{
             bound_type = BoundType::NoWrapper;
         }
         <span class="kw">if </span><span class="self">self</span>.used.iter().any(|n| n.parameter_name == name) {
@@ -715,7 +716,7 @@
         }
         <span class="kw">let </span>alias = bound_type
             .has_alias()
-            .then(|| <span class="self">self</span>.unused.pop_front().expect(<span class="string">&quot;No free type aliases!&quot;</span>));
+            .then(|| <span class="self">self</span>.unused.pop_front().expect(<span class="string">"No free type aliases!"</span>));
         <span class="self">self</span>.used.push(Bound {
             bound_type,
             parameter_name: name.to_owned(),
@@ -735,7 +736,7 @@
         <span class="kw">for </span>used <span class="kw">in </span><span class="kw-2">&amp;</span><span class="self">self</span>.used {
             <span class="kw">match </span>used.bound_type {
                 NoWrapper =&gt; (),
-                IsA(<span class="kw">_</span>) =&gt; imports.add(<span class="string">&quot;glib::prelude::*&quot;</span>),
+                IsA(<span class="kw">_</span>) =&gt; imports.add(<span class="string">"glib::prelude::*"</span>),
                 AsRef(<span class="kw">_</span>) =&gt; imports.add_used_type(<span class="kw-2">&amp;</span>used.type_str),
             }
         }
@@ -745,11 +746,11 @@
         <span class="self">self</span>.used.is_empty()
     }
 
-    <span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Iter&lt;<span class="lifetime">&#39;_</span>, Bound&gt; {
+    <span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Iter&lt;<span class="lifetime">'_</span>, Bound&gt; {
         <span class="self">self</span>.used.iter()
     }
 
-    <span class="kw">pub fn </span>iter_lifetimes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Iter&lt;<span class="lifetime">&#39;_</span>, char&gt; {
+    <span class="kw">pub fn </span>iter_lifetimes(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Iter&lt;<span class="lifetime">'_</span>, char&gt; {
         <span class="self">self</span>.lifetimes.iter()
     }
 }
@@ -789,7 +790,7 @@
         .filter(|<span class="kw-2">&amp;</span>(index, param)| {
             <span class="prelude-val">Some</span>(index) != index_to_ignore
                 &amp;&amp; param.direction == ParameterDirection::Out
-                &amp;&amp; param.name != <span class="string">&quot;error&quot;
+                &amp;&amp; param.name != <span class="string">"error"
         </span>})
         .map(|(<span class="kw">_</span>, param)| {
             <span class="comment">// FIXME: This should work completely based on the analysis of the finish()
@@ -818,7 +819,7 @@
     <span class="kw">if </span>parameters.len() == <span class="number">1 </span>{
         parameters[<span class="number">0</span>].to_string()
     } <span class="kw">else </span>{
-        <span class="macro">format!</span>(<span class="string">&quot;({})&quot;</span>, parameters.join(<span class="string">&quot;, &quot;</span>))
+        <span class="macro">format!</span>(<span class="string">"({})"</span>, parameters.join(<span class="string">", "</span>))
     }
 }
 
@@ -847,34 +848,34 @@
     </span><span class="kw">fn </span>get_new_all() {
         <span class="kw">let </span><span class="kw-2">mut </span>bounds: Bounds = Default::default();
         <span class="kw">let </span>typ = BoundType::IsA(<span class="prelude-val">None</span>);
-        bounds.add_parameter(<span class="string">&quot;a&quot;</span>, <span class="string">&quot;&quot;</span>, typ.clone(), <span class="bool-val">false</span>);
+        bounds.add_parameter(<span class="string">"a"</span>, <span class="string">""</span>, typ.clone(), <span class="bool-val">false</span>);
         <span class="macro">assert_eq!</span>(bounds.iter().len(), <span class="number">1</span>);
-        <span class="comment">// Don&#39;t add second time
-        </span>bounds.add_parameter(<span class="string">&quot;a&quot;</span>, <span class="string">&quot;&quot;</span>, typ.clone(), <span class="bool-val">false</span>);
+        <span class="comment">// Don't add second time
+        </span>bounds.add_parameter(<span class="string">"a"</span>, <span class="string">""</span>, typ.clone(), <span class="bool-val">false</span>);
         <span class="macro">assert_eq!</span>(bounds.iter().len(), <span class="number">1</span>);
-        bounds.add_parameter(<span class="string">&quot;b&quot;</span>, <span class="string">&quot;&quot;</span>, typ.clone(), <span class="bool-val">false</span>);
-        bounds.add_parameter(<span class="string">&quot;c&quot;</span>, <span class="string">&quot;&quot;</span>, typ.clone(), <span class="bool-val">false</span>);
-        bounds.add_parameter(<span class="string">&quot;d&quot;</span>, <span class="string">&quot;&quot;</span>, typ.clone(), <span class="bool-val">false</span>);
-        bounds.add_parameter(<span class="string">&quot;e&quot;</span>, <span class="string">&quot;&quot;</span>, typ.clone(), <span class="bool-val">false</span>);
-        bounds.add_parameter(<span class="string">&quot;f&quot;</span>, <span class="string">&quot;&quot;</span>, typ.clone(), <span class="bool-val">false</span>);
-        bounds.add_parameter(<span class="string">&quot;g&quot;</span>, <span class="string">&quot;&quot;</span>, typ.clone(), <span class="bool-val">false</span>);
-        bounds.add_parameter(<span class="string">&quot;h&quot;</span>, <span class="string">&quot;&quot;</span>, typ.clone(), <span class="bool-val">false</span>);
+        bounds.add_parameter(<span class="string">"b"</span>, <span class="string">""</span>, typ.clone(), <span class="bool-val">false</span>);
+        bounds.add_parameter(<span class="string">"c"</span>, <span class="string">""</span>, typ.clone(), <span class="bool-val">false</span>);
+        bounds.add_parameter(<span class="string">"d"</span>, <span class="string">""</span>, typ.clone(), <span class="bool-val">false</span>);
+        bounds.add_parameter(<span class="string">"e"</span>, <span class="string">""</span>, typ.clone(), <span class="bool-val">false</span>);
+        bounds.add_parameter(<span class="string">"f"</span>, <span class="string">""</span>, typ.clone(), <span class="bool-val">false</span>);
+        bounds.add_parameter(<span class="string">"g"</span>, <span class="string">""</span>, typ.clone(), <span class="bool-val">false</span>);
+        bounds.add_parameter(<span class="string">"h"</span>, <span class="string">""</span>, typ.clone(), <span class="bool-val">false</span>);
         <span class="macro">assert_eq!</span>(bounds.iter().len(), <span class="number">8</span>);
-        bounds.add_parameter(<span class="string">&quot;h&quot;</span>, <span class="string">&quot;&quot;</span>, typ.clone(), <span class="bool-val">false</span>);
+        bounds.add_parameter(<span class="string">"h"</span>, <span class="string">""</span>, typ.clone(), <span class="bool-val">false</span>);
         <span class="macro">assert_eq!</span>(bounds.iter().len(), <span class="number">8</span>);
-        bounds.add_parameter(<span class="string">&quot;i&quot;</span>, <span class="string">&quot;&quot;</span>, typ.clone(), <span class="bool-val">false</span>);
-        bounds.add_parameter(<span class="string">&quot;j&quot;</span>, <span class="string">&quot;&quot;</span>, typ.clone(), <span class="bool-val">false</span>);
-        bounds.add_parameter(<span class="string">&quot;k&quot;</span>, <span class="string">&quot;&quot;</span>, typ, <span class="bool-val">false</span>);
+        bounds.add_parameter(<span class="string">"i"</span>, <span class="string">""</span>, typ.clone(), <span class="bool-val">false</span>);
+        bounds.add_parameter(<span class="string">"j"</span>, <span class="string">""</span>, typ.clone(), <span class="bool-val">false</span>);
+        bounds.add_parameter(<span class="string">"k"</span>, <span class="string">""</span>, typ, <span class="bool-val">false</span>);
     }
 
     <span class="attr">#[test]
-    #[should_panic(expected = <span class="string">&quot;No free type aliases!&quot;</span>)]
+    #[should_panic(expected = <span class="string">"No free type aliases!"</span>)]
     </span><span class="kw">fn </span>exhaust_type_parameters() {
         <span class="kw">let </span><span class="kw-2">mut </span>bounds: Bounds = Default::default();
         <span class="kw">let </span>typ = BoundType::NoWrapper;
-        <span class="kw">for </span>c <span class="kw">in </span><span class="string">&#39;a&#39;</span>..=<span class="string">&#39;l&#39; </span>{
+        <span class="kw">for </span>c <span class="kw">in </span><span class="string">'a'</span>..=<span class="string">'l' </span>{
             <span class="comment">// Should panic on `l` because all type parameters are exhausted
-            </span>bounds.add_parameter(c.to_string().as_str(), <span class="string">&quot;&quot;</span>, typ.clone(), <span class="bool-val">false</span>);
+            </span>bounds.add_parameter(c.to_string().as_str(), <span class="string">""</span>, typ.clone(), <span class="bool-val">false</span>);
         }
     }
 
@@ -882,33 +883,33 @@
     </span><span class="kw">fn </span>get_parameter_bound() {
         <span class="kw">let </span><span class="kw-2">mut </span>bounds: Bounds = Default::default();
         <span class="kw">let </span>typ = BoundType::NoWrapper;
-        bounds.add_parameter(<span class="string">&quot;a&quot;</span>, <span class="string">&quot;&quot;</span>, typ.clone(), <span class="bool-val">false</span>);
-        bounds.add_parameter(<span class="string">&quot;b&quot;</span>, <span class="string">&quot;&quot;</span>, typ.clone(), <span class="bool-val">false</span>);
-        <span class="kw">let </span>bound = bounds.get_parameter_bound(<span class="string">&quot;a&quot;</span>).unwrap();
+        bounds.add_parameter(<span class="string">"a"</span>, <span class="string">""</span>, typ.clone(), <span class="bool-val">false</span>);
+        bounds.add_parameter(<span class="string">"b"</span>, <span class="string">""</span>, typ.clone(), <span class="bool-val">false</span>);
+        <span class="kw">let </span>bound = bounds.get_parameter_bound(<span class="string">"a"</span>).unwrap();
         <span class="comment">// `NoWrapper `bounds are expected to have an alias:
-        </span><span class="macro">assert_eq!</span>(bound.alias, <span class="prelude-val">Some</span>(<span class="string">&#39;P&#39;</span>));
+        </span><span class="macro">assert_eq!</span>(bound.alias, <span class="prelude-val">Some</span>(<span class="string">'P'</span>));
         <span class="macro">assert_eq!</span>(bound.bound_type, typ);
-        <span class="kw">let </span>bound = bounds.get_parameter_bound(<span class="string">&quot;b&quot;</span>).unwrap();
-        <span class="macro">assert_eq!</span>(bound.alias, <span class="prelude-val">Some</span>(<span class="string">&#39;Q&#39;</span>));
+        <span class="kw">let </span>bound = bounds.get_parameter_bound(<span class="string">"b"</span>).unwrap();
+        <span class="macro">assert_eq!</span>(bound.alias, <span class="prelude-val">Some</span>(<span class="string">'Q'</span>));
         <span class="macro">assert_eq!</span>(bound.bound_type, typ);
-        <span class="macro">assert_eq!</span>(bounds.get_parameter_bound(<span class="string">&quot;c&quot;</span>), <span class="prelude-val">None</span>);
+        <span class="macro">assert_eq!</span>(bounds.get_parameter_bound(<span class="string">"c"</span>), <span class="prelude-val">None</span>);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>impl_bound() {
         <span class="kw">let </span><span class="kw-2">mut </span>bounds: Bounds = Default::default();
         <span class="kw">let </span>typ = BoundType::IsA(<span class="prelude-val">None</span>);
-        bounds.add_parameter(<span class="string">&quot;a&quot;</span>, <span class="string">&quot;&quot;</span>, typ.clone(), <span class="bool-val">false</span>);
-        bounds.add_parameter(<span class="string">&quot;b&quot;</span>, <span class="string">&quot;&quot;</span>, typ.clone(), <span class="bool-val">false</span>);
-        <span class="kw">let </span>bound = bounds.get_parameter_bound(<span class="string">&quot;a&quot;</span>).unwrap();
+        bounds.add_parameter(<span class="string">"a"</span>, <span class="string">""</span>, typ.clone(), <span class="bool-val">false</span>);
+        bounds.add_parameter(<span class="string">"b"</span>, <span class="string">""</span>, typ.clone(), <span class="bool-val">false</span>);
+        <span class="kw">let </span>bound = bounds.get_parameter_bound(<span class="string">"a"</span>).unwrap();
         <span class="comment">// `IsA` is simplified to an inline `foo: impl IsA&lt;Bar&gt;` and
         // lacks an alias/type-parameter:
         </span><span class="macro">assert_eq!</span>(bound.alias, <span class="prelude-val">None</span>);
         <span class="macro">assert_eq!</span>(bound.bound_type, typ);
 
         <span class="kw">let </span>typ = BoundType::AsRef(<span class="prelude-val">None</span>);
-        bounds.add_parameter(<span class="string">&quot;c&quot;</span>, <span class="string">&quot;&quot;</span>, typ.clone(), <span class="bool-val">false</span>);
-        <span class="kw">let </span>bound = bounds.get_parameter_bound(<span class="string">&quot;c&quot;</span>).unwrap();
+        bounds.add_parameter(<span class="string">"c"</span>, <span class="string">""</span>, typ.clone(), <span class="bool-val">false</span>);
+        <span class="kw">let </span>bound = bounds.get_parameter_bound(<span class="string">"c"</span>).unwrap();
         <span class="comment">// Same `impl AsRef&lt;Foo&gt;` simplification as `IsA`:
         </span><span class="macro">assert_eq!</span>(bound.alias, <span class="prelude-val">None</span>);
         <span class="macro">assert_eq!</span>(bound.bound_type, typ);

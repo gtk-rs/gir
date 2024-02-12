@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/library_postprocessing.rs`."><title>library_postprocessing.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/library_postprocessing.rs`."><title>library_postprocessing.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -699,9 +700,9 @@
     }
 
     <span class="kw">fn </span>fix_gtype(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(ns_id) = <span class="self">self</span>.find_namespace(<span class="string">&quot;GObject&quot;</span>) {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(ns_id) = <span class="self">self</span>.find_namespace(<span class="string">"GObject"</span>) {
             <span class="comment">// hide the `GType` type alias in `GObject`
-            </span><span class="self">self</span>.add_type(ns_id, <span class="string">&quot;Type&quot;</span>, Type::Basic(Basic::Unsupported));
+            </span><span class="self">self</span>.add_type(ns_id, <span class="string">"Type"</span>, Type::Basic(Basic::Unsupported));
         }
     }
 
@@ -714,11 +715,11 @@
                 <span class="self">self</span>.namespace(id)
                     .unresolved()
                     .into_iter()
-                    .map(<span class="kw">move </span>|s| <span class="macro">format!</span>(<span class="string">&quot;{name}.{s}&quot;</span>))
+                    .map(<span class="kw">move </span>|s| <span class="macro">format!</span>(<span class="string">"{name}.{s}"</span>))
             })
             .collect();
 
-        <span class="macro">assert!</span>(list.is_empty(), <span class="string">&quot;Incomplete library, unresolved: {list:?}&quot;</span>);
+        <span class="macro">assert!</span>(list.is_empty(), <span class="string">"Incomplete library, unresolved: {list:?}"</span>);
     }
 
     <span class="kw">fn </span>fill_empty_signals_c_types(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
@@ -823,7 +824,7 @@
         <span class="kw">let </span>type_ = <span class="self">self</span>.type_(tid);
         type_.get_glib_name().map(|glib_name| {
             <span class="kw">if </span><span class="self">self</span>.is_referenced_type(type_) {
-                <span class="macro">format!</span>(<span class="string">&quot;{glib_name}*&quot;</span>)
+                <span class="macro">format!</span>(<span class="string">"{glib_name}*"</span>)
             } <span class="kw">else </span>{
                 glib_name.to_string()
             }
@@ -868,7 +869,7 @@
                 }
 
                 x =&gt; <span class="macro">unreachable!</span>(
-                    <span class="string">&quot;Something other than a class or interface has a class struct: {:?}&quot;</span>,
+                    <span class="string">"Something other than a class or interface has a class struct: {:?}"</span>,
                     x
                 ),
             }
@@ -905,7 +906,7 @@
                     <span class="kw">let </span>type_struct_tid = <span class="self">self</span>.find_type(ns_id <span class="kw">as </span>u16, type_struct);
                     <span class="macro">assert!</span>(
                         type_struct_tid.is_some(),
-                        <span class="string">&quot;\&quot;{name}\&quot; has glib:type-struct=\&quot;{type_struct}\&quot; but there is no such record&quot;
+                        <span class="string">"\"{name}\" has glib:type-struct=\"{type_struct}\" but there is no such record"
                     </span>);
 
                     <span class="kw">let </span>type_struct_type = <span class="self">self</span>.type_(type_struct_tid.unwrap());
@@ -913,13 +914,13 @@
                     <span class="kw">if let </span>Type::Record(r) = type_struct_type {
                         <span class="kw">if </span>r.gtype_struct_for.as_ref() != <span class="prelude-val">Some</span>(name) {
                             <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>gtype_struct_for) = r.gtype_struct_for {
-                                <span class="macro">panic!</span>(<span class="string">&quot;\&quot;{}\&quot; has glib:type-struct=\&quot;{}\&quot; but the corresponding record \&quot;{}\&quot; has glib:is-gtype-struct-for={:?}&quot;</span>,
+                                <span class="macro">panic!</span>(<span class="string">"\"{}\" has glib:type-struct=\"{}\" but the corresponding record \"{}\" has glib:is-gtype-struct-for={:?}"</span>,
                                        name,
                                        type_struct,
                                        r.name,
                                        gtype_struct_for);
                             } <span class="kw">else </span>{
-                                <span class="macro">panic!</span>(<span class="string">&quot;\&quot;{}\&quot; has glib:type-struct=\&quot;{}\&quot; but the corresponding record \&quot;{}\&quot; has no glib:is-gtype-struct-for attribute&quot;</span>,
+                                <span class="macro">panic!</span>(<span class="string">"\"{}\" has glib:type-struct=\"{}\" but the corresponding record \"{}\" has no glib:is-gtype-struct-for attribute"</span>,
                                        name,
                                        type_struct,
                                        r.name);
@@ -927,14 +928,14 @@
                         }
                     } <span class="kw">else </span>{
                         <span class="macro">panic!</span>(
-                            <span class="string">&quot;Element with name=\&quot;{type_struct}\&quot; should be a record but it isn&#39;t&quot;
+                            <span class="string">"Element with name=\"{type_struct}\" should be a record but it isn't"
                         </span>);
                     }
                 } <span class="kw">else if let </span><span class="prelude-val">Some</span>(c) = c_class_type {
-                    <span class="macro">panic!</span>(<span class="string">&quot;\&quot;{name}\&quot; has no glib:type-struct but there is an element with glib:is-gtype-struct-for=\&quot;{c}\&quot;&quot;</span>);
+                    <span class="macro">panic!</span>(<span class="string">"\"{name}\" has no glib:type-struct but there is an element with glib:is-gtype-struct-for=\"{c}\""</span>);
                 }
                 <span class="comment">// else both type_struct and c_class_type are None,
-                // and that&#39;s fine because they don&#39;t reference each
+                // and that's fine because they don't reference each
                 // other.
             </span>}
         }
@@ -967,7 +968,7 @@
                             }
                             <span class="kw">let </span>field_type = <span class="self">self</span>.type_(field.typ);
                             <span class="kw">if </span>field_type.maybe_ref_as::&lt;Function&gt;().is_some() {
-                                <span class="comment">// Function pointers generally don&#39;t have c_type.
+                                <span class="comment">// Function pointers generally don't have c_type.
                                 </span><span class="kw">continue</span>;
                             }
                             <span class="kw">if let </span><span class="prelude-val">Some</span>(c_type) = field_type.get_glib_name() {
@@ -976,37 +977,37 @@
                             }
                             <span class="kw">if let </span>Type::Basic(Basic::Pointer) = field_type {
                                 <span class="comment">// For example SoupBuffer is missing c:type for data field.
-                                </span>actions.push((tid, fid, Action::SetCType(<span class="string">&quot;void*&quot;</span>.to_owned())));
+                                </span>actions.push((tid, fid, Action::SetCType(<span class="string">"void*"</span>.to_owned())));
                                 <span class="kw">continue</span>;
                             }
                             <span class="kw">if let </span>Type::FixedArray(..) = field_type {
                                 <span class="comment">// fixed-size Arrays can only have inner c_type
                                 // HACK: field c_type used only in sys mode for pointer checking
                                 // so any string without * will work
-                                </span><span class="kw">let </span>array_c_type = <span class="string">&quot;fixed_array&quot;</span>.to_owned();
+                                </span><span class="kw">let </span>array_c_type = <span class="string">"fixed_array"</span>.to_owned();
                                 actions.push((tid, fid, Action::SetCType(array_c_type)));
                                 <span class="kw">continue</span>;
                             }
-                            <span class="macro">error!</span>(<span class="string">&quot;Field `{}::{}` is missing c:type&quot;</span>, name, <span class="kw-2">&amp;</span>field.name);
+                            <span class="macro">error!</span>(<span class="string">"Field `{}::{}` is missing c:type"</span>, name, <span class="kw-2">&amp;</span>field.name);
                         }
                     }
                     <span class="kw">_ </span>=&gt; {}
                 }
             }
         }
-        <span class="kw">let </span>ignore_missing_ctype = [<span class="string">&quot;padding&quot;</span>, <span class="string">&quot;reserved&quot;</span>, <span class="string">&quot;_padding&quot;</span>, <span class="string">&quot;_reserved&quot;</span>];
+        <span class="kw">let </span>ignore_missing_ctype = [<span class="string">"padding"</span>, <span class="string">"reserved"</span>, <span class="string">"_padding"</span>, <span class="string">"_reserved"</span>];
         <span class="kw">for </span>(tid, fid, action) <span class="kw">in </span>actions {
             <span class="kw">match </span><span class="self">self</span>.type_mut(tid) {
                 Type::Class(Class { name, fields, .. })
                 | Type::Record(Record { name, fields, .. })
                 | Type::Union(Union { name, fields, .. }) =&gt; <span class="kw">match </span>action {
                     Action::SetCType(c_type) =&gt; {
-                        <span class="comment">// Don&#39;t be verbose when internal fields such as padding don&#39;t provide a
+                        <span class="comment">// Don't be verbose when internal fields such as padding don't provide a
                         // c-type
                         </span><span class="kw">if </span>!ignore_missing_ctype.contains(<span class="kw-2">&amp;</span>fields[fid].name.as_str()) {
                             <span class="macro">warn_main!</span>(
                                 tid,
-                                <span class="string">&quot;Field `{}::{}` missing c:type assumed to be `{}`&quot;</span>,
+                                <span class="string">"Field `{}::{}` missing c:type assumed to be `{}`"</span>,
                                 name,
                                 <span class="kw-2">&amp;</span>fields[fid].name,
                                 c_type
@@ -1016,20 +1017,20 @@
                     }
                     Action::SetName(name) =&gt; fields[fid].name = name,
                 },
-                <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;Expected class, record or union&quot;</span>),
+                <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">"Expected class, record or union"</span>),
             }
         }
     }
 
     <span class="kw">fn </span>make_unrepresentable_types_opaque(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
         <span class="comment">// Unions with non-`Copy` fields are unstable (see issue #32836).
-        // It would seem that this shouldn&#39;t be cause for concern as one can
+        // It would seem that this shouldn't be cause for concern as one can
         // always make all types in the union copyable.
         //
         // Unfortunately, this is not that simple, as some types are currently
         // unrepresentable in Rust, and they do occur inside the unions.
         // Thus to avoid the problem, we mark all unions with such unrepresentable
-        // types as opaque, and don&#39;t generate their definitions.
+        // types as opaque, and don't generate their definitions.
         </span><span class="kw">let </span><span class="kw-2">mut </span>unrepresentable: Vec&lt;TypeId&gt; = Vec::new();
         <span class="kw">for </span>(ns_id, ns) <span class="kw">in </span><span class="self">self</span>.namespaces.iter().enumerate() {
             <span class="kw">for </span>(id, type_) <span class="kw">in </span>ns.types.iter().enumerate() {
@@ -1049,10 +1050,10 @@
         <span class="kw">for </span>tid <span class="kw">in </span>unrepresentable {
             <span class="kw">match </span><span class="self">self</span>.type_mut(tid) {
                 Type::Union(Union { name, fields, .. }) =&gt; {
-                    <span class="macro">info!</span>(<span class="string">&quot;Type `{}` is not representable.&quot;</span>, name);
+                    <span class="macro">info!</span>(<span class="string">"Type `{}` is not representable."</span>, name);
                     fields.clear();
                 }
-                <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">&quot;Expected a union&quot;</span>),
+                <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(<span class="string">"Expected a union"</span>),
             }
         }
     }
@@ -1075,7 +1076,7 @@
         // struct has no fields (i.e. is not known!), and there are no known
         // subtypes.
         //
-        // Final types can&#39;t have any subclasses and we handle them slightly different
+        // Final types can't have any subclasses and we handle them slightly different
         // for that reason.
         // FIXME: without class_hierarchy this function O(n2) due inner loop in
         // `has_subtypes`
@@ -1114,10 +1115,10 @@
                             <span class="kw">if let </span>Type::Record(record) = <span class="self">self</span>.type_(class_record_tid) {
                                 !record.disguised &amp;&amp; !record.pointer
                             } <span class="kw">else </span>{
-                                <span class="macro">unreachable!</span>(<span class="string">&quot;Type {} with non-record class&quot;</span>, full_name);
+                                <span class="macro">unreachable!</span>(<span class="string">"Type {} with non-record class"</span>, full_name);
                             }
                         } <span class="kw">else </span>{
-                            <span class="macro">unreachable!</span>(<span class="string">&quot;Can&#39;t find class for {}&quot;</span>, full_name);
+                            <span class="macro">unreachable!</span>(<span class="string">"Can't find class for {}"</span>, full_name);
                         };
 
                         !has_subtypes &amp;&amp; (!instance_struct_known || !class_struct_known)
@@ -1142,7 +1143,7 @@
         <span class="comment">// Find find all error domains that have corresponding functions
         </span><span class="kw">let </span><span class="kw-2">mut </span>error_domains = <span class="macro">vec!</span>[];
         <span class="kw">for </span>(ns_id, ns) <span class="kw">in </span><span class="self">self</span>.namespaces.iter().enumerate() {
-            <span class="lifetime">&#39;next_enum</span>: <span class="kw">for </span>(id, type_) <span class="kw">in </span>ns.types.iter().enumerate() {
+            <span class="lifetime">'next_enum</span>: <span class="kw">for </span>(id, type_) <span class="kw">in </span>ns.types.iter().enumerate() {
                 <span class="kw">let </span>type_ = type_.as_ref().unwrap(); <span class="comment">// Always contains something
                 </span><span class="kw">let </span>enum_tid = TypeId {
                     ns_id: ns_id <span class="kw">as </span>u16,
@@ -1151,24 +1152,24 @@
 
                 <span class="kw">if let </span>Type::Enumeration(enum_) = type_ {
                     <span class="kw">if let </span><span class="prelude-val">Some</span>(ErrorDomain::Quark(<span class="kw-2">ref </span>domain)) = enum_.error_domain {
-                        <span class="kw">let </span>domain = domain.replace(<span class="string">&#39;-&#39;</span>, <span class="string">&quot;_&quot;</span>);
+                        <span class="kw">let </span>domain = domain.replace(<span class="string">'-'</span>, <span class="string">"_"</span>);
 
                         <span class="kw">let </span><span class="kw-2">mut </span>function_candidates = <span class="macro">vec!</span>[domain.clone()];
-                        <span class="kw">if </span>!domain.ends_with(<span class="string">&quot;_quark&quot;</span>) {
-                            function_candidates.push(<span class="macro">format!</span>(<span class="string">&quot;{domain}_quark&quot;</span>));
+                        <span class="kw">if </span>!domain.ends_with(<span class="string">"_quark"</span>) {
+                            function_candidates.push(<span class="macro">format!</span>(<span class="string">"{domain}_quark"</span>));
                         }
-                        <span class="kw">if </span>!domain.ends_with(<span class="string">&quot;_error_quark&quot;</span>) {
-                            <span class="kw">if </span>domain.ends_with(<span class="string">&quot;_quark&quot;</span>) {
+                        <span class="kw">if </span>!domain.ends_with(<span class="string">"_error_quark"</span>) {
+                            <span class="kw">if </span>domain.ends_with(<span class="string">"_quark"</span>) {
                                 function_candidates
-                                    .push(<span class="macro">format!</span>(<span class="string">&quot;{}_error_quark&quot;</span>, <span class="kw-2">&amp;</span>domain[..(domain.len() - <span class="number">6</span>)]));
+                                    .push(<span class="macro">format!</span>(<span class="string">"{}_error_quark"</span>, <span class="kw-2">&amp;</span>domain[..(domain.len() - <span class="number">6</span>)]));
                             } <span class="kw">else </span>{
-                                function_candidates.push(<span class="macro">format!</span>(<span class="string">&quot;{domain}_error_quark&quot;</span>));
+                                function_candidates.push(<span class="macro">format!</span>(<span class="string">"{domain}_error_quark"</span>));
                             }
                         }
-                        <span class="kw">if let </span><span class="prelude-val">Some</span>(domain) = domain.strip_suffix(<span class="string">&quot;_error_quark&quot;</span>) {
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(domain) = domain.strip_suffix(<span class="string">"_error_quark"</span>) {
                             function_candidates.push(domain.to_owned());
                         }
-                        <span class="kw">if let </span><span class="prelude-val">Some</span>(domain) = domain.strip_suffix(<span class="string">&quot;_quark&quot;</span>) {
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(domain) = domain.strip_suffix(<span class="string">"_quark"</span>) {
                             function_candidates.push(domain.to_owned());
                         }
 
@@ -1183,7 +1184,7 @@
                                 <span class="prelude-val">None</span>,
                                 func.c_identifier.as_ref().unwrap().clone(),
                             ));
-                            <span class="kw">continue </span><span class="lifetime">&#39;next_enum</span>;
+                            <span class="kw">continue </span><span class="lifetime">'next_enum</span>;
                         }
 
                         <span class="comment">// Quadratic in number of types...
@@ -1213,7 +1214,7 @@
                                     <span class="prelude-val">Some</span>(domain_tid),
                                     func.c_identifier.as_ref().unwrap().clone(),
                                 ));
-                                <span class="kw">continue </span><span class="lifetime">&#39;next_enum</span>;
+                                <span class="kw">continue </span><span class="lifetime">'next_enum</span>;
                             }
                         }
                     }
@@ -1268,7 +1269,7 @@
                 <span class="kw">match </span><span class="self">self</span>.type_(type_id) {
                     Type::Bitfield(Bitfield { name, members, .. })
                     | Type::Enumeration(Enumeration { name, members, .. }) =&gt; {
-                        <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, ns.name, name);
+                        <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">"{}.{}"</span>, ns.name, name);
                         <span class="kw">let </span>config = config.objects.get(<span class="kw-2">&amp;</span>full_name);
                         <span class="kw">let </span><span class="kw-2">mut </span>type_members = HashMap::new();
                         <span class="kw">for </span>member <span class="kw">in </span>members.iter() {

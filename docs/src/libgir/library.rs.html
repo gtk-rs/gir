@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/library.rs`."><title>library.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/library.rs`."><title>library.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1412,10 +1413,10 @@
     <span class="kw">type </span><span class="prelude-val">Err </span>= String;
     <span class="kw">fn </span>from_str(name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, String&gt; {
         <span class="kw">match </span>name {
-            <span class="string">&quot;none&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::None),
-            <span class="string">&quot;container&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Container),
-            <span class="string">&quot;full&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Full),
-            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;Unknown ownership transfer mode &#39;{name}&#39;&quot;</span>)),
+            <span class="string">"none" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::None),
+            <span class="string">"container" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Container),
+            <span class="string">"full" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Full),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"Unknown ownership transfer mode '{name}'"</span>)),
         }
     }
 }
@@ -1444,10 +1445,10 @@
     <span class="kw">type </span><span class="prelude-val">Err </span>= String;
     <span class="kw">fn </span>from_str(name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, String&gt; {
         <span class="kw">match </span>name {
-            <span class="string">&quot;in&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::In),
-            <span class="string">&quot;out&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Out),
-            <span class="string">&quot;inout&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::InOut),
-            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;Unknown parameter direction &#39;{name}&#39;&quot;</span>)),
+            <span class="string">"in" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::In),
+            <span class="string">"out" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Out),
+            <span class="string">"inout" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::InOut),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"Unknown parameter direction '{name}'"</span>)),
         }
     }
 }
@@ -1498,11 +1499,11 @@
 
     <span class="kw">fn </span>from_str(name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, String&gt; {
         <span class="kw">match </span>name {
-            <span class="string">&quot;call&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Call),
-            <span class="string">&quot;async&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Async),
-            <span class="string">&quot;notified&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Notified),
-            <span class="string">&quot;forever&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Forever),
-            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;Unknown parameter scope type: {name}&quot;</span>)),
+            <span class="string">"call" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Call),
+            <span class="string">"async" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Async),
+            <span class="string">"notified" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Notified),
+            <span class="string">"forever" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Forever),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"Unknown parameter scope type: {name}"</span>)),
         }
     }
 }
@@ -1557,12 +1558,12 @@
     <span class="kw">type </span><span class="prelude-val">Err </span>= String;
     <span class="kw">fn </span>from_str(name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, String&gt; {
         <span class="kw">match </span>name {
-            <span class="string">&quot;constructor&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Constructor),
-            <span class="string">&quot;function&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Function),
-            <span class="string">&quot;method&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Method),
-            <span class="string">&quot;callback&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Function),
-            <span class="string">&quot;global&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Global),
-            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;Unknown function kind &#39;{name}&#39;&quot;</span>)),
+            <span class="string">"constructor" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Constructor),
+            <span class="string">"function" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Function),
+            <span class="string">"method" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Method),
+            <span class="string">"callback" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Function),
+            <span class="string">"global" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Global),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"Unknown function kind '{name}'"</span>)),
         }
     }
 }
@@ -1579,10 +1580,10 @@
     <span class="kw">type </span><span class="prelude-val">Err </span>= String;
     <span class="kw">fn </span>from_str(name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, String&gt; {
         <span class="kw">match </span>name {
-            <span class="string">&quot;none&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::None),
-            <span class="string">&quot;send&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Send),
-            <span class="string">&quot;send+sync&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::SendSync),
-            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">&quot;Unknown concurrency kind &#39;{name}&#39;&quot;</span>)),
+            <span class="string">"none" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::None),
+            <span class="string">"send" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Send),
+            <span class="string">"send+sync" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::SendSync),
+            <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"Unknown concurrency kind '{name}'"</span>)),
         }
     }
 }
@@ -1656,42 +1657,42 @@
 }
 
 <span class="kw">const </span>BASIC: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span>str, Basic)] = <span class="kw-2">&amp;</span>[
-    (<span class="string">&quot;none&quot;</span>, Basic::None),
-    (<span class="string">&quot;gboolean&quot;</span>, Basic::Boolean),
-    (<span class="string">&quot;gint8&quot;</span>, Basic::Int8),
-    (<span class="string">&quot;guint8&quot;</span>, Basic::UInt8),
-    (<span class="string">&quot;gint16&quot;</span>, Basic::Int16),
-    (<span class="string">&quot;guint16&quot;</span>, Basic::UInt16),
-    (<span class="string">&quot;gint32&quot;</span>, Basic::Int32),
-    (<span class="string">&quot;guint32&quot;</span>, Basic::UInt32),
-    (<span class="string">&quot;gint64&quot;</span>, Basic::Int64),
-    (<span class="string">&quot;guint64&quot;</span>, Basic::UInt64),
-    (<span class="string">&quot;gchar&quot;</span>, Basic::Char),
-    (<span class="string">&quot;guchar&quot;</span>, Basic::UChar),
-    (<span class="string">&quot;gshort&quot;</span>, Basic::Short),
-    (<span class="string">&quot;gushort&quot;</span>, Basic::UShort),
-    (<span class="string">&quot;gint&quot;</span>, Basic::Int),
-    (<span class="string">&quot;guint&quot;</span>, Basic::UInt),
-    (<span class="string">&quot;glong&quot;</span>, Basic::Long),
-    (<span class="string">&quot;gulong&quot;</span>, Basic::ULong),
-    (<span class="string">&quot;gsize&quot;</span>, Basic::Size),
-    (<span class="string">&quot;gssize&quot;</span>, Basic::SSize),
-    (<span class="string">&quot;gfloat&quot;</span>, Basic::Float),
-    (<span class="string">&quot;gdouble&quot;</span>, Basic::Double),
-    (<span class="string">&quot;long double&quot;</span>, Basic::Unsupported),
-    (<span class="string">&quot;gunichar&quot;</span>, Basic::UniChar),
-    (<span class="string">&quot;gconstpointer&quot;</span>, Basic::Pointer),
-    (<span class="string">&quot;gpointer&quot;</span>, Basic::Pointer),
-    (<span class="string">&quot;va_list&quot;</span>, Basic::Unsupported),
-    (<span class="string">&quot;varargs&quot;</span>, Basic::VarArgs),
-    (<span class="string">&quot;utf8&quot;</span>, Basic::Utf8),
-    (<span class="string">&quot;filename&quot;</span>, Basic::Filename),
-    (<span class="string">&quot;GType&quot;</span>, Basic::Type),
-    (<span class="string">&quot;gintptr&quot;</span>, Basic::IntPtr),
-    (<span class="string">&quot;guintptr&quot;</span>, Basic::UIntPtr),
+    (<span class="string">"none"</span>, Basic::None),
+    (<span class="string">"gboolean"</span>, Basic::Boolean),
+    (<span class="string">"gint8"</span>, Basic::Int8),
+    (<span class="string">"guint8"</span>, Basic::UInt8),
+    (<span class="string">"gint16"</span>, Basic::Int16),
+    (<span class="string">"guint16"</span>, Basic::UInt16),
+    (<span class="string">"gint32"</span>, Basic::Int32),
+    (<span class="string">"guint32"</span>, Basic::UInt32),
+    (<span class="string">"gint64"</span>, Basic::Int64),
+    (<span class="string">"guint64"</span>, Basic::UInt64),
+    (<span class="string">"gchar"</span>, Basic::Char),
+    (<span class="string">"guchar"</span>, Basic::UChar),
+    (<span class="string">"gshort"</span>, Basic::Short),
+    (<span class="string">"gushort"</span>, Basic::UShort),
+    (<span class="string">"gint"</span>, Basic::Int),
+    (<span class="string">"guint"</span>, Basic::UInt),
+    (<span class="string">"glong"</span>, Basic::Long),
+    (<span class="string">"gulong"</span>, Basic::ULong),
+    (<span class="string">"gsize"</span>, Basic::Size),
+    (<span class="string">"gssize"</span>, Basic::SSize),
+    (<span class="string">"gfloat"</span>, Basic::Float),
+    (<span class="string">"gdouble"</span>, Basic::Double),
+    (<span class="string">"long double"</span>, Basic::Unsupported),
+    (<span class="string">"gunichar"</span>, Basic::UniChar),
+    (<span class="string">"gconstpointer"</span>, Basic::Pointer),
+    (<span class="string">"gpointer"</span>, Basic::Pointer),
+    (<span class="string">"va_list"</span>, Basic::Unsupported),
+    (<span class="string">"varargs"</span>, Basic::VarArgs),
+    (<span class="string">"utf8"</span>, Basic::Utf8),
+    (<span class="string">"filename"</span>, Basic::Filename),
+    (<span class="string">"GType"</span>, Basic::Type),
+    (<span class="string">"gintptr"</span>, Basic::IntPtr),
+    (<span class="string">"guintptr"</span>, Basic::UIntPtr),
     <span class="comment">// TODO: this is temporary name, change it when type added to GLib
-    </span>(<span class="string">&quot;os_string&quot;</span>, Basic::OsString),
-    (<span class="string">&quot;bool&quot;</span>, Basic::Bool),
+    </span>(<span class="string">"os_string"</span>, Basic::OsString),
+    (<span class="string">"bool"</span>, Basic::Bool),
 ];
 
 <span class="attr">#[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord)]
@@ -1704,7 +1705,7 @@
     <span class="kw">pub fn </span>full_name(<span class="self">self</span>, library: <span class="kw-2">&amp;</span>Library) -&gt; String {
         <span class="kw">let </span>ns_name = <span class="kw-2">&amp;</span>library.namespace(<span class="self">self</span>.ns_id).name;
         <span class="kw">let </span>type_ = <span class="kw-2">&amp;</span>library.type_(<span class="self">self</span>);
-        <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, ns_name, <span class="kw-2">&amp;</span>type_.get_name())
+        <span class="macro">format!</span>(<span class="string">"{}.{}"</span>, ns_name, <span class="kw-2">&amp;</span>type_.get_name())
     }
 
     <span class="kw">pub fn </span>tid_none() -&gt; TypeId {
@@ -1823,35 +1824,35 @@
     <span class="kw">pub </span>deprecated_version: <span class="prelude-ty">Option</span>&lt;Version&gt;,
     <span class="kw">pub </span>doc: <span class="prelude-ty">Option</span>&lt;String&gt;,
     <span class="kw">pub </span>doc_deprecated: <span class="prelude-ty">Option</span>&lt;String&gt;,
-    <span class="doccomment">/// A &#39;pointer&#39; record is one where the c:type is a typedef that
-    /// doesn&#39;t look like a pointer, but is internally: typedef struct _X *X;
+    <span class="doccomment">/// A 'pointer' record is one where the c:type is a typedef that
+    /// doesn't look like a pointer, but is internally: typedef struct _X *X;
     </span><span class="kw">pub </span>pointer: bool,
-    <span class="doccomment">/// A &#39;disguised&#39; record is one where the c:type is a typedef to
+    <span class="doccomment">/// A 'disguised' record is one where the c:type is a typedef to
     /// a struct whose content and size are unknown, it is :typedef struct _X X;
     </span><span class="kw">pub </span>disguised: bool,
 }
 
 <span class="kw">impl </span>Record {
     <span class="kw">pub fn </span>has_free(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="self">self</span>.functions.iter().any(|f| f.name == <span class="string">&quot;free&quot;</span>) || (<span class="self">self</span>.has_copy() &amp;&amp; <span class="self">self</span>.has_destroy())
+        <span class="self">self</span>.functions.iter().any(|f| f.name == <span class="string">"free"</span>) || (<span class="self">self</span>.has_copy() &amp;&amp; <span class="self">self</span>.has_destroy())
     }
 
     <span class="kw">pub fn </span>has_copy(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="self">self</span>.functions
             .iter()
-            .any(|f| f.name == <span class="string">&quot;copy&quot; </span>|| f.name == <span class="string">&quot;copy_into&quot;</span>)
+            .any(|f| f.name == <span class="string">"copy" </span>|| f.name == <span class="string">"copy_into"</span>)
     }
 
     <span class="kw">pub fn </span>has_destroy(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="self">self</span>.functions.iter().any(|f| f.name == <span class="string">&quot;destroy&quot;</span>)
+        <span class="self">self</span>.functions.iter().any(|f| f.name == <span class="string">"destroy"</span>)
     }
 
     <span class="kw">pub fn </span>has_unref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="self">self</span>.functions.iter().any(|f| f.name == <span class="string">&quot;unref&quot;</span>)
+        <span class="self">self</span>.functions.iter().any(|f| f.name == <span class="string">"unref"</span>)
     }
 
     <span class="kw">pub fn </span>has_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="self">self</span>.functions.iter().any(|f| f.name == <span class="string">&quot;ref&quot;</span>)
+        <span class="self">self</span>.functions.iter().any(|f| f.name == <span class="string">"ref"</span>)
     }
 }
 
@@ -2054,25 +2055,25 @@
 }
 
 <span class="kw">impl </span>fmt::Display <span class="kw">for </span>Type {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         f.write_str(<span class="kw">match </span><span class="self">self </span>{
-            <span class="self">Self</span>::Basic(<span class="kw">_</span>) =&gt; <span class="string">&quot;Basic&quot;</span>,
-            <span class="self">Self</span>::Alias(<span class="kw">_</span>) =&gt; <span class="string">&quot;Alias&quot;</span>,
-            <span class="self">Self</span>::Enumeration(<span class="kw">_</span>) =&gt; <span class="string">&quot;Enumeration&quot;</span>,
-            <span class="self">Self</span>::Bitfield(<span class="kw">_</span>) =&gt; <span class="string">&quot;Bitfield&quot;</span>,
-            <span class="self">Self</span>::Record(<span class="kw">_</span>) =&gt; <span class="string">&quot;Record&quot;</span>,
-            <span class="self">Self</span>::Union(<span class="kw">_</span>) =&gt; <span class="string">&quot;Union&quot;</span>,
-            <span class="self">Self</span>::Function(<span class="kw">_</span>) =&gt; <span class="string">&quot;Function&quot;</span>,
-            <span class="self">Self</span>::Interface(<span class="kw">_</span>) =&gt; <span class="string">&quot;Interface&quot;</span>,
-            <span class="self">Self</span>::Class(<span class="kw">_</span>) =&gt; <span class="string">&quot;Class&quot;</span>,
-            <span class="self">Self</span>::Custom(<span class="kw">_</span>) =&gt; <span class="string">&quot;Custom&quot;</span>,
-            <span class="self">Self</span>::Array(<span class="kw">_</span>) =&gt; <span class="string">&quot;Array&quot;</span>,
-            <span class="self">Self</span>::CArray(<span class="kw">_</span>) =&gt; <span class="string">&quot;CArray&quot;</span>,
-            <span class="self">Self</span>::FixedArray(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="string">&quot;FixedArray&quot;</span>,
-            <span class="self">Self</span>::PtrArray(<span class="kw">_</span>) =&gt; <span class="string">&quot;PtrArray&quot;</span>,
-            <span class="self">Self</span>::HashTable(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="string">&quot;HashTable&quot;</span>,
-            <span class="self">Self</span>::List(<span class="kw">_</span>) =&gt; <span class="string">&quot;List&quot;</span>,
-            <span class="self">Self</span>::SList(<span class="kw">_</span>) =&gt; <span class="string">&quot;SList&quot;</span>,
+            <span class="self">Self</span>::Basic(<span class="kw">_</span>) =&gt; <span class="string">"Basic"</span>,
+            <span class="self">Self</span>::Alias(<span class="kw">_</span>) =&gt; <span class="string">"Alias"</span>,
+            <span class="self">Self</span>::Enumeration(<span class="kw">_</span>) =&gt; <span class="string">"Enumeration"</span>,
+            <span class="self">Self</span>::Bitfield(<span class="kw">_</span>) =&gt; <span class="string">"Bitfield"</span>,
+            <span class="self">Self</span>::Record(<span class="kw">_</span>) =&gt; <span class="string">"Record"</span>,
+            <span class="self">Self</span>::Union(<span class="kw">_</span>) =&gt; <span class="string">"Union"</span>,
+            <span class="self">Self</span>::Function(<span class="kw">_</span>) =&gt; <span class="string">"Function"</span>,
+            <span class="self">Self</span>::Interface(<span class="kw">_</span>) =&gt; <span class="string">"Interface"</span>,
+            <span class="self">Self</span>::Class(<span class="kw">_</span>) =&gt; <span class="string">"Class"</span>,
+            <span class="self">Self</span>::Custom(<span class="kw">_</span>) =&gt; <span class="string">"Custom"</span>,
+            <span class="self">Self</span>::Array(<span class="kw">_</span>) =&gt; <span class="string">"Array"</span>,
+            <span class="self">Self</span>::CArray(<span class="kw">_</span>) =&gt; <span class="string">"CArray"</span>,
+            <span class="self">Self</span>::FixedArray(<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="string">"FixedArray"</span>,
+            <span class="self">Self</span>::PtrArray(<span class="kw">_</span>) =&gt; <span class="string">"PtrArray"</span>,
+            <span class="self">Self</span>::HashTable(<span class="kw">_</span>, <span class="kw">_</span>) =&gt; <span class="string">"HashTable"</span>,
+            <span class="self">Self</span>::List(<span class="kw">_</span>) =&gt; <span class="string">"List"</span>,
+            <span class="self">Self</span>::SList(<span class="kw">_</span>) =&gt; <span class="string">"SList"</span>,
         })
     }
 }
@@ -2080,7 +2081,7 @@
 <span class="kw">impl </span>Type {
     <span class="kw">pub fn </span>get_name(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; String {
         <span class="kw">match </span><span class="self">self </span>{
-            <span class="self">Self</span>::Basic(basic) =&gt; <span class="macro">format!</span>(<span class="string">&quot;{basic:?}&quot;</span>),
+            <span class="self">Self</span>::Basic(basic) =&gt; <span class="macro">format!</span>(<span class="string">"{basic:?}"</span>),
             <span class="self">Self</span>::Alias(alias) =&gt; alias.name.clone(),
             <span class="self">Self</span>::Enumeration(enum_) =&gt; enum_.name.clone(),
             <span class="self">Self</span>::Bitfield(bit_field) =&gt; bit_field.name.clone(),
@@ -2088,17 +2089,17 @@
             <span class="self">Self</span>::Union(u) =&gt; u.name.clone(),
             <span class="self">Self</span>::Function(func) =&gt; func.name.clone(),
             <span class="self">Self</span>::Interface(interface) =&gt; interface.name.clone(),
-            <span class="self">Self</span>::Array(type_id) =&gt; <span class="macro">format!</span>(<span class="string">&quot;Array {type_id:?}&quot;</span>),
+            <span class="self">Self</span>::Array(type_id) =&gt; <span class="macro">format!</span>(<span class="string">"Array {type_id:?}"</span>),
             <span class="self">Self</span>::Class(class) =&gt; class.name.clone(),
             <span class="self">Self</span>::Custom(custom) =&gt; custom.name.clone(),
-            <span class="self">Self</span>::CArray(type_id) =&gt; <span class="macro">format!</span>(<span class="string">&quot;CArray {type_id:?}&quot;</span>),
-            <span class="self">Self</span>::FixedArray(type_id, size, <span class="kw">_</span>) =&gt; <span class="macro">format!</span>(<span class="string">&quot;FixedArray {type_id:?}; {size}&quot;</span>),
-            <span class="self">Self</span>::PtrArray(type_id) =&gt; <span class="macro">format!</span>(<span class="string">&quot;PtrArray {type_id:?}&quot;</span>),
+            <span class="self">Self</span>::CArray(type_id) =&gt; <span class="macro">format!</span>(<span class="string">"CArray {type_id:?}"</span>),
+            <span class="self">Self</span>::FixedArray(type_id, size, <span class="kw">_</span>) =&gt; <span class="macro">format!</span>(<span class="string">"FixedArray {type_id:?}; {size}"</span>),
+            <span class="self">Self</span>::PtrArray(type_id) =&gt; <span class="macro">format!</span>(<span class="string">"PtrArray {type_id:?}"</span>),
             <span class="self">Self</span>::HashTable(key_type_id, value_type_id) =&gt; {
-                <span class="macro">format!</span>(<span class="string">&quot;HashTable {key_type_id:?}/{value_type_id:?}&quot;</span>)
+                <span class="macro">format!</span>(<span class="string">"HashTable {key_type_id:?}/{value_type_id:?}"</span>)
             }
-            <span class="self">Self</span>::List(type_id) =&gt; <span class="macro">format!</span>(<span class="string">&quot;List {type_id:?}&quot;</span>),
-            <span class="self">Self</span>::SList(type_id) =&gt; <span class="macro">format!</span>(<span class="string">&quot;SList {type_id:?}&quot;</span>),
+            <span class="self">Self</span>::List(type_id) =&gt; <span class="macro">format!</span>(<span class="string">"List {type_id:?}"</span>),
+            <span class="self">Self</span>::SList(type_id) =&gt; <span class="macro">format!</span>(<span class="string">"SList {type_id:?}"</span>),
         }
     }
 
@@ -2160,42 +2161,42 @@
         <span class="kw">let </span>name = <span class="self">Self</span>::c_array_internal_name(inner, size, <span class="kw-2">&amp;</span><span class="prelude-val">None</span>);
         library
             .find_type(INTERNAL_NAMESPACE, <span class="kw-2">&amp;</span>name)
-            .unwrap_or_else(|| <span class="macro">panic!</span>(<span class="string">&quot;No type for &#39;*.{name}&#39;&quot;</span>))
+            .unwrap_or_else(|| <span class="macro">panic!</span>(<span class="string">"No type for '*.{name}'"</span>))
     }
 
     <span class="kw">fn </span>c_array_internal_name(inner: TypeId, size: <span class="prelude-ty">Option</span>&lt;u16&gt;, c_type: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;String&gt;) -&gt; String {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(size) = size {
-            <span class="macro">format!</span>(<span class="string">&quot;[#{inner:?}; {size};{c_type:?}]&quot;</span>)
+            <span class="macro">format!</span>(<span class="string">"[#{inner:?}; {size};{c_type:?}]"</span>)
         } <span class="kw">else </span>{
-            <span class="macro">format!</span>(<span class="string">&quot;[#{inner:?}]&quot;</span>)
+            <span class="macro">format!</span>(<span class="string">"[#{inner:?}]"</span>)
         }
     }
 
     <span class="kw">pub fn </span>container(library: <span class="kw-2">&amp;mut </span>Library, name: <span class="kw-2">&amp;</span>str, <span class="kw-2">mut </span>inner: Vec&lt;TypeId&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;TypeId&gt; {
         <span class="kw">match </span>(name, inner.len()) {
-            (<span class="string">&quot;GLib.Array&quot;</span>, <span class="number">1</span>) =&gt; {
+            (<span class="string">"GLib.Array"</span>, <span class="number">1</span>) =&gt; {
                 <span class="kw">let </span>tid = inner.remove(<span class="number">0</span>);
-                <span class="prelude-val">Some</span>((<span class="macro">format!</span>(<span class="string">&quot;Array(#{tid:?})&quot;</span>), <span class="self">Self</span>::Array(tid)))
+                <span class="prelude-val">Some</span>((<span class="macro">format!</span>(<span class="string">"Array(#{tid:?})"</span>), <span class="self">Self</span>::Array(tid)))
             }
-            (<span class="string">&quot;GLib.PtrArray&quot;</span>, <span class="number">1</span>) =&gt; {
+            (<span class="string">"GLib.PtrArray"</span>, <span class="number">1</span>) =&gt; {
                 <span class="kw">let </span>tid = inner.remove(<span class="number">0</span>);
-                <span class="prelude-val">Some</span>((<span class="macro">format!</span>(<span class="string">&quot;PtrArray(#{tid:?})&quot;</span>), <span class="self">Self</span>::PtrArray(tid)))
+                <span class="prelude-val">Some</span>((<span class="macro">format!</span>(<span class="string">"PtrArray(#{tid:?})"</span>), <span class="self">Self</span>::PtrArray(tid)))
             }
-            (<span class="string">&quot;GLib.HashTable&quot;</span>, <span class="number">2</span>) =&gt; {
+            (<span class="string">"GLib.HashTable"</span>, <span class="number">2</span>) =&gt; {
                 <span class="kw">let </span>k_tid = inner.remove(<span class="number">0</span>);
                 <span class="kw">let </span>v_tid = inner.remove(<span class="number">0</span>);
                 <span class="prelude-val">Some</span>((
-                    <span class="macro">format!</span>(<span class="string">&quot;HashTable(#{k_tid:?}, #{v_tid:?})&quot;</span>),
+                    <span class="macro">format!</span>(<span class="string">"HashTable(#{k_tid:?}, #{v_tid:?})"</span>),
                     <span class="self">Self</span>::HashTable(k_tid, v_tid),
                 ))
             }
-            (<span class="string">&quot;GLib.List&quot;</span>, <span class="number">1</span>) =&gt; {
+            (<span class="string">"GLib.List"</span>, <span class="number">1</span>) =&gt; {
                 <span class="kw">let </span>tid = inner.remove(<span class="number">0</span>);
-                <span class="prelude-val">Some</span>((<span class="macro">format!</span>(<span class="string">&quot;List(#{tid:?})&quot;</span>), <span class="self">Self</span>::List(tid)))
+                <span class="prelude-val">Some</span>((<span class="macro">format!</span>(<span class="string">"List(#{tid:?})"</span>), <span class="self">Self</span>::List(tid)))
             }
-            (<span class="string">&quot;GLib.SList&quot;</span>, <span class="number">1</span>) =&gt; {
+            (<span class="string">"GLib.SList"</span>, <span class="number">1</span>) =&gt; {
                 <span class="kw">let </span>tid = inner.remove(<span class="number">0</span>);
-                <span class="prelude-val">Some</span>((<span class="macro">format!</span>(<span class="string">&quot;SList(#{tid:?})&quot;</span>), <span class="self">Self</span>::SList(tid)))
+                <span class="prelude-val">Some</span>((<span class="macro">format!</span>(<span class="string">"SList(#{tid:?})"</span>), <span class="self">Self</span>::SList(tid)))
             }
             <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
         }
@@ -2206,19 +2207,19 @@
         <span class="kw">let </span><span class="kw-2">mut </span>param_tids: Vec&lt;TypeId&gt; = func.parameters.iter().map(|p| p.typ).collect();
         param_tids.push(func.ret.typ);
         <span class="kw">let </span>typ = <span class="self">Self</span>::Function(func);
-        library.add_type(INTERNAL_NAMESPACE, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;fn&lt;#{param_tids:?}&gt;&quot;</span>), typ)
+        library.add_type(INTERNAL_NAMESPACE, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"fn&lt;#{param_tids:?}&gt;"</span>), typ)
     }
 
     <span class="kw">pub fn </span>union(library: <span class="kw-2">&amp;mut </span>Library, u: Union, ns_id: u16) -&gt; TypeId {
         <span class="kw">let </span>field_tids: Vec&lt;TypeId&gt; = u.fields.iter().map(|f| f.typ).collect();
         <span class="kw">let </span>typ = <span class="self">Self</span>::Union(u);
-        library.add_type(ns_id, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;#{field_tids:?}&quot;</span>), typ)
+        library.add_type(ns_id, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"#{field_tids:?}"</span>), typ)
     }
 
     <span class="kw">pub fn </span>record(library: <span class="kw-2">&amp;mut </span>Library, r: Record, ns_id: u16) -&gt; TypeId {
         <span class="kw">let </span>field_tids: Vec&lt;TypeId&gt; = r.fields.iter().map(|f| f.typ).collect();
         <span class="kw">let </span>typ = <span class="self">Self</span>::Record(r);
-        library.add_type(ns_id, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;#{field_tids:?}&quot;</span>), typ)
+        library.add_type(ns_id, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"#{field_tids:?}"</span>), typ)
     }
 
     <span class="kw">pub fn </span>functions(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[Function] {
@@ -2237,8 +2238,8 @@
         <span class="macro">matches!</span>(<span class="kw-2">*</span><span class="self">self</span>, <span class="self">Self</span>::Basic(<span class="kw">_</span>))
     }
 
-    <span class="doccomment">/// If the type is an Alias containing a basic, it&#39;ll return true (whereas
-    /// `is_basic` won&#39;t).
+    <span class="doccomment">/// If the type is an Alias containing a basic, it'll return true (whereas
+    /// `is_basic` won't).
     </span><span class="kw">pub fn </span>is_basic_type(<span class="kw-2">&amp;</span><span class="self">self</span>, env: <span class="kw-2">&amp;</span>Env) -&gt; bool {
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Alias(x) =&gt; env.library.type_(x.typ).is_basic_type(env),
@@ -2246,7 +2247,7 @@
         }
     }
 
-    <span class="kw">pub fn </span>get_inner_type&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, env: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Env) -&gt; <span class="prelude-ty">Option</span>&lt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Type, u16)&gt; {
+    <span class="kw">pub fn </span>get_inner_type&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>, env: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Env) -&gt; <span class="prelude-ty">Option</span>&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Type, u16)&gt; {
         <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
             <span class="self">Self</span>::Array(t)
             | <span class="self">Self</span>::CArray(t)
@@ -2316,7 +2317,7 @@
 
             <span class="kw">fn </span>to_ref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="macro-nonterminal">$name </span>{
                 <span class="self">self</span>.maybe_ref().unwrap_or_else(|| {
-                    <span class="macro">panic!</span>(<span class="string">&quot;{} is not a {}&quot;</span>, <span class="self">self</span>.get_name(), <span class="macro">stringify!</span>(<span class="macro-nonterminal">$name</span>))
+                    <span class="macro">panic!</span>(<span class="string">"{} is not a {}"</span>, <span class="self">self</span>.get_name(), <span class="macro">stringify!</span>(<span class="macro-nonterminal">$name</span>))
                 })
             }
         }
@@ -2420,7 +2421,7 @@
     }
 }
 
-<span class="kw">pub const </span>INTERNAL_NAMESPACE_NAME: <span class="kw-2">&amp;</span>str = <span class="string">&quot;*&quot;</span>;
+<span class="kw">pub const </span>INTERNAL_NAMESPACE_NAME: <span class="kw-2">&amp;</span>str = <span class="string">"*"</span>;
 <span class="kw">pub const </span>INTERNAL_NAMESPACE: u16 = <span class="number">0</span>;
 <span class="kw">pub const </span>MAIN_NAMESPACE: u16 = <span class="number">1</span>;
 
@@ -2455,21 +2456,21 @@
 
     <span class="kw">pub fn </span>show_non_bound_types(<span class="kw-2">&amp;</span><span class="self">self</span>, env: <span class="kw-2">&amp;</span>Env) {
         <span class="kw">let </span>not_allowed_ending = [
-            <span class="string">&quot;Class&quot;</span>,
-            <span class="string">&quot;Private&quot;</span>,
-            <span class="string">&quot;Func&quot;</span>,
-            <span class="string">&quot;Callback&quot;</span>,
-            <span class="string">&quot;Accessible&quot;</span>,
-            <span class="string">&quot;Iface&quot;</span>,
-            <span class="string">&quot;Type&quot;</span>,
-            <span class="string">&quot;Interface&quot;</span>,
+            <span class="string">"Class"</span>,
+            <span class="string">"Private"</span>,
+            <span class="string">"Func"</span>,
+            <span class="string">"Callback"</span>,
+            <span class="string">"Accessible"</span>,
+            <span class="string">"Iface"</span>,
+            <span class="string">"Type"</span>,
+            <span class="string">"Interface"</span>,
         ];
         <span class="kw">let </span>namespace_name = <span class="self">self</span>.namespaces[MAIN_NAMESPACE <span class="kw">as </span>usize].name.clone();
         <span class="kw">let </span><span class="kw-2">mut </span>parents = HashSet::new();
 
         <span class="kw">for </span>x <span class="kw">in </span><span class="self">self</span>.namespace(MAIN_NAMESPACE).types.iter().flatten() {
             <span class="kw">let </span>name = x.get_name();
-            <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">&quot;{namespace_name}.{name}&quot;</span>);
+            <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">"{namespace_name}.{name}"</span>);
             <span class="kw">let </span><span class="kw-2">mut </span>check_methods = <span class="bool-val">true</span>;
 
             <span class="kw">if </span>!not_allowed_ending.iter().any(|s| name.ends_with(s))
@@ -2485,9 +2486,9 @@
                 {
                     check_methods = <span class="bool-val">false</span>;
                     <span class="kw">if let </span><span class="prelude-val">Some</span>(version) = version {
-                        <span class="macro">println!</span>(<span class="string">&quot;[NOT GENERATED] {full_name} (deprecated in {version})&quot;</span>);
+                        <span class="macro">println!</span>(<span class="string">"[NOT GENERATED] {full_name} (deprecated in {version})"</span>);
                     } <span class="kw">else </span>{
-                        <span class="macro">println!</span>(<span class="string">&quot;[NOT GENERATED] {full_name}&quot;</span>);
+                        <span class="macro">println!</span>(<span class="string">"[NOT GENERATED] {full_name}"</span>);
                     }
                 } <span class="kw">else if let </span>Type::Class(Class { properties, .. }) = x {
                     <span class="kw">if </span>!env
@@ -2499,19 +2500,19 @@
                             .iter()
                             .any(|prop| prop.construct_only || prop.construct || prop.writable)
                     {
-                        <span class="macro">println!</span>(<span class="string">&quot;[NOT GENERATED BUILDER] {full_name}Builder&quot;</span>);
+                        <span class="macro">println!</span>(<span class="string">"[NOT GENERATED BUILDER] {full_name}Builder"</span>);
                     }
                 }
             }
             <span class="kw">if let </span>(<span class="prelude-val">Some</span>(tid), <span class="prelude-val">Some</span>(gobject_id)) = (
                 env.library.find_type(<span class="number">0</span>, <span class="kw-2">&amp;</span>full_name),
-                env.library.find_type(<span class="number">0</span>, <span class="string">&quot;GObject.Object&quot;</span>),
+                env.library.find_type(<span class="number">0</span>, <span class="string">"GObject.Object"</span>),
             ) {
                 <span class="kw">for </span><span class="kw-2">&amp;</span>super_tid <span class="kw">in </span>env.class_hierarchy.supertypes(tid) {
                     <span class="kw">let </span>ty = env.library.type_(super_tid);
                     <span class="kw">let </span>ns_id = super_tid.ns_id <span class="kw">as </span>usize;
                     <span class="kw">let </span>full_parent_name =
-                        <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, <span class="self">self</span>.namespaces[ns_id].name, ty.get_name());
+                        <span class="macro">format!</span>(<span class="string">"{}.{}"</span>, <span class="self">self</span>.namespaces[ns_id].name, ty.get_name());
                     <span class="kw">if </span>super_tid != gobject_id
                         &amp;&amp; env
                             .type_status(<span class="kw-2">&amp;</span>super_tid.full_name(<span class="kw-2">&amp;</span>env.library))
@@ -2520,28 +2521,28 @@
                     {
                         <span class="kw">if let </span><span class="prelude-val">Some</span>(version) = ty.get_deprecated_version() {
                             <span class="macro">println!</span>(
-                                <span class="string">&quot;[NOT GENERATED PARENT] {full_parent_name} (deprecated in {version})&quot;
+                                <span class="string">"[NOT GENERATED PARENT] {full_parent_name} (deprecated in {version})"
                             </span>);
                         } <span class="kw">else </span>{
-                            <span class="macro">println!</span>(<span class="string">&quot;[NOT GENERATED PARENT] {full_parent_name}&quot;</span>);
+                            <span class="macro">println!</span>(<span class="string">"[NOT GENERATED PARENT] {full_parent_name}"</span>);
                         }
                     }
                 }
                 <span class="kw">if </span>check_methods {
                     <span class="self">self</span>.not_bound_functions(
                         env,
-                        <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{full_name}::&quot;</span>),
+                        <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{full_name}::"</span>),
                         x.functions(),
-                        <span class="string">&quot;METHOD&quot;</span>,
+                        <span class="string">"METHOD"</span>,
                     );
                 }
             }
         }
         <span class="self">self</span>.not_bound_functions(
             env,
-            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{namespace_name}.&quot;</span>),
+            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{namespace_name}."</span>),
             <span class="kw-2">&amp;</span><span class="self">self</span>.namespace(MAIN_NAMESPACE).functions,
-            <span class="string">&quot;FUNCTION&quot;</span>,
+            <span class="string">"FUNCTION"</span>,
         );
     }
 
@@ -2567,7 +2568,7 @@
                     <span class="kw">if </span>ty.is_basic() {
                         <span class="kw">return </span><span class="prelude-val">None</span>;
                     }
-                    <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, <span class="self">self</span>.namespaces[ns_id].name, ty.get_name());
+                    <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">"{}.{}"</span>, <span class="self">self</span>.namespaces[ns_id].name, ty.get_name());
                     <span class="kw">if </span>env.type_status(<span class="kw-2">&amp;</span>p.typ.full_name(<span class="kw-2">&amp;</span>env.library)).ignored()
                         &amp;&amp; !env.analysis.objects.contains_key(<span class="kw-2">&amp;</span>full_name)
                         &amp;&amp; !env.analysis.records.contains_key(<span class="kw-2">&amp;</span>full_name)
@@ -2587,7 +2588,7 @@
                     ns_id = n <span class="kw">as </span>usize;
                 }
                 <span class="kw">if </span>!ty.is_basic() {
-                    <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, <span class="self">self</span>.namespaces[ns_id].name, ty.get_name());
+                    <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">"{}.{}"</span>, <span class="self">self</span>.namespaces[ns_id].name, ty.get_name());
                     <span class="kw">if </span>env
                         .type_status(<span class="kw-2">&amp;</span>func.ret.typ.full_name(<span class="kw-2">&amp;</span>env.library))
                         .ignored()
@@ -2600,20 +2601,20 @@
                 }
             }
             <span class="kw">if </span>!errors.is_empty() {
-                <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">&quot;{}{}&quot;</span>, prefix, func.name);
+                <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">"{}{}"</span>, prefix, func.name);
                 <span class="kw">let </span>deprecated_version = <span class="kw">match </span>version {
-                    <span class="prelude-val">Some</span>(dv) =&gt; <span class="macro">format!</span>(<span class="string">&quot; (deprecated in {dv})&quot;</span>),
+                    <span class="prelude-val">Some</span>(dv) =&gt; <span class="macro">format!</span>(<span class="string">" (deprecated in {dv})"</span>),
                     <span class="prelude-val">None </span>=&gt; String::new(),
                 };
                 <span class="kw">if </span>errors.len() &gt; <span class="number">1 </span>{
                     <span class="kw">let </span>end = errors.pop().unwrap();
-                    <span class="kw">let </span>begin = errors.join(<span class="string">&quot;, &quot;</span>);
+                    <span class="kw">let </span>begin = errors.join(<span class="string">", "</span>);
                     <span class="macro">println!</span>(
-                        <span class="string">&quot;[NOT GENERATED {kind}] {full_name}{deprecated_version} because of {begin} and {end}&quot;
+                        <span class="string">"[NOT GENERATED {kind}] {full_name}{deprecated_version} because of {begin} and {end}"
                     </span>);
                 } <span class="kw">else </span>{
                     <span class="macro">println!</span>(
-                        <span class="string">&quot;[NOT GENERATED {}] {}{} because of {}&quot;</span>,
+                        <span class="string">"[NOT GENERATED {}] {}{} because of {}"</span>,
                         kind, full_name, deprecated_version, errors[<span class="number">0</span>]
                     );
                 }
@@ -2662,7 +2663,7 @@
     <span class="attr">#[allow(clippy::manual_map)]
     </span><span class="kw">pub fn </span>find_type(<span class="kw-2">&amp;</span><span class="self">self</span>, current_ns_id: u16, name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;TypeId&gt; {
         <span class="kw">let </span>(<span class="kw-2">mut </span>ns, name) = split_namespace_name(name);
-        <span class="kw">if </span>name == <span class="string">&quot;GType&quot; </span>{
+        <span class="kw">if </span>name == <span class="string">"GType" </span>{
             ns = <span class="prelude-val">None</span>;
         }
 
@@ -2724,7 +2725,7 @@
         <span class="self">self</span>.namespace_mut(ns_id).versions.insert(version);
     }
 
-    <span class="kw">pub fn </span>types&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>) -&gt; Box&lt;<span class="kw">dyn </span>Iterator&lt;Item = (TypeId, <span class="kw-2">&amp;</span>Type)&gt; + <span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">pub fn </span>types&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>) -&gt; Box&lt;<span class="kw">dyn </span>Iterator&lt;Item = (TypeId, <span class="kw-2">&amp;</span>Type)&gt; + <span class="lifetime">'a</span>&gt; {
         Box::new(<span class="self">self</span>.namespaces.iter().enumerate().flat_map(|(ns_id, ns)| {
             ns.types.iter().enumerate().filter_map(<span class="kw">move </span>|(id, type_)| {
                 <span class="kw">let </span>tid = TypeId {
@@ -2737,10 +2738,10 @@
     }
 
     <span class="doccomment">/// Types from a single namespace in alphabetical order.
-    </span><span class="kw">pub fn </span>namespace_types&lt;<span class="lifetime">&#39;a</span>&gt;(
-        <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>,
+    </span><span class="kw">pub fn </span>namespace_types&lt;<span class="lifetime">'a</span>&gt;(
+        <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">self</span>,
         ns_id: u16,
-    ) -&gt; Box&lt;<span class="kw">dyn </span>Iterator&lt;Item = (TypeId, <span class="kw-2">&amp;</span>Type)&gt; + <span class="lifetime">&#39;a</span>&gt; {
+    ) -&gt; Box&lt;<span class="kw">dyn </span>Iterator&lt;Item = (TypeId, <span class="kw-2">&amp;</span>Type)&gt; + <span class="lifetime">'a</span>&gt; {
         <span class="kw">let </span>ns = <span class="self">self</span>.namespace(ns_id);
         Box::new(ns.index.values().map(<span class="kw">move </span>|<span class="kw-2">&amp;</span>id| {
             (
@@ -2755,7 +2756,7 @@
     }
 
     <span class="kw">pub fn </span>is_glib_crate(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="self">self</span>.is_crate(<span class="string">&quot;GObject&quot;</span>) || <span class="self">self</span>.is_crate(<span class="string">&quot;GLib&quot;</span>)
+        <span class="self">self</span>.is_crate(<span class="string">"GObject"</span>) || <span class="self">self</span>.is_crate(<span class="string">"GLib"</span>)
     }
 }
 
@@ -2765,15 +2766,15 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>basic_tids() {
-        <span class="kw">let </span>lib = Library::new(<span class="string">&quot;Gtk&quot;</span>);
+        <span class="kw">let </span>lib = Library::new(<span class="string">"Gtk"</span>);
 
-        <span class="macro">assert_eq!</span>(TypeId::tid_none().full_name(<span class="kw-2">&amp;</span>lib), <span class="string">&quot;*.None&quot;</span>);
-        <span class="macro">assert_eq!</span>(TypeId::tid_bool().full_name(<span class="kw-2">&amp;</span>lib), <span class="string">&quot;*.Boolean&quot;</span>);
-        <span class="macro">assert_eq!</span>(TypeId::tid_uint32().full_name(<span class="kw-2">&amp;</span>lib), <span class="string">&quot;*.UInt32&quot;</span>);
-        <span class="macro">assert_eq!</span>(TypeId::tid_c_bool().full_name(<span class="kw-2">&amp;</span>lib), <span class="string">&quot;*.Bool&quot;</span>);
-        <span class="macro">assert_eq!</span>(TypeId::tid_utf8().full_name(<span class="kw-2">&amp;</span>lib), <span class="string">&quot;*.Utf8&quot;</span>);
-        <span class="macro">assert_eq!</span>(TypeId::tid_filename().full_name(<span class="kw-2">&amp;</span>lib), <span class="string">&quot;*.Filename&quot;</span>);
-        <span class="macro">assert_eq!</span>(TypeId::tid_os_string().full_name(<span class="kw-2">&amp;</span>lib), <span class="string">&quot;*.OsString&quot;</span>);
+        <span class="macro">assert_eq!</span>(TypeId::tid_none().full_name(<span class="kw-2">&amp;</span>lib), <span class="string">"*.None"</span>);
+        <span class="macro">assert_eq!</span>(TypeId::tid_bool().full_name(<span class="kw-2">&amp;</span>lib), <span class="string">"*.Boolean"</span>);
+        <span class="macro">assert_eq!</span>(TypeId::tid_uint32().full_name(<span class="kw-2">&amp;</span>lib), <span class="string">"*.UInt32"</span>);
+        <span class="macro">assert_eq!</span>(TypeId::tid_c_bool().full_name(<span class="kw-2">&amp;</span>lib), <span class="string">"*.Bool"</span>);
+        <span class="macro">assert_eq!</span>(TypeId::tid_utf8().full_name(<span class="kw-2">&amp;</span>lib), <span class="string">"*.Utf8"</span>);
+        <span class="macro">assert_eq!</span>(TypeId::tid_filename().full_name(<span class="kw-2">&amp;</span>lib), <span class="string">"*.Filename"</span>);
+        <span class="macro">assert_eq!</span>(TypeId::tid_os_string().full_name(<span class="kw-2">&amp;</span>lib), <span class="string">"*.OsString"</span>);
     }
 }
 </code></pre></div></section></main></body></html>

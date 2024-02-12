@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/doc/gi_docgen.rs`."><title>gi_docgen.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/doc/gi_docgen.rs`."><title>gi_docgen.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -860,23 +861,23 @@
 }
 
 <span class="kw">impl </span>Display <span class="kw">for </span>GiDocgenError {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="kw">match </span><span class="self">self </span>{
-            <span class="self">Self</span>::InvalidLinkType(e) =&gt; f.write_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;Invalid link type \&quot;{e}\&quot;&quot;</span>)),
-            <span class="self">Self</span>::BrokenLinkType(e) =&gt; f.write_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;Broken link syntax for type \&quot;{e}\&quot;&quot;</span>)),
-            <span class="self">Self</span>::InvalidLink =&gt; f.write_str(<span class="string">&quot;Invalid link syntax&quot;</span>),
+            <span class="self">Self</span>::InvalidLinkType(e) =&gt; f.write_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"Invalid link type \"{e}\""</span>)),
+            <span class="self">Self</span>::BrokenLinkType(e) =&gt; f.write_str(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"Broken link syntax for type \"{e}\""</span>)),
+            <span class="self">Self</span>::InvalidLink =&gt; f.write_str(<span class="string">"Invalid link syntax"</span>),
         }
     }
 }
 
 <span class="kw">impl </span>std::error::Error <span class="kw">for </span>GiDocgenError {}
 
-<span class="doccomment">/// Convert a &quot;Namespace.Type&quot; to (Option&lt;Namespace&gt;, Type)
+<span class="doccomment">/// Convert a "Namespace.Type" to (Option&lt;Namespace&gt;, Type)
 </span><span class="kw">fn </span>namespace_type_from_details(
     link_details: <span class="kw-2">&amp;</span>str,
     link_type: <span class="kw-2">&amp;</span>str,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(<span class="prelude-ty">Option</span>&lt;String&gt;, String), GiDocgenError&gt; {
-    <span class="kw">let </span>res: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = link_details.split(<span class="string">&#39;.&#39;</span>).collect();
+    <span class="kw">let </span>res: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = link_details.split(<span class="string">'.'</span>).collect();
     <span class="kw">let </span>len = res.len();
     <span class="kw">if </span>len == <span class="number">1 </span>{
         <span class="prelude-val">Ok</span>((<span class="prelude-val">None</span>, res[<span class="number">0</span>].to_string()))
@@ -891,7 +892,7 @@
     }
 }
 
-<span class="doccomment">/// Convert a &quot;Namespace.Type.method_name&quot; to (Option&lt;Namespace&gt;, Option&lt;Type&gt;,
+<span class="doccomment">/// Convert a "Namespace.Type.method_name" to (Option&lt;Namespace&gt;, Option&lt;Type&gt;,
 /// name) Type is only optional for global functions and the order can be
 /// modified the `is_global_func` parameters
 </span><span class="kw">fn </span>namespace_type_method_from_details(
@@ -899,7 +900,7 @@
     link_type: <span class="kw-2">&amp;</span>str,
     is_global_func: bool,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;(<span class="prelude-ty">Option</span>&lt;String&gt;, <span class="prelude-ty">Option</span>&lt;String&gt;, String), GiDocgenError&gt; {
-    <span class="kw">let </span>res: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = link_details.split(<span class="string">&#39;.&#39;</span>).collect();
+    <span class="kw">let </span>res: Vec&lt;<span class="kw-2">&amp;</span>str&gt; = link_details.split(<span class="string">'.'</span>).collect();
     <span class="kw">let </span>len = res.len();
     <span class="kw">if </span>len == <span class="number">1 </span>{
         <span class="prelude-val">Ok</span>((<span class="prelude-val">None</span>, <span class="prelude-val">None</span>, res[<span class="number">0</span>].to_string()))
@@ -926,10 +927,10 @@
     }
 }
 
-<span class="kw">fn </span>gi_docgen_symbols() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Regex {
+<span class="kw">fn </span>gi_docgen_symbols() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Regex {
     <span class="kw">static </span>REGEX: OnceLock&lt;Regex&gt; = OnceLock::new();
     REGEX.get_or_init(|| {
-        Regex::new(<span class="string">r&quot;\[(callback|id|alias|class|const|ctor|enum|error|flags|func|iface|method|property|signal|struct|vfunc)[@](\w+\b)([:.]+[\w-]+\b)?([:.]+[\w-]+\b)?\]?&quot;</span>).unwrap()
+        Regex::new(<span class="string">r"\[(callback|id|alias|class|const|ctor|enum|error|flags|func|iface|method|property|signal|struct|vfunc)[@](\w+\b)([:.]+[\w-]+\b)?([:.]+[\w-]+\b)?\]?"</span>).unwrap()
     })
 }
 
@@ -939,7 +940,7 @@
     in_type: <span class="prelude-ty">Option</span>&lt;(<span class="kw-2">&amp;</span>TypeId, <span class="prelude-ty">Option</span>&lt;LocationInObject&gt;)&gt;,
 ) -&gt; String {
     gi_docgen_symbols()
-        .replace_all(entry, |caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;| {
+        .replace_all(entry, |caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">'_</span>&gt;| {
             <span class="kw">if let </span><span class="prelude-val">Ok</span>(gi_type) = GiDocgen::from_str(<span class="kw-2">&amp;</span>caps[<span class="number">0</span>]) {
                 gi_type.rust_link(env, in_type)
             } <span class="kw">else </span>{
@@ -1027,7 +1028,7 @@
 
 <span class="kw">fn </span>ns_type_to_doc(namespace: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;String&gt;, type_: <span class="kw-2">&amp;</span>str) -&gt; String {
     <span class="kw">if let </span><span class="prelude-val">Some</span>(ns) = namespace {
-        <span class="macro">format!</span>(<span class="string">&quot;{ns}::{type_}&quot;</span>)
+        <span class="macro">format!</span>(<span class="string">"{ns}::{type_}"</span>)
     } <span class="kw">else </span>{
         type_.to_string()
     }
@@ -1126,7 +1127,7 @@
                 .iter()
                 .find(|e| <span class="kw-2">&amp;</span>e.name == type_)
                 .map_or_else(
-                    || <span class="macro">format!</span>(<span class="string">&quot;`{}`&quot;</span>, ns_type_to_doc(namespace, type_)),
+                    || <span class="macro">format!</span>(<span class="string">"`{}`"</span>, ns_type_to_doc(namespace, type_)),
                     |info| gen_symbol_doc_link(info.type_id, env),
                 ),
             GiDocgen::Class { type_, namespace } | GiDocgen::Interface { type_, namespace } =&gt; env
@@ -1137,7 +1138,7 @@
                     <span class="kw-2">&amp;</span>o.name == type_ &amp;&amp; is_same_namespace(env, namespace.as_deref(), o.type_id)
                 })
                 .map_or_else(
-                    || <span class="macro">format!</span>(<span class="string">&quot;`{}`&quot;</span>, ns_type_to_doc(namespace, type_)),
+                    || <span class="macro">format!</span>(<span class="string">"`{}`"</span>, ns_type_to_doc(namespace, type_)),
                     |info| gen_symbol_doc_link(info.type_id, env),
                 ),
             GiDocgen::Flag { type_, namespace } =&gt; env
@@ -1148,7 +1149,7 @@
                     <span class="kw-2">&amp;</span>e.name == type_ &amp;&amp; is_same_namespace(env, namespace.as_deref(), e.type_id)
                 })
                 .map_or_else(
-                    || <span class="macro">format!</span>(<span class="string">&quot;`{}`&quot;</span>, ns_type_to_doc(namespace, type_)),
+                    || <span class="macro">format!</span>(<span class="string">"`{}`"</span>, ns_type_to_doc(namespace, type_)),
                     |info| gen_symbol_doc_link(info.type_id, env),
                 ),
             GiDocgen::Const { type_, namespace } =&gt; env
@@ -1157,7 +1158,7 @@
                 .iter()
                 .find(|c| <span class="kw-2">&amp;</span>c.name == type_ &amp;&amp; is_same_namespace(env, namespace.as_deref(), c.typ))
                 .map_or_else(
-                    || <span class="macro">format!</span>(<span class="string">&quot;`{}`&quot;</span>, ns_type_to_doc(namespace, type_)),
+                    || <span class="macro">format!</span>(<span class="string">"`{}`"</span>, ns_type_to_doc(namespace, type_)),
                     gen_const_doc_link,
                 ),
             GiDocgen::Property {
@@ -1197,8 +1198,8 @@
                     },
                 ),
             GiDocgen::Id(c_name) =&gt; symbols.by_c_name(c_name).map_or_else(
-                || <span class="macro">format!</span>(<span class="string">&quot;`{c_name}`&quot;</span>),
-                |sym| <span class="macro">format!</span>(<span class="string">&quot;[`{n}`][crate::{n}]&quot;</span>, n = sym.full_rust_name()),
+                || <span class="macro">format!</span>(<span class="string">"`{c_name}`"</span>),
+                |sym| <span class="macro">format!</span>(<span class="string">"[`{n}`][crate::{n}]"</span>, n = sym.full_rust_name()),
             ),
             GiDocgen::Struct { namespace, type_ } =&gt; env
                 .analysis
@@ -1208,7 +1209,7 @@
                     <span class="kw-2">&amp;</span>r.name == type_ &amp;&amp; is_same_namespace(env, namespace.as_deref(), r.type_id)
                 })
                 .map_or_else(
-                    || <span class="macro">format!</span>(<span class="string">&quot;`{}`&quot;</span>, ns_type_to_doc(namespace, type_)),
+                    || <span class="macro">format!</span>(<span class="string">"`{}`"</span>, ns_type_to_doc(namespace, type_)),
                     |info| gen_symbol_doc_link(info.type_id, env),
                 ),
             GiDocgen::Constructor {
@@ -1223,7 +1224,7 @@
                     |f| f.name == mangle_keywords(name),
                 )
                 .map_or_else(
-                    || <span class="macro">format!</span>(<span class="string">&quot;`{}::{}()`&quot;</span>, ns_type_to_doc(namespace, type_), name),
+                    || <span class="macro">format!</span>(<span class="string">"`{}::{}()`"</span>, ns_type_to_doc(namespace, type_), name),
                     |(obj_info, fn_info)| {
                         gen_object_fn_doc_link(obj_info, fn_info, env, in_type, type_)
                     },
@@ -1242,9 +1243,9 @@
             )
             .unwrap_or_else(|| {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(ty) = type_ {
-                    <span class="macro">format!</span>(<span class="string">&quot;`{}::{}()`&quot;</span>, ns_type_to_doc(namespace, ty), name)
+                    <span class="macro">format!</span>(<span class="string">"`{}::{}()`"</span>, ns_type_to_doc(namespace, ty), name)
                 } <span class="kw">else </span>{
-                    <span class="macro">format!</span>(<span class="string">&quot;`{name}()`&quot;</span>)
+                    <span class="macro">format!</span>(<span class="string">"`{name}()`"</span>)
                 }
             }),
             GiDocgen::Alias(alias) =&gt; gen_alias_doc_link(alias),
@@ -1261,7 +1262,7 @@
                 in_type,
                 <span class="kw-2">*</span>is_class_method,
             )
-            .unwrap_or_else(|| <span class="macro">format!</span>(<span class="string">&quot;`{}::{}()`&quot;</span>, ns_type_to_doc(namespace, type_), name)),
+            .unwrap_or_else(|| <span class="macro">format!</span>(<span class="string">"`{}::{}()`"</span>, ns_type_to_doc(namespace, type_), name)),
             GiDocgen::Callback { namespace, name } =&gt; {
                 gen_callback_doc_link(<span class="kw-2">&amp;</span>ns_type_to_doc(namespace, name))
             }
@@ -1279,74 +1280,74 @@
     <span class="kw">type </span><span class="prelude-val">Err </span>= GiDocgenError;
     <span class="comment">// We assume the string is contained inside a []
     </span><span class="kw">fn </span>from_str(item_link: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="self">Self</span>, <span class="self">Self</span>::Err&gt; {
-        <span class="kw">let </span>item_link = item_link.trim_start_matches(<span class="string">&#39;[&#39;</span>).trim_end_matches(<span class="string">&#39;]&#39;</span>);
-        <span class="kw">if let </span><span class="prelude-val">Some</span>((link_type, link_details)) = item_link.split_once(<span class="string">&#39;@&#39;</span>) {
+        <span class="kw">let </span>item_link = item_link.trim_start_matches(<span class="string">'['</span>).trim_end_matches(<span class="string">']'</span>);
+        <span class="kw">if let </span><span class="prelude-val">Some</span>((link_type, link_details)) = item_link.split_once(<span class="string">'@'</span>) {
             <span class="kw">match </span>link_type {
-                <span class="string">&quot;alias&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Alias(link_details.to_string())),
-                <span class="string">&quot;class&quot; </span>=&gt; {
-                    <span class="kw">let </span>(namespace, type_) = namespace_type_from_details(link_details, <span class="string">&quot;class&quot;</span>)<span class="question-mark">?</span>;
+                <span class="string">"alias" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Alias(link_details.to_string())),
+                <span class="string">"class" </span>=&gt; {
+                    <span class="kw">let </span>(namespace, type_) = namespace_type_from_details(link_details, <span class="string">"class"</span>)<span class="question-mark">?</span>;
                     <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Class { namespace, type_ })
                 }
-                <span class="string">&quot;const&quot; </span>=&gt; {
-                    <span class="kw">let </span>(namespace, type_) = namespace_type_from_details(link_details, <span class="string">&quot;const&quot;</span>)<span class="question-mark">?</span>;
+                <span class="string">"const" </span>=&gt; {
+                    <span class="kw">let </span>(namespace, type_) = namespace_type_from_details(link_details, <span class="string">"const"</span>)<span class="question-mark">?</span>;
                     <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Const { namespace, type_ })
                 }
-                <span class="string">&quot;ctor&quot; </span>=&gt; {
+                <span class="string">"ctor" </span>=&gt; {
                     <span class="kw">let </span>(namespace, type_, name) =
-                        namespace_type_method_from_details(link_details, <span class="string">&quot;ctor&quot;</span>, <span class="bool-val">false</span>)<span class="question-mark">?</span>;
+                        namespace_type_method_from_details(link_details, <span class="string">"ctor"</span>, <span class="bool-val">false</span>)<span class="question-mark">?</span>;
                     <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Constructor {
                         namespace,
                         type_: type_
-                            .ok_or_else(|| GiDocgenError::BrokenLinkType(<span class="string">&quot;ctor&quot;</span>.to_string()))<span class="question-mark">?</span>,
+                            .ok_or_else(|| GiDocgenError::BrokenLinkType(<span class="string">"ctor"</span>.to_string()))<span class="question-mark">?</span>,
                         name,
                     })
                 }
-                <span class="string">&quot;enum&quot; </span>=&gt; {
-                    <span class="kw">let </span>(namespace, type_) = namespace_type_from_details(link_details, <span class="string">&quot;enum&quot;</span>)<span class="question-mark">?</span>;
+                <span class="string">"enum" </span>=&gt; {
+                    <span class="kw">let </span>(namespace, type_) = namespace_type_from_details(link_details, <span class="string">"enum"</span>)<span class="question-mark">?</span>;
                     <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Enum { namespace, type_ })
                 }
-                <span class="string">&quot;error&quot; </span>=&gt; {
-                    <span class="kw">let </span>(namespace, type_) = namespace_type_from_details(link_details, <span class="string">&quot;error&quot;</span>)<span class="question-mark">?</span>;
+                <span class="string">"error" </span>=&gt; {
+                    <span class="kw">let </span>(namespace, type_) = namespace_type_from_details(link_details, <span class="string">"error"</span>)<span class="question-mark">?</span>;
                     <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Error { namespace, type_ })
                 }
-                <span class="string">&quot;flags&quot; </span>=&gt; {
-                    <span class="kw">let </span>(namespace, type_) = namespace_type_from_details(link_details, <span class="string">&quot;flags&quot;</span>)<span class="question-mark">?</span>;
+                <span class="string">"flags" </span>=&gt; {
+                    <span class="kw">let </span>(namespace, type_) = namespace_type_from_details(link_details, <span class="string">"flags"</span>)<span class="question-mark">?</span>;
                     <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Flag { namespace, type_ })
                 }
-                <span class="string">&quot;func&quot; </span>=&gt; {
+                <span class="string">"func" </span>=&gt; {
                     <span class="kw">let </span>(namespace, type_, name) =
-                        namespace_type_method_from_details(link_details, <span class="string">&quot;func&quot;</span>, <span class="bool-val">true</span>)<span class="question-mark">?</span>;
+                        namespace_type_method_from_details(link_details, <span class="string">"func"</span>, <span class="bool-val">true</span>)<span class="question-mark">?</span>;
                     <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Func {
                         namespace,
                         type_,
                         name,
                     })
                 }
-                <span class="string">&quot;iface&quot; </span>=&gt; {
-                    <span class="kw">let </span>(namespace, type_) = namespace_type_from_details(link_details, <span class="string">&quot;iface&quot;</span>)<span class="question-mark">?</span>;
+                <span class="string">"iface" </span>=&gt; {
+                    <span class="kw">let </span>(namespace, type_) = namespace_type_from_details(link_details, <span class="string">"iface"</span>)<span class="question-mark">?</span>;
                     <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Interface { namespace, type_ })
                 }
-                <span class="string">&quot;callback&quot; </span>=&gt; {
-                    <span class="kw">let </span>(namespace, name) = namespace_type_from_details(link_details, <span class="string">&quot;callback&quot;</span>)<span class="question-mark">?</span>;
+                <span class="string">"callback" </span>=&gt; {
+                    <span class="kw">let </span>(namespace, name) = namespace_type_from_details(link_details, <span class="string">"callback"</span>)<span class="question-mark">?</span>;
                     <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Callback { namespace, name })
                 }
-                <span class="string">&quot;method&quot; </span>=&gt; {
+                <span class="string">"method" </span>=&gt; {
                     <span class="kw">let </span>(namespace, type_, name) =
-                        namespace_type_method_from_details(link_details, <span class="string">&quot;method&quot;</span>, <span class="bool-val">false</span>)<span class="question-mark">?</span>;
+                        namespace_type_method_from_details(link_details, <span class="string">"method"</span>, <span class="bool-val">false</span>)<span class="question-mark">?</span>;
                     <span class="kw">let </span>type_ =
-                        type_.ok_or_else(|| GiDocgenError::BrokenLinkType(<span class="string">&quot;method&quot;</span>.to_string()))<span class="question-mark">?</span>;
+                        type_.ok_or_else(|| GiDocgenError::BrokenLinkType(<span class="string">"method"</span>.to_string()))<span class="question-mark">?</span>;
                     <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Method {
                         namespace,
-                        is_class_method: type_.ends_with(<span class="string">&quot;Class&quot;</span>),
+                        is_class_method: type_.ends_with(<span class="string">"Class"</span>),
                         type_,
                         name,
                     })
                 }
-                <span class="string">&quot;property&quot; </span>=&gt; {
-                    <span class="kw">let </span>(namespace, type_) = namespace_type_from_details(link_details, <span class="string">&quot;property&quot;</span>)<span class="question-mark">?</span>;
-                    <span class="kw">let </span>type_details: Vec&lt;<span class="kw">_</span>&gt; = type_.split(<span class="string">&#39;:&#39;</span>).collect();
+                <span class="string">"property" </span>=&gt; {
+                    <span class="kw">let </span>(namespace, type_) = namespace_type_from_details(link_details, <span class="string">"property"</span>)<span class="question-mark">?</span>;
+                    <span class="kw">let </span>type_details: Vec&lt;<span class="kw">_</span>&gt; = type_.split(<span class="string">':'</span>).collect();
                     <span class="kw">if </span>type_details.len() &lt; <span class="number">2 </span>|| type_details[<span class="number">1</span>].is_empty() {
-                        <span class="prelude-val">Err</span>(GiDocgenError::BrokenLinkType(<span class="string">&quot;property&quot;</span>.to_string()))
+                        <span class="prelude-val">Err</span>(GiDocgenError::BrokenLinkType(<span class="string">"property"</span>.to_string()))
                     } <span class="kw">else </span>{
                         <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Property {
                             namespace,
@@ -1355,11 +1356,11 @@
                         })
                     }
                 }
-                <span class="string">&quot;signal&quot; </span>=&gt; {
-                    <span class="kw">let </span>(namespace, type_) = namespace_type_from_details(link_details, <span class="string">&quot;signal&quot;</span>)<span class="question-mark">?</span>;
-                    <span class="kw">let </span>type_details: Vec&lt;<span class="kw">_</span>&gt; = type_.split(<span class="string">&quot;::&quot;</span>).collect();
+                <span class="string">"signal" </span>=&gt; {
+                    <span class="kw">let </span>(namespace, type_) = namespace_type_from_details(link_details, <span class="string">"signal"</span>)<span class="question-mark">?</span>;
+                    <span class="kw">let </span>type_details: Vec&lt;<span class="kw">_</span>&gt; = type_.split(<span class="string">"::"</span>).collect();
                     <span class="kw">if </span>type_details.len() &lt; <span class="number">2 </span>|| type_details[<span class="number">1</span>].is_empty() {
-                        <span class="prelude-val">Err</span>(GiDocgenError::BrokenLinkType(<span class="string">&quot;signal&quot;</span>.to_string()))
+                        <span class="prelude-val">Err</span>(GiDocgenError::BrokenLinkType(<span class="string">"signal"</span>.to_string()))
                     } <span class="kw">else </span>{
                         <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Signal {
                             namespace,
@@ -1368,21 +1369,21 @@
                         })
                     }
                 }
-                <span class="string">&quot;struct&quot; </span>=&gt; {
-                    <span class="kw">let </span>(namespace, type_) = namespace_type_from_details(link_details, <span class="string">&quot;struct&quot;</span>)<span class="question-mark">?</span>;
+                <span class="string">"struct" </span>=&gt; {
+                    <span class="kw">let </span>(namespace, type_) = namespace_type_from_details(link_details, <span class="string">"struct"</span>)<span class="question-mark">?</span>;
                     <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Struct { namespace, type_ })
                 }
-                <span class="string">&quot;vfunc&quot; </span>=&gt; {
+                <span class="string">"vfunc" </span>=&gt; {
                     <span class="kw">let </span>(namespace, type_, name) =
-                        namespace_type_method_from_details(link_details, <span class="string">&quot;vfunc&quot;</span>, <span class="bool-val">false</span>)<span class="question-mark">?</span>;
+                        namespace_type_method_from_details(link_details, <span class="string">"vfunc"</span>, <span class="bool-val">false</span>)<span class="question-mark">?</span>;
                     <span class="prelude-val">Ok</span>(<span class="self">Self</span>::VFunc {
                         namespace,
                         type_: type_
-                            .ok_or_else(|| GiDocgenError::BrokenLinkType(<span class="string">&quot;vfunc&quot;</span>.to_string()))<span class="question-mark">?</span>,
+                            .ok_or_else(|| GiDocgenError::BrokenLinkType(<span class="string">"vfunc"</span>.to_string()))<span class="question-mark">?</span>,
                         name,
                     })
                 }
-                <span class="string">&quot;id&quot; </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Id(link_details.to_string())),
+                <span class="string">"id" </span>=&gt; <span class="prelude-val">Ok</span>(<span class="self">Self</span>::Id(link_details.to_string())),
                 e =&gt; <span class="prelude-val">Err</span>(GiDocgenError::InvalidLinkType(e.to_string())),
             }
         } <span class="kw">else </span>{
@@ -1397,61 +1398,61 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_link_alias() {
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[alias@Allocation]&quot;</span>),
-            <span class="prelude-val">Ok</span>(GiDocgen::Alias(<span class="string">&quot;Allocation&quot;</span>.to_string()))
+            GiDocgen::from_str(<span class="string">"[alias@Allocation]"</span>),
+            <span class="prelude-val">Ok</span>(GiDocgen::Alias(<span class="string">"Allocation"</span>.to_string()))
         );
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_link_class() {
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[class@Widget]&quot;</span>),
+            GiDocgen::from_str(<span class="string">"[class@Widget]"</span>),
             <span class="prelude-val">Ok</span>(GiDocgen::Class {
                 namespace: <span class="prelude-val">None</span>,
-                type_: <span class="string">&quot;Widget&quot;</span>.to_string(),
+                type_: <span class="string">"Widget"</span>.to_string(),
             })
         );
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[class@Gdk.Surface]&quot;</span>),
+            GiDocgen::from_str(<span class="string">"[class@Gdk.Surface]"</span>),
             <span class="prelude-val">Ok</span>(GiDocgen::Class {
-                namespace: <span class="prelude-val">Some</span>(<span class="string">&quot;Gdk&quot;</span>.to_string()),
-                type_: <span class="string">&quot;Surface&quot;</span>.to_string(),
+                namespace: <span class="prelude-val">Some</span>(<span class="string">"Gdk"</span>.to_string()),
+                type_: <span class="string">"Surface"</span>.to_string(),
             })
         );
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[class@Gsk.RenderNode]&quot;</span>),
+            GiDocgen::from_str(<span class="string">"[class@Gsk.RenderNode]"</span>),
             <span class="prelude-val">Ok</span>(GiDocgen::Class {
-                namespace: <span class="prelude-val">Some</span>(<span class="string">&quot;Gsk&quot;</span>.to_string()),
-                type_: <span class="string">&quot;RenderNode&quot;</span>.to_string(),
+                namespace: <span class="prelude-val">Some</span>(<span class="string">"Gsk"</span>.to_string()),
+                type_: <span class="string">"RenderNode"</span>.to_string(),
             })
         );
 
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[class@Gsk.RenderNode.test]&quot;</span>),
-            <span class="prelude-val">Err</span>(GiDocgenError::BrokenLinkType(<span class="string">&quot;class&quot;</span>.to_string()))
+            GiDocgen::from_str(<span class="string">"[class@Gsk.RenderNode.test]"</span>),
+            <span class="prelude-val">Err</span>(GiDocgenError::BrokenLinkType(<span class="string">"class"</span>.to_string()))
         );
 
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[class@Gsk.]&quot;</span>),
-            <span class="prelude-val">Err</span>(GiDocgenError::BrokenLinkType(<span class="string">&quot;class&quot;</span>.to_string()))
+            GiDocgen::from_str(<span class="string">"[class@Gsk.]"</span>),
+            <span class="prelude-val">Err</span>(GiDocgenError::BrokenLinkType(<span class="string">"class"</span>.to_string()))
         );
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_link_id() {
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[id@gtk_widget_show]&quot;</span>),
-            <span class="prelude-val">Ok</span>(GiDocgen::Id(<span class="string">&quot;gtk_widget_show&quot;</span>.to_string()))
+            GiDocgen::from_str(<span class="string">"[id@gtk_widget_show]"</span>),
+            <span class="prelude-val">Ok</span>(GiDocgen::Id(<span class="string">"gtk_widget_show"</span>.to_string()))
         );
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_link_const() {
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[const@Gdk.KEY_q]&quot;</span>),
+            GiDocgen::from_str(<span class="string">"[const@Gdk.KEY_q]"</span>),
             <span class="prelude-val">Ok</span>(GiDocgen::Const {
-                namespace: <span class="prelude-val">Some</span>(<span class="string">&quot;Gdk&quot;</span>.to_string()),
-                type_: <span class="string">&quot;KEY_q&quot;</span>.to_string()
+                namespace: <span class="prelude-val">Some</span>(<span class="string">"Gdk"</span>.to_string()),
+                type_: <span class="string">"KEY_q"</span>.to_string()
             })
         );
     }
@@ -1459,10 +1460,10 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_link_callback() {
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[callback@Gtk.MapListModelMapFunc]&quot;</span>),
+            GiDocgen::from_str(<span class="string">"[callback@Gtk.MapListModelMapFunc]"</span>),
             <span class="prelude-val">Ok</span>(GiDocgen::Callback {
-                namespace: <span class="prelude-val">Some</span>(<span class="string">&quot;Gtk&quot;</span>.to_string()),
-                name: <span class="string">&quot;MapListModelMapFunc&quot;</span>.to_string()
+                namespace: <span class="prelude-val">Some</span>(<span class="string">"Gtk"</span>.to_string()),
+                name: <span class="string">"MapListModelMapFunc"</span>.to_string()
             })
         );
     }
@@ -1470,10 +1471,10 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_link_enum() {
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[enum@Orientation]&quot;</span>),
+            GiDocgen::from_str(<span class="string">"[enum@Orientation]"</span>),
             <span class="prelude-val">Ok</span>(GiDocgen::Enum {
                 namespace: <span class="prelude-val">None</span>,
-                type_: <span class="string">&quot;Orientation&quot;</span>.to_string()
+                type_: <span class="string">"Orientation"</span>.to_string()
             })
         );
     }
@@ -1481,10 +1482,10 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_link_error() {
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[error@Gtk.BuilderParseError]&quot;</span>),
+            GiDocgen::from_str(<span class="string">"[error@Gtk.BuilderParseError]"</span>),
             <span class="prelude-val">Ok</span>(GiDocgen::Error {
-                namespace: <span class="prelude-val">Some</span>(<span class="string">&quot;Gtk&quot;</span>.to_string()),
-                type_: <span class="string">&quot;BuilderParseError&quot;</span>.to_string()
+                namespace: <span class="prelude-val">Some</span>(<span class="string">"Gtk"</span>.to_string()),
+                type_: <span class="string">"BuilderParseError"</span>.to_string()
             })
         );
     }
@@ -1492,10 +1493,10 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_link_flags() {
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[flags@Gdk.ModifierType]&quot;</span>),
+            GiDocgen::from_str(<span class="string">"[flags@Gdk.ModifierType]"</span>),
             <span class="prelude-val">Ok</span>(GiDocgen::Flag {
-                namespace: <span class="prelude-val">Some</span>(<span class="string">&quot;Gdk&quot;</span>.to_string()),
-                type_: <span class="string">&quot;ModifierType&quot;</span>.to_string()
+                namespace: <span class="prelude-val">Some</span>(<span class="string">"Gdk"</span>.to_string()),
+                type_: <span class="string">"ModifierType"</span>.to_string()
             })
         );
     }
@@ -1503,10 +1504,10 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_link_iface() {
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[iface@Gtk.Buildable]&quot;</span>),
+            GiDocgen::from_str(<span class="string">"[iface@Gtk.Buildable]"</span>),
             <span class="prelude-val">Ok</span>(GiDocgen::Interface {
-                namespace: <span class="prelude-val">Some</span>(<span class="string">&quot;Gtk&quot;</span>.to_string()),
-                type_: <span class="string">&quot;Buildable&quot;</span>.to_string()
+                namespace: <span class="prelude-val">Some</span>(<span class="string">"Gtk"</span>.to_string()),
+                type_: <span class="string">"Buildable"</span>.to_string()
             })
         );
     }
@@ -1514,10 +1515,10 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_link_struct() {
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[struct@Gtk.TextIter]&quot;</span>),
+            GiDocgen::from_str(<span class="string">"[struct@Gtk.TextIter]"</span>),
             <span class="prelude-val">Ok</span>(GiDocgen::Struct {
-                namespace: <span class="prelude-val">Some</span>(<span class="string">&quot;Gtk&quot;</span>.to_string()),
-                type_: <span class="string">&quot;TextIter&quot;</span>.to_string()
+                namespace: <span class="prelude-val">Some</span>(<span class="string">"Gtk"</span>.to_string()),
+                type_: <span class="string">"TextIter"</span>.to_string()
             })
         );
     }
@@ -1525,69 +1526,69 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_link_property() {
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[property@Gtk.Orientable:orientation]&quot;</span>),
+            GiDocgen::from_str(<span class="string">"[property@Gtk.Orientable:orientation]"</span>),
             <span class="prelude-val">Ok</span>(GiDocgen::Property {
-                namespace: <span class="prelude-val">Some</span>(<span class="string">&quot;Gtk&quot;</span>.to_string()),
-                type_: <span class="string">&quot;Orientable&quot;</span>.to_string(),
-                name: <span class="string">&quot;orientation&quot;</span>.to_string(),
+                namespace: <span class="prelude-val">Some</span>(<span class="string">"Gtk"</span>.to_string()),
+                type_: <span class="string">"Orientable"</span>.to_string(),
+                name: <span class="string">"orientation"</span>.to_string(),
             })
         );
 
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[property@Gtk.Orientable]&quot;</span>),
-            <span class="prelude-val">Err</span>(GiDocgenError::BrokenLinkType(<span class="string">&quot;property&quot;</span>.to_string()))
+            GiDocgen::from_str(<span class="string">"[property@Gtk.Orientable]"</span>),
+            <span class="prelude-val">Err</span>(GiDocgenError::BrokenLinkType(<span class="string">"property"</span>.to_string()))
         );
 
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[property@Gtk.Orientable:]&quot;</span>),
-            <span class="prelude-val">Err</span>(GiDocgenError::BrokenLinkType(<span class="string">&quot;property&quot;</span>.to_string()))
+            GiDocgen::from_str(<span class="string">"[property@Gtk.Orientable:]"</span>),
+            <span class="prelude-val">Err</span>(GiDocgenError::BrokenLinkType(<span class="string">"property"</span>.to_string()))
         );
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_link_signal() {
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[signal@Gtk.RecentManager::changed]&quot;</span>),
+            GiDocgen::from_str(<span class="string">"[signal@Gtk.RecentManager::changed]"</span>),
             <span class="prelude-val">Ok</span>(GiDocgen::Signal {
-                namespace: <span class="prelude-val">Some</span>(<span class="string">&quot;Gtk&quot;</span>.to_string()),
-                type_: <span class="string">&quot;RecentManager&quot;</span>.to_string(),
-                name: <span class="string">&quot;changed&quot;</span>.to_string(),
+                namespace: <span class="prelude-val">Some</span>(<span class="string">"Gtk"</span>.to_string()),
+                type_: <span class="string">"RecentManager"</span>.to_string(),
+                name: <span class="string">"changed"</span>.to_string(),
             })
         );
 
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[signal@Gtk.RecentManager]&quot;</span>),
-            <span class="prelude-val">Err</span>(GiDocgenError::BrokenLinkType(<span class="string">&quot;signal&quot;</span>.to_string()))
+            GiDocgen::from_str(<span class="string">"[signal@Gtk.RecentManager]"</span>),
+            <span class="prelude-val">Err</span>(GiDocgenError::BrokenLinkType(<span class="string">"signal"</span>.to_string()))
         );
 
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[signal@Gtk.RecentManager::]&quot;</span>),
-            <span class="prelude-val">Err</span>(GiDocgenError::BrokenLinkType(<span class="string">&quot;signal&quot;</span>.to_string()))
+            GiDocgen::from_str(<span class="string">"[signal@Gtk.RecentManager::]"</span>),
+            <span class="prelude-val">Err</span>(GiDocgenError::BrokenLinkType(<span class="string">"signal"</span>.to_string()))
         );
 
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[signal@Gtk.RecentManager:]&quot;</span>),
-            <span class="prelude-val">Err</span>(GiDocgenError::BrokenLinkType(<span class="string">&quot;signal&quot;</span>.to_string()))
+            GiDocgen::from_str(<span class="string">"[signal@Gtk.RecentManager:]"</span>),
+            <span class="prelude-val">Err</span>(GiDocgenError::BrokenLinkType(<span class="string">"signal"</span>.to_string()))
         );
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_link_vfunc() {
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[vfunc@Gtk.Widget.measure]&quot;</span>),
+            GiDocgen::from_str(<span class="string">"[vfunc@Gtk.Widget.measure]"</span>),
             <span class="prelude-val">Ok</span>(GiDocgen::VFunc {
-                namespace: <span class="prelude-val">Some</span>(<span class="string">&quot;Gtk&quot;</span>.to_string()),
-                type_: <span class="string">&quot;Widget&quot;</span>.to_string(),
-                name: <span class="string">&quot;measure&quot;</span>.to_string(),
+                namespace: <span class="prelude-val">Some</span>(<span class="string">"Gtk"</span>.to_string()),
+                type_: <span class="string">"Widget"</span>.to_string(),
+                name: <span class="string">"measure"</span>.to_string(),
             })
         );
 
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[vfunc@Widget.snapshot]&quot;</span>),
+            GiDocgen::from_str(<span class="string">"[vfunc@Widget.snapshot]"</span>),
             <span class="prelude-val">Ok</span>(GiDocgen::VFunc {
                 namespace: <span class="prelude-val">None</span>,
-                type_: <span class="string">&quot;Widget&quot;</span>.to_string(),
-                name: <span class="string">&quot;snapshot&quot;</span>.to_string(),
+                type_: <span class="string">"Widget"</span>.to_string(),
+                name: <span class="string">"snapshot"</span>.to_string(),
             })
         );
     }
@@ -1595,20 +1596,20 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_link_ctor() {
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[ctor@Gtk.Box.new]&quot;</span>),
+            GiDocgen::from_str(<span class="string">"[ctor@Gtk.Box.new]"</span>),
             <span class="prelude-val">Ok</span>(GiDocgen::Constructor {
-                namespace: <span class="prelude-val">Some</span>(<span class="string">&quot;Gtk&quot;</span>.to_string()),
-                type_: <span class="string">&quot;Box&quot;</span>.to_string(),
-                name: <span class="string">&quot;new&quot;</span>.to_string(),
+                namespace: <span class="prelude-val">Some</span>(<span class="string">"Gtk"</span>.to_string()),
+                type_: <span class="string">"Box"</span>.to_string(),
+                name: <span class="string">"new"</span>.to_string(),
             })
         );
 
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[ctor@Button.new_with_label]&quot;</span>),
+            GiDocgen::from_str(<span class="string">"[ctor@Button.new_with_label]"</span>),
             <span class="prelude-val">Ok</span>(GiDocgen::Constructor {
                 namespace: <span class="prelude-val">None</span>,
-                type_: <span class="string">&quot;Button&quot;</span>.to_string(),
-                name: <span class="string">&quot;new_with_label&quot;</span>.to_string(),
+                type_: <span class="string">"Button"</span>.to_string(),
+                name: <span class="string">"new_with_label"</span>.to_string(),
             })
         );
     }
@@ -1616,29 +1617,29 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_link_func() {
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[func@Gtk.init]&quot;</span>),
+            GiDocgen::from_str(<span class="string">"[func@Gtk.init]"</span>),
             <span class="prelude-val">Ok</span>(GiDocgen::Func {
-                namespace: <span class="prelude-val">Some</span>(<span class="string">&quot;Gtk&quot;</span>.to_string()),
+                namespace: <span class="prelude-val">Some</span>(<span class="string">"Gtk"</span>.to_string()),
                 type_: <span class="prelude-val">None</span>,
-                name: <span class="string">&quot;init&quot;</span>.to_string(),
+                name: <span class="string">"init"</span>.to_string(),
             })
         );
 
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[func@show_uri]&quot;</span>),
+            GiDocgen::from_str(<span class="string">"[func@show_uri]"</span>),
             <span class="prelude-val">Ok</span>(GiDocgen::Func {
                 namespace: <span class="prelude-val">None</span>,
                 type_: <span class="prelude-val">None</span>,
-                name: <span class="string">&quot;show_uri&quot;</span>.to_string(),
+                name: <span class="string">"show_uri"</span>.to_string(),
             })
         );
 
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[func@Gtk.Window.list_toplevels]&quot;</span>),
+            GiDocgen::from_str(<span class="string">"[func@Gtk.Window.list_toplevels]"</span>),
             <span class="prelude-val">Ok</span>(GiDocgen::Func {
-                namespace: <span class="prelude-val">Some</span>(<span class="string">&quot;Gtk&quot;</span>.to_string()),
-                type_: <span class="prelude-val">Some</span>(<span class="string">&quot;Window&quot;</span>.to_string()),
-                name: <span class="string">&quot;list_toplevels&quot;</span>.to_string(),
+                namespace: <span class="prelude-val">Some</span>(<span class="string">"Gtk"</span>.to_string()),
+                type_: <span class="prelude-val">Some</span>(<span class="string">"Window"</span>.to_string()),
+                name: <span class="string">"list_toplevels"</span>.to_string(),
             })
         );
     }
@@ -1646,21 +1647,21 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_link_method() {
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[method@Gtk.Widget.show]&quot;</span>),
+            GiDocgen::from_str(<span class="string">"[method@Gtk.Widget.show]"</span>),
             <span class="prelude-val">Ok</span>(GiDocgen::Method {
-                namespace: <span class="prelude-val">Some</span>(<span class="string">&quot;Gtk&quot;</span>.to_string()),
-                type_: <span class="string">&quot;Widget&quot;</span>.to_string(),
-                name: <span class="string">&quot;show&quot;</span>.to_string(),
+                namespace: <span class="prelude-val">Some</span>(<span class="string">"Gtk"</span>.to_string()),
+                type_: <span class="string">"Widget"</span>.to_string(),
+                name: <span class="string">"show"</span>.to_string(),
                 is_class_method: <span class="bool-val">false</span>,
             })
         );
 
         <span class="macro">assert_eq!</span>(
-            GiDocgen::from_str(<span class="string">&quot;[method@WidgetClass.add_binding]&quot;</span>),
+            GiDocgen::from_str(<span class="string">"[method@WidgetClass.add_binding]"</span>),
             <span class="prelude-val">Ok</span>(GiDocgen::Method {
                 namespace: <span class="prelude-val">None</span>,
-                type_: <span class="string">&quot;WidgetClass&quot;</span>.to_string(),
-                name: <span class="string">&quot;add_binding&quot;</span>.to_string(),
+                type_: <span class="string">"WidgetClass"</span>.to_string(),
+                name: <span class="string">"add_binding"</span>.to_string(),
                 is_class_method: <span class="bool-val">true</span>,
             })
         );

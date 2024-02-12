@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/nameutil.rs`."><title>nameutil.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/nameutil.rs`."><title>nameutil.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -274,7 +275,7 @@
     <span class="kw">unsafe </span>{
         <span class="macro">assert!</span>(
             CRATE_NAME_OVERRIDES.is_none(),
-            <span class="string">&quot;Crate name overrides already set&quot;
+            <span class="string">"Crate name overrides already set"
         </span>);
         CRATE_NAME_OVERRIDES = <span class="prelude-val">Some</span>(overrides);
     }
@@ -292,7 +293,7 @@
 }
 
 <span class="kw">pub fn </span>split_namespace_name(name: <span class="kw-2">&amp;</span>str) -&gt; (<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;, <span class="kw-2">&amp;</span>str) {
-    <span class="kw">let </span><span class="kw-2">mut </span>parts = name.split(<span class="string">&#39;.&#39;</span>);
+    <span class="kw">let </span><span class="kw-2">mut </span>parts = name.split(<span class="string">'.'</span>);
     <span class="kw">let </span>name = parts.next_back().unwrap();
     <span class="kw">let </span>ns = parts.next_back();
     <span class="macro">assert!</span>(ns.is_none() || parts.next().is_none());
@@ -300,7 +301,7 @@
 }
 
 <span class="comment">// unused :(
-// pub fn strip_suffix&lt;&#39;a&gt;(name: &amp;&#39;a str, suffix: &amp;str) -&gt; Option&lt;&amp;&#39;a str&gt; {
+// pub fn strip_suffix&lt;'a&gt;(name: &amp;'a str, suffix: &amp;str) -&gt; Option&lt;&amp;'a str&gt; {
 // if name.ends_with(suffix) {
 // Some(&amp;name[..name.len() - suffix.len()])
 // }
@@ -311,15 +312,15 @@
 
 </span><span class="kw">pub fn </span>file_name_sys(name: <span class="kw-2">&amp;</span>str) -&gt; String {
     <span class="kw">let </span><span class="kw-2">mut </span>path = PathBuf::from(name);
-    <span class="kw">let </span>added = path.set_extension(<span class="string">&quot;rs&quot;</span>);
+    <span class="kw">let </span>added = path.set_extension(<span class="string">"rs"</span>);
     <span class="macro">assert!</span>(added);
     path.to_str().unwrap().into()
 }
 
 <span class="doccomment">/// Crate name with underscores for `use` statement
 </span><span class="kw">pub fn </span>crate_name(name: <span class="kw-2">&amp;</span>str) -&gt; String {
-    <span class="kw">let </span>name = name.replace(<span class="string">&#39;-&#39;</span>, <span class="string">&quot;_&quot;</span>).to_snake();
-    <span class="kw">let </span>crate_name = <span class="kw">if let </span><span class="prelude-val">Some</span>(name_without_prefix) = name.strip_prefix(<span class="string">&quot;g_&quot;</span>) {
+    <span class="kw">let </span>name = name.replace(<span class="string">'-'</span>, <span class="string">"_"</span>).to_snake();
+    <span class="kw">let </span>crate_name = <span class="kw">if let </span><span class="prelude-val">Some</span>(name_without_prefix) = name.strip_prefix(<span class="string">"g_"</span>) {
         name_without_prefix.to_owned()
     } <span class="kw">else </span>{
         name
@@ -331,9 +332,9 @@
     }
 }
 
-<span class="doccomment">/// Crate name with &#39;-&#39; for Cargo.toml etc.
+<span class="doccomment">/// Crate name with '-' for Cargo.toml etc.
 </span><span class="kw">pub fn </span>exported_crate_name(crate_name: <span class="kw-2">&amp;</span>str) -&gt; String {
-    crate_name.replace(<span class="string">&#39;_&#39;</span>, <span class="string">&quot;-&quot;</span>)
+    crate_name.replace(<span class="string">'_'</span>, <span class="string">"-"</span>)
 }
 
 <span class="kw">pub fn </span>module_name(name: <span class="kw-2">&amp;</span>str) -&gt; String {
@@ -344,7 +345,7 @@
     <span class="kw">if </span>name.starts_with(char::is_alphabetic) {
         name.to_camel()
     } <span class="kw">else </span>{
-        <span class="macro">format!</span>(<span class="string">&quot;_{}&quot;</span>, name.to_camel())
+        <span class="macro">format!</span>(<span class="string">"_{}"</span>, name.to_camel())
     }
 }
 
@@ -352,7 +353,7 @@
     <span class="kw">if </span>name.starts_with(char::is_alphabetic) {
         name.to_uppercase()
     } <span class="kw">else </span>{
-        <span class="macro">format!</span>(<span class="string">&quot;_{}&quot;</span>, name.to_uppercase())
+        <span class="macro">format!</span>(<span class="string">"_{}"</span>, name.to_uppercase())
     }
 }
 
@@ -361,7 +362,7 @@
 }
 
 <span class="comment">// If the mangling happened, guaranteed to return Owned.
-</span><span class="kw">pub fn </span>mangle_keywords&lt;<span class="lifetime">&#39;a</span>, S: Into&lt;Cow&lt;<span class="lifetime">&#39;a</span>, str&gt;&gt;&gt;(name: S) -&gt; Cow&lt;<span class="lifetime">&#39;a</span>, str&gt; {
+</span><span class="kw">pub fn </span>mangle_keywords&lt;<span class="lifetime">'a</span>, S: Into&lt;Cow&lt;<span class="lifetime">'a</span>, str&gt;&gt;&gt;(name: S) -&gt; Cow&lt;<span class="lifetime">'a</span>, str&gt; {
     <span class="kw">let </span>name = name.into();
     <span class="kw">if let </span><span class="prelude-val">Some</span>(s) = keywords().get(<span class="kw-2">&amp;*</span>name) {
         s.clone().into()
@@ -370,43 +371,43 @@
     }
 }
 
-<span class="kw">fn </span>keywords() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>HashMap&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, String&gt; {
-    <span class="kw">static </span>KEYWORDS: OnceLock&lt;HashMap&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, String&gt;&gt; = OnceLock::new();
+<span class="kw">fn </span>keywords() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>HashMap&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, String&gt; {
+    <span class="kw">static </span>KEYWORDS: OnceLock&lt;HashMap&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>str, String&gt;&gt; = OnceLock::new();
     KEYWORDS.get_or_init(|| {
         [
-            <span class="string">&quot;abstract&quot;</span>, <span class="string">&quot;alignof&quot;</span>, <span class="string">&quot;as&quot;</span>, <span class="string">&quot;async&quot;</span>, <span class="string">&quot;await&quot;</span>, <span class="string">&quot;become&quot;</span>, <span class="string">&quot;box&quot;</span>, <span class="string">&quot;break&quot;</span>, <span class="string">&quot;const&quot;</span>,
-            <span class="string">&quot;continue&quot;</span>, <span class="string">&quot;crate&quot;</span>, <span class="string">&quot;do&quot;</span>, <span class="string">&quot;dyn&quot;</span>, <span class="string">&quot;else&quot;</span>, <span class="string">&quot;enum&quot;</span>, <span class="string">&quot;extern&quot;</span>, <span class="string">&quot;false&quot;</span>, <span class="string">&quot;final&quot;</span>, <span class="string">&quot;fn&quot;</span>,
-            <span class="string">&quot;for&quot;</span>, <span class="string">&quot;if&quot;</span>, <span class="string">&quot;impl&quot;</span>, <span class="string">&quot;in&quot;</span>, <span class="string">&quot;let&quot;</span>, <span class="string">&quot;loop&quot;</span>, <span class="string">&quot;macro&quot;</span>, <span class="string">&quot;match&quot;</span>, <span class="string">&quot;mod&quot;</span>, <span class="string">&quot;move&quot;</span>, <span class="string">&quot;mut&quot;</span>,
-            <span class="string">&quot;offsetof&quot;</span>, <span class="string">&quot;override&quot;</span>, <span class="string">&quot;priv&quot;</span>, <span class="string">&quot;proc&quot;</span>, <span class="string">&quot;pub&quot;</span>, <span class="string">&quot;pure&quot;</span>, <span class="string">&quot;ref&quot;</span>, <span class="string">&quot;return&quot;</span>, <span class="string">&quot;Self&quot;</span>, <span class="string">&quot;self&quot;</span>,
-            <span class="string">&quot;sizeof&quot;</span>, <span class="string">&quot;static&quot;</span>, <span class="string">&quot;struct&quot;</span>, <span class="string">&quot;super&quot;</span>, <span class="string">&quot;trait&quot;</span>, <span class="string">&quot;true&quot;</span>, <span class="string">&quot;try&quot;</span>, <span class="string">&quot;type&quot;</span>, <span class="string">&quot;typeof&quot;</span>,
-            <span class="string">&quot;unsafe&quot;</span>, <span class="string">&quot;unsized&quot;</span>, <span class="string">&quot;use&quot;</span>, <span class="string">&quot;virtual&quot;</span>, <span class="string">&quot;where&quot;</span>, <span class="string">&quot;while&quot;</span>, <span class="string">&quot;yield&quot;</span>,
+            <span class="string">"abstract"</span>, <span class="string">"alignof"</span>, <span class="string">"as"</span>, <span class="string">"async"</span>, <span class="string">"await"</span>, <span class="string">"become"</span>, <span class="string">"box"</span>, <span class="string">"break"</span>, <span class="string">"const"</span>,
+            <span class="string">"continue"</span>, <span class="string">"crate"</span>, <span class="string">"do"</span>, <span class="string">"dyn"</span>, <span class="string">"else"</span>, <span class="string">"enum"</span>, <span class="string">"extern"</span>, <span class="string">"false"</span>, <span class="string">"final"</span>, <span class="string">"fn"</span>,
+            <span class="string">"for"</span>, <span class="string">"if"</span>, <span class="string">"impl"</span>, <span class="string">"in"</span>, <span class="string">"let"</span>, <span class="string">"loop"</span>, <span class="string">"macro"</span>, <span class="string">"match"</span>, <span class="string">"mod"</span>, <span class="string">"move"</span>, <span class="string">"mut"</span>,
+            <span class="string">"offsetof"</span>, <span class="string">"override"</span>, <span class="string">"priv"</span>, <span class="string">"proc"</span>, <span class="string">"pub"</span>, <span class="string">"pure"</span>, <span class="string">"ref"</span>, <span class="string">"return"</span>, <span class="string">"Self"</span>, <span class="string">"self"</span>,
+            <span class="string">"sizeof"</span>, <span class="string">"static"</span>, <span class="string">"struct"</span>, <span class="string">"super"</span>, <span class="string">"trait"</span>, <span class="string">"true"</span>, <span class="string">"try"</span>, <span class="string">"type"</span>, <span class="string">"typeof"</span>,
+            <span class="string">"unsafe"</span>, <span class="string">"unsized"</span>, <span class="string">"use"</span>, <span class="string">"virtual"</span>, <span class="string">"where"</span>, <span class="string">"while"</span>, <span class="string">"yield"</span>,
         ]
         .iter()
-        .map(|k| (<span class="kw-2">*</span>k, <span class="macro">format!</span>(<span class="string">&quot;{k}_&quot;</span>)))
+        .map(|k| (<span class="kw-2">*</span>k, <span class="macro">format!</span>(<span class="string">"{k}_"</span>)))
         .collect()
     })
 }
 
 <span class="kw">pub fn </span>signal_to_snake(signal: <span class="kw-2">&amp;</span>str) -&gt; String {
-    signal.replace(<span class="string">&quot;::&quot;</span>, <span class="string">&quot;_&quot;</span>).replace(<span class="string">&#39;-&#39;</span>, <span class="string">&quot;_&quot;</span>)
+    signal.replace(<span class="string">"::"</span>, <span class="string">"_"</span>).replace(<span class="string">'-'</span>, <span class="string">"_"</span>)
 }
 
 <span class="kw">pub fn </span>lib_name_to_toml(name: <span class="kw-2">&amp;</span>str) -&gt; String {
-    name.to_string().replace([<span class="string">&#39;-&#39;</span>, <span class="string">&#39;.&#39;</span>], <span class="string">&quot;_&quot;</span>)
+    name.to_string().replace([<span class="string">'-'</span>, <span class="string">'.'</span>], <span class="string">"_"</span>)
 }
 
 <span class="kw">pub fn </span>shared_lib_name_to_link_name(name: <span class="kw-2">&amp;</span>str) -&gt; <span class="kw-2">&amp;</span>str {
     <span class="kw">let </span><span class="kw-2">mut </span>s = name;
 
-    <span class="kw">if </span>s.starts_with(<span class="string">&quot;lib&quot;</span>) {
+    <span class="kw">if </span>s.starts_with(<span class="string">"lib"</span>) {
         s = <span class="kw-2">&amp;</span>s[<span class="number">3</span>..];
     }
 
-    <span class="kw">if let </span><span class="prelude-val">Some</span>(offset) = s.rfind(<span class="string">&quot;.so&quot;</span>) {
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(offset) = s.rfind(<span class="string">".so"</span>) {
         s = <span class="kw-2">&amp;</span>s[..offset];
-    } <span class="kw">else if let </span><span class="prelude-val">Some</span>(offset) = s.rfind(<span class="string">&quot;.dll&quot;</span>) {
+    } <span class="kw">else if let </span><span class="prelude-val">Some</span>(offset) = s.rfind(<span class="string">".dll"</span>) {
         s = <span class="kw-2">&amp;</span>s[..offset];
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(offset) = s.rfind(<span class="string">&#39;-&#39;</span>) {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(offset) = s.rfind(<span class="string">'-'</span>) {
             s = <span class="kw-2">&amp;</span>s[..offset];
         }
     }
@@ -416,11 +417,11 @@
 
 <span class="kw">pub fn </span>use_glib_type(env: <span class="kw-2">&amp;</span><span class="kw">crate</span>::env::Env, import: <span class="kw-2">&amp;</span>str) -&gt; String {
     <span class="macro">format!</span>(
-        <span class="string">&quot;{}::{}&quot;</span>,
+        <span class="string">"{}::{}"</span>,
         <span class="kw">if </span>env.library.is_glib_crate() {
-            <span class="string">&quot;crate&quot;
+            <span class="string">"crate"
         </span>} <span class="kw">else </span>{
-            <span class="string">&quot;glib&quot;
+            <span class="string">"glib"
         </span>},
         import
     )
@@ -428,11 +429,11 @@
 
 <span class="kw">pub fn </span>use_glib_if_needed(env: <span class="kw-2">&amp;</span><span class="kw">crate</span>::env::Env, import: <span class="kw-2">&amp;</span>str) -&gt; String {
     <span class="macro">format!</span>(
-        <span class="string">&quot;{}{}&quot;</span>,
+        <span class="string">"{}{}"</span>,
         <span class="kw">if </span>env.library.is_glib_crate() {
-            <span class="string">&quot;&quot;
+            <span class="string">""
         </span>} <span class="kw">else </span>{
-            <span class="string">&quot;glib::&quot;
+            <span class="string">"glib::"
         </span>},
         import
     )
@@ -440,11 +441,11 @@
 
 <span class="kw">pub fn </span>use_gio_type(env: <span class="kw-2">&amp;</span><span class="kw">crate</span>::env::Env, import: <span class="kw-2">&amp;</span>str) -&gt; String {
     <span class="macro">format!</span>(
-        <span class="string">&quot;{}::{}&quot;</span>,
-        <span class="kw">if </span>env.library.is_crate(<span class="string">&quot;Gio&quot;</span>) {
-            <span class="string">&quot;crate&quot;
+        <span class="string">"{}::{}"</span>,
+        <span class="kw">if </span>env.library.is_crate(<span class="string">"Gio"</span>) {
+            <span class="string">"crate"
         </span>} <span class="kw">else </span>{
-            <span class="string">&quot;gio&quot;
+            <span class="string">"gio"
         </span>},
         import
     )
@@ -452,18 +453,18 @@
 
 <span class="kw">pub fn </span>use_gtk_type(env: <span class="kw-2">&amp;</span><span class="kw">crate</span>::env::Env, import: <span class="kw-2">&amp;</span>str) -&gt; String {
     <span class="macro">format!</span>(
-        <span class="string">&quot;{}::{}&quot;</span>,
-        <span class="kw">if </span>env.library.is_crate(<span class="string">&quot;Gtk&quot;</span>) {
-            <span class="string">&quot;crate&quot;
+        <span class="string">"{}::{}"</span>,
+        <span class="kw">if </span>env.library.is_crate(<span class="string">"Gtk"</span>) {
+            <span class="string">"crate"
         </span>} <span class="kw">else </span>{
-            <span class="string">&quot;gtk&quot;
+            <span class="string">"gtk"
         </span>},
         import
     )
 }
 
 <span class="kw">pub fn </span>is_gstring(name: <span class="kw-2">&amp;</span>str) -&gt; bool {
-    name == <span class="string">&quot;GString&quot; </span>|| name.ends_with(<span class="string">&quot;::GString&quot;</span>)
+    name == <span class="string">"GString" </span>|| name.ends_with(<span class="string">"::GString"</span>)
 }
 
 <span class="attr">#[cfg(test)]
@@ -472,61 +473,61 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>split_no_namespace() {
-        <span class="kw">let </span>(ns, name) = split_namespace_name(<span class="string">&quot;GObject&quot;</span>);
+        <span class="kw">let </span>(ns, name) = split_namespace_name(<span class="string">"GObject"</span>);
         <span class="macro">assert_eq!</span>(ns, <span class="prelude-val">None</span>);
-        <span class="macro">assert_eq!</span>(name, <span class="string">&quot;GObject&quot;</span>);
+        <span class="macro">assert_eq!</span>(name, <span class="string">"GObject"</span>);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>split_full_name() {
-        <span class="kw">let </span>(ns, name) = split_namespace_name(<span class="string">&quot;Gtk.StatusIcon&quot;</span>);
-        <span class="macro">assert_eq!</span>(ns, <span class="prelude-val">Some</span>(<span class="string">&quot;Gtk&quot;</span>));
-        <span class="macro">assert_eq!</span>(name, <span class="string">&quot;StatusIcon&quot;</span>);
+        <span class="kw">let </span>(ns, name) = split_namespace_name(<span class="string">"Gtk.StatusIcon"</span>);
+        <span class="macro">assert_eq!</span>(ns, <span class="prelude-val">Some</span>(<span class="string">"Gtk"</span>));
+        <span class="macro">assert_eq!</span>(name, <span class="string">"StatusIcon"</span>);
     }
 
     <span class="comment">// #[test]
     // fn strip_prefix_g() {
-    // assert_eq!(strip_prefix(&quot;G&quot;, &quot;GBusType&quot;), &quot;BusType&quot;);
-    // assert_eq!(strip_prefix(&quot;G&quot;, &quot;G_BUS_TYPE_NONE&quot;), &quot;BUS_TYPE_NONE&quot;);
+    // assert_eq!(strip_prefix("G", "GBusType"), "BusType");
+    // assert_eq!(strip_prefix("G", "G_BUS_TYPE_NONE"), "BUS_TYPE_NONE");
     // }
     //
     // #[test]
     // fn strip_prefix_gtk() {
-    // assert_eq!(strip_prefix(&quot;Gtk&quot;, &quot;GtkAlign&quot;), &quot;Align&quot;);
-    // assert_eq!(strip_prefix(&quot;Gtk&quot;, &quot;GTK_ALIGN_FILL&quot;), &quot;ALIGN_FILL&quot;);
+    // assert_eq!(strip_prefix("Gtk", "GtkAlign"), "Align");
+    // assert_eq!(strip_prefix("Gtk", "GTK_ALIGN_FILL"), "ALIGN_FILL");
     // }
 
     </span><span class="attr">#[test]
     </span><span class="kw">fn </span>crate_name_works() {
-        <span class="macro">assert_eq!</span>(crate_name(<span class="string">&quot;GdkPixbuf&quot;</span>), <span class="string">&quot;gdk_pixbuf&quot;</span>);
-        <span class="macro">assert_eq!</span>(crate_name(<span class="string">&quot;GLib&quot;</span>), <span class="string">&quot;glib&quot;</span>);
-        <span class="macro">assert_eq!</span>(crate_name(<span class="string">&quot;GObject&quot;</span>), <span class="string">&quot;gobject&quot;</span>);
-        <span class="macro">assert_eq!</span>(crate_name(<span class="string">&quot;Gtk&quot;</span>), <span class="string">&quot;gtk&quot;</span>);
+        <span class="macro">assert_eq!</span>(crate_name(<span class="string">"GdkPixbuf"</span>), <span class="string">"gdk_pixbuf"</span>);
+        <span class="macro">assert_eq!</span>(crate_name(<span class="string">"GLib"</span>), <span class="string">"glib"</span>);
+        <span class="macro">assert_eq!</span>(crate_name(<span class="string">"GObject"</span>), <span class="string">"gobject"</span>);
+        <span class="macro">assert_eq!</span>(crate_name(<span class="string">"Gtk"</span>), <span class="string">"gtk"</span>);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>file_name_sys_works() {
-        <span class="macro">assert_eq!</span>(file_name_sys(<span class="string">&quot;funcs&quot;</span>), <span class="string">&quot;funcs.rs&quot;</span>);
+        <span class="macro">assert_eq!</span>(file_name_sys(<span class="string">"funcs"</span>), <span class="string">"funcs.rs"</span>);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>signal_to_snake_works() {
-        <span class="macro">assert_eq!</span>(signal_to_snake(<span class="string">&quot;changed&quot;</span>), <span class="string">&quot;changed&quot;</span>);
-        <span class="macro">assert_eq!</span>(signal_to_snake(<span class="string">&quot;move-active&quot;</span>), <span class="string">&quot;move_active&quot;</span>);
+        <span class="macro">assert_eq!</span>(signal_to_snake(<span class="string">"changed"</span>), <span class="string">"changed"</span>);
+        <span class="macro">assert_eq!</span>(signal_to_snake(<span class="string">"move-active"</span>), <span class="string">"move_active"</span>);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>lib_name_to_toml_works() {
-        <span class="macro">assert_eq!</span>(lib_name_to_toml(<span class="string">&quot;gstreamer-1.0&quot;</span>), <span class="string">&quot;gstreamer_1_0&quot;</span>);
+        <span class="macro">assert_eq!</span>(lib_name_to_toml(<span class="string">"gstreamer-1.0"</span>), <span class="string">"gstreamer_1_0"</span>);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>shared_lib_name_to_link_name_works() {
-        <span class="macro">assert_eq!</span>(shared_lib_name_to_link_name(<span class="string">&quot;libgtk-4-1.dll&quot;</span>), <span class="string">&quot;gtk-4&quot;</span>);
-        <span class="macro">assert_eq!</span>(shared_lib_name_to_link_name(<span class="string">&quot;libatk-1.0.so.0&quot;</span>), <span class="string">&quot;atk-1.0&quot;</span>);
+        <span class="macro">assert_eq!</span>(shared_lib_name_to_link_name(<span class="string">"libgtk-4-1.dll"</span>), <span class="string">"gtk-4"</span>);
+        <span class="macro">assert_eq!</span>(shared_lib_name_to_link_name(<span class="string">"libatk-1.0.so.0"</span>), <span class="string">"atk-1.0"</span>);
         <span class="macro">assert_eq!</span>(
-            shared_lib_name_to_link_name(<span class="string">&quot;libgdk_pixbuf-2.0.so.0&quot;</span>),
-            <span class="string">&quot;gdk_pixbuf-2.0&quot;
+            shared_lib_name_to_link_name(<span class="string">"libgdk_pixbuf-2.0.so.0"</span>),
+            <span class="string">"gdk_pixbuf-2.0"
         </span>);
     }
 }

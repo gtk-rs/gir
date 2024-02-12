@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/sys/functions.rs`."><title>functions.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/sys/functions.rs`."><title>functions.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -354,9 +355,9 @@
 };
 
 <span class="comment">// used as glib:get-type in GLib-2.0.gir
-</span><span class="kw">const </span>INTERN: <span class="kw-2">&amp;</span>str = <span class="string">&quot;intern&quot;</span>;
+</span><span class="kw">const </span>INTERN: <span class="kw-2">&amp;</span>str = <span class="string">"intern"</span>;
 
-<span class="kw">fn </span>default_obj() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>GObject {
+<span class="kw">fn </span>default_obj() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>GObject {
     <span class="kw">static </span>OBJ: OnceLock&lt;GObject&gt; = OnceLock::new();
     OBJ.get_or_init(Default::default)
 }
@@ -368,7 +369,7 @@
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">let </span>intern_str = INTERN.to_string();
     <span class="kw">for </span>record <span class="kw">in </span>records {
-        <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, env.config.library_name, record.name);
+        <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">"{}.{}"</span>, env.config.library_name, record.name);
         <span class="kw">let </span>obj = env.config.objects.get(<span class="kw-2">&amp;</span>name).unwrap_or(default_obj());
         <span class="kw">let </span>version = obj.version.or(record.version);
         <span class="kw">let </span>glib_get_type = record.glib_get_type.as_ref().unwrap_or(<span class="kw-2">&amp;</span>intern_str);
@@ -392,7 +393,7 @@
     classes: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>library::Class],
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">for </span>klass <span class="kw">in </span>classes {
-        <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, env.config.library_name, klass.name);
+        <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">"{}.{}"</span>, env.config.library_name, klass.name);
         <span class="kw">let </span>obj = env.config.objects.get(<span class="kw-2">&amp;</span>name).unwrap_or(default_obj());
         <span class="kw">let </span>version = obj.version.or(klass.version);
         generate_object_funcs(
@@ -416,7 +417,7 @@
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">let </span>intern_str = INTERN.to_string();
     <span class="kw">for </span>bitfield <span class="kw">in </span>bitfields {
-        <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, env.config.library_name, bitfield.name);
+        <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">"{}.{}"</span>, env.config.library_name, bitfield.name);
         <span class="kw">let </span>obj = env.config.objects.get(<span class="kw-2">&amp;</span>name).unwrap_or(default_obj());
         <span class="kw">let </span>version = obj.version.or(bitfield.version);
         <span class="kw">let </span>glib_get_type = bitfield.glib_get_type.as_ref().unwrap_or(<span class="kw-2">&amp;</span>intern_str);
@@ -441,7 +442,7 @@
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">let </span>intern_str = INTERN.to_string();
     <span class="kw">for </span>en <span class="kw">in </span>enums {
-        <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, env.config.library_name, en.name);
+        <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">"{}.{}"</span>, env.config.library_name, en.name);
         <span class="kw">let </span>obj = env.config.objects.get(<span class="kw-2">&amp;</span>name).unwrap_or(default_obj());
         <span class="kw">let </span>version = obj.version.or(en.version);
         <span class="kw">let </span>glib_get_type = en.glib_get_type.as_ref().unwrap_or(<span class="kw-2">&amp;</span>intern_str);
@@ -469,7 +470,7 @@
         <span class="kw">let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>c_type) = union.c_type <span class="kw">else </span>{
             <span class="kw">return </span><span class="prelude-val">Ok</span>(());
         };
-        <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, env.config.library_name, union.name);
+        <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">"{}.{}"</span>, env.config.library_name, union.name);
         <span class="kw">let </span>obj = env.config.objects.get(<span class="kw-2">&amp;</span>name).unwrap_or(default_obj());
         <span class="kw">let </span>glib_get_type = union.glib_get_type.as_ref().unwrap_or(<span class="kw-2">&amp;</span>intern_str);
         generate_object_funcs(
@@ -492,7 +493,7 @@
     interfaces: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>library::Interface],
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">for </span>interface <span class="kw">in </span>interfaces {
-        <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">&quot;{}.{}&quot;</span>, env.config.library_name, interface.name);
+        <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">"{}.{}"</span>, env.config.library_name, interface.name);
         <span class="kw">let </span>obj = env.config.objects.get(<span class="kw-2">&amp;</span>name).unwrap_or(default_obj());
         <span class="kw">let </span>version = obj.version.or(interface.version);
         generate_object_funcs(
@@ -514,9 +515,9 @@
     env: <span class="kw-2">&amp;</span>Env,
     functions: <span class="kw-2">&amp;</span>[library::Function],
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-    <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">&quot;{}.*&quot;</span>, env.config.library_name);
+    <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">"{}.*"</span>, env.config.library_name);
     <span class="kw">let </span>obj = env.config.objects.get(<span class="kw-2">&amp;</span>name).unwrap_or(default_obj());
-    generate_object_funcs(w, env, obj, <span class="prelude-val">None</span>, <span class="string">&quot;Other functions&quot;</span>, INTERN, functions)
+    generate_object_funcs(w, env, obj, <span class="prelude-val">None</span>, <span class="string">"Other functions"</span>, INTERN, functions)
 }
 
 <span class="kw">fn </span>generate_cfg_configure(
@@ -551,16 +552,16 @@
         <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(
             w,
-            <span class="string">&quot;    //=========================================================================&quot;
+            <span class="string">"    //========================================================================="
         </span>)<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;    // {c_type}&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"    // {c_type}"</span>)<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(
             w,
-            <span class="string">&quot;    //=========================================================================&quot;
+            <span class="string">"    //========================================================================="
         </span>)<span class="question-mark">?</span>;
     }
     <span class="kw">if </span>write_get_type {
-        <span class="kw">let </span>configured_functions = obj.functions.matched(<span class="string">&quot;get_type&quot;</span>);
+        <span class="kw">let </span>configured_functions = obj.functions.matched(<span class="string">"get_type"</span>);
 
         <span class="kw">if </span>configured_functions
             .iter()
@@ -572,7 +573,7 @@
                 .flatten();
             version_condition(w, env, <span class="prelude-val">None</span>, version, <span class="bool-val">false</span>, <span class="number">1</span>)<span class="question-mark">?</span>;
             generate_cfg_configure(w, env, glib_get_type, <span class="kw-2">&amp;</span>configured_functions, <span class="bool-val">false</span>)<span class="question-mark">?</span>;
-            <span class="macro">writeln!</span>(w, <span class="string">&quot;    pub fn {glib_get_type}() -&gt; GType;&quot;</span>)<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(w, <span class="string">"    pub fn {glib_get_type}() -&gt; GType;"</span>)<span class="question-mark">?</span>;
         }
     }
 
@@ -586,7 +587,7 @@
         }
 
         <span class="kw">let </span>(commented, sig) = function_signature(env, func, <span class="bool-val">false</span>);
-        <span class="kw">let </span>comment = <span class="kw">if </span>commented { <span class="string">&quot;//&quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;&quot; </span>};
+        <span class="kw">let </span>comment = <span class="kw">if </span>commented { <span class="string">"//" </span>} <span class="kw">else </span>{ <span class="string">"" </span>};
 
         <span class="comment">// If a version was configured for this function specifically then use that,
         // otherwise use the (fixed up!) version of the function, if any, otherwise
@@ -602,7 +603,7 @@
         version_condition(w, env, <span class="prelude-val">None</span>, version, commented, <span class="number">1</span>)<span class="question-mark">?</span>;
         <span class="kw">let </span>name = func.c_identifier.as_ref().unwrap();
         generate_cfg_configure(w, env, name, <span class="kw-2">&amp;</span>configured_functions, commented)<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;    {comment}pub fn {name}{sig};&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"    {comment}pub fn {name}{sig};"</span>)<span class="question-mark">?</span>;
     }
 
     <span class="prelude-val">Ok</span>(())
@@ -614,14 +615,14 @@
     callbacks: <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>library::Function],
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">if </span>!callbacks.is_empty() {
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;// Callbacks&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"// Callbacks"</span>)<span class="question-mark">?</span>;
     }
     <span class="kw">for </span>func <span class="kw">in </span>callbacks {
         <span class="kw">let </span>(commented, sig) = function_signature(env, func, <span class="bool-val">true</span>);
-        <span class="kw">let </span>comment = <span class="kw">if </span>commented { <span class="string">&quot;//&quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;&quot; </span>};
+        <span class="kw">let </span>comment = <span class="kw">if </span>commented { <span class="string">"//" </span>} <span class="kw">else </span>{ <span class="string">"" </span>};
         <span class="macro">writeln!</span>(
             w,
-            <span class="string">&quot;{}pub type {} = Option&lt;unsafe extern \&quot;C\&quot; fn{}&gt;;&quot;</span>,
+            <span class="string">"{}pub type {} = Option&lt;unsafe extern \"C\" fn{}&gt;;"</span>,
             comment,
             func.c_identifier.as_ref().unwrap(),
             sig
@@ -648,7 +649,7 @@
 
     (
         commented,
-        <span class="macro">format!</span>(<span class="string">&quot;({}){}&quot;</span>, parameter_strs.join(<span class="string">&quot;, &quot;</span>), ret_str),
+        <span class="macro">format!</span>(<span class="string">"({}){}"</span>, parameter_strs.join(<span class="string">", "</span>), ret_str),
     )
 }
 
@@ -658,12 +659,12 @@
     }
     <span class="kw">let </span>ffi_type = ffi_type(env, func.ret.typ, <span class="kw-2">&amp;</span>func.ret.c_type);
     <span class="kw">let </span>commented = ffi_type.is_err();
-    (commented, <span class="macro">format!</span>(<span class="string">&quot; -&gt; {}&quot;</span>, ffi_type.into_string()))
+    (commented, <span class="macro">format!</span>(<span class="string">" -&gt; {}"</span>, ffi_type.into_string()))
 }
 
 <span class="kw">fn </span>function_parameter(env: <span class="kw-2">&amp;</span>Env, par: <span class="kw-2">&amp;</span>library::Parameter, bare: bool) -&gt; (bool, String) {
     <span class="kw">if let </span>library::Type::Basic(library::Basic::VarArgs) = env.library.type_(par.typ) {
-        <span class="kw">return </span>(<span class="bool-val">false</span>, <span class="string">&quot;...&quot;</span>.into());
+        <span class="kw">return </span>(<span class="bool-val">false</span>, <span class="string">"..."</span>.into());
     }
     <span class="kw">let </span>ffi_type = ffi_type(env, par.typ, <span class="kw-2">&amp;</span>par.c_type);
     <span class="kw">let </span>commented = ffi_type.is_err();
@@ -671,7 +672,7 @@
         ffi_type.into_string()
     } <span class="kw">else </span>{
         <span class="macro">format!</span>(
-            <span class="string">&quot;{}: {}&quot;</span>,
+            <span class="string">"{}: {}"</span>,
             nameutil::mangle_keywords(<span class="kw-2">&amp;*</span>par.name),
             ffi_type.into_string()
         )

@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/doc/mod.rs`."><title>mod.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/doc/mod.rs`."><title>mod.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../../" data-static-root-path="../../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../../src-files.js"></script><script defer src="../../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1222,12 +1223,12 @@
 
 <span class="comment">// A list of C parameters that are not used directly by the Rust bindings
 </span><span class="kw">const </span>IGNORED_C_FN_PARAMS: [<span class="kw-2">&amp;</span>str; <span class="number">6</span>] = [
-    <span class="string">&quot;user_data&quot;</span>,
-    <span class="string">&quot;user_destroy&quot;</span>,
-    <span class="string">&quot;destroy_func&quot;</span>,
-    <span class="string">&quot;dnotify&quot;</span>,
-    <span class="string">&quot;destroy&quot;</span>,
-    <span class="string">&quot;user_data_free_func&quot;</span>,
+    <span class="string">"user_data"</span>,
+    <span class="string">"user_destroy"</span>,
+    <span class="string">"destroy_func"</span>,
+    <span class="string">"dnotify"</span>,
+    <span class="string">"destroy"</span>,
+    <span class="string">"user_data_free_func"</span>,
 ];
 
 <span class="kw">trait </span>ToStripperType {
@@ -1240,7 +1241,7 @@
             <span class="kw">fn </span>to_stripper_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TypeStruct {
                 TypeStruct::new(
                     SType::<span class="macro-nonterminal">$enum_var</span>,
-                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;connect_{}&quot;</span>, nameutil::signal_to_snake(<span class="kw-2">&amp;</span><span class="self">self</span>.name)),
+                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"connect_{}"</span>, nameutil::signal_to_snake(<span class="kw-2">&amp;</span><span class="self">self</span>.name)),
                 )
             }
         }
@@ -1299,7 +1300,7 @@
 <span class="macro">impl_function_like_type!</span>(Signal);
 
 <span class="kw">pub fn </span>generate(env: <span class="kw-2">&amp;</span>Env) {
-    <span class="macro">info!</span>(<span class="string">&quot;Generating documentation {:?}&quot;</span>, env.config.doc_target_path);
+    <span class="macro">info!</span>(<span class="string">"Generating documentation {:?}"</span>, env.config.doc_target_path);
     save_to_file(<span class="kw-2">&amp;</span>env.config.doc_target_path, env.config.make_backup, |w| {
         generate_doc(w, env)
     });
@@ -1377,7 +1378,7 @@
                 <span class="kw">let </span>doc_struct_name = f_info.and_then(|f| f.doc_struct_name.as_ref());
                 <span class="macro">assert!</span>(
                     !(doc_trait_name.is_some() &amp;&amp; doc_struct_name.is_some()),
-                    <span class="string">&quot;Can&#39;t use both doc_trait_name and doc_struct_name on the same function&quot;
+                    <span class="string">"Can't use both doc_trait_name and doc_struct_name on the same function"
                 </span>);
 
                 <span class="kw">let </span>parent = <span class="kw">if </span>doc_trait_name.is_some() {
@@ -1414,7 +1415,7 @@
 
     <span class="kw">for </span>constant <span class="kw">in </span><span class="kw-2">&amp;</span>ns.constants {
         <span class="comment">// strings are mapped to a static
-        </span><span class="kw">let </span>ty = <span class="kw">if </span>constant.c_type == <span class="string">&quot;gchar*&quot; </span>{
+        </span><span class="kw">let </span>ty = <span class="kw">if </span>constant.c_type == <span class="string">"gchar*" </span>{
             SType::Static
         } <span class="kw">else </span>{
             SType::Const
@@ -1428,7 +1429,7 @@
         <span class="kw">if </span>generate_doc {
             write_item_doc(w, <span class="kw-2">&amp;</span>ty_id, |w| {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>doc) = constant.doc {
-                    <span class="macro">writeln!</span>(w, <span class="string">&quot;{}&quot;</span>, reformat_doc(doc, env, <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>constant.typ, <span class="prelude-val">None</span>))))<span class="question-mark">?</span>;
+                    <span class="macro">writeln!</span>(w, <span class="string">"{}"</span>, reformat_doc(doc, env, <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>constant.typ, <span class="prelude-val">None</span>))))<span class="question-mark">?</span>;
                 }
                 <span class="prelude-val">Ok</span>(())
             })<span class="question-mark">?</span>;
@@ -1460,7 +1461,7 @@
         .config
         .objects
         .get(<span class="kw-2">&amp;</span>info.full_name)
-        .expect(<span class="string">&quot;Object not found&quot;</span>);
+        .expect(<span class="string">"Object not found"</span>);
 
     <span class="kw">match </span>env.library.type_(info.type_id) {
         Type::Class(cl) =&gt; {
@@ -1492,7 +1493,7 @@
         <span class="kw">if let </span><span class="prelude-val">Some</span>(doc) = doc_deprecated {
             <span class="macro">writeln!</span>(
                 w,
-                <span class="string">&quot;{}&quot;</span>,
+                <span class="string">"{}"</span>,
                 reformat_doc(
                     doc,
                     env,
@@ -1503,7 +1504,7 @@
         <span class="kw">if let </span>(<span class="prelude-val">Some</span>(doc), <span class="bool-val">true</span>) = (doc, obj.generate_doc) {
             <span class="macro">writeln!</span>(
                 w,
-                <span class="string">&quot;{}&quot;</span>,
+                <span class="string">"{}"</span>,
                 reformat_doc(
                     doc,
                     env,
@@ -1516,12 +1517,12 @@
         <span class="kw">if </span>is_abstract {
             <span class="macro">writeln!</span>(
                 w,
-                <span class="string">&quot;\nThis is an Abstract Base Class, you cannot instantiate it.&quot;
+                <span class="string">"\nThis is an Abstract Base Class, you cannot instantiate it."
             </span>)<span class="question-mark">?</span>;
         }
 
         <span class="kw">if </span>!properties.is_empty() {
-            <span class="macro">writeln!</span>(w, <span class="string">&quot;\n## Properties&quot;</span>)<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(w, <span class="string">"\n## Properties"</span>)<span class="question-mark">?</span>;
             document_type_properties(env, w, info, properties, <span class="prelude-val">None</span>)<span class="question-mark">?</span>;
 
             <span class="kw">for </span>parent_info <span class="kw">in </span><span class="kw-2">&amp;</span>info.supertypes {
@@ -1547,7 +1548,7 @@
             }
         }
         <span class="kw">if </span>!signals.is_empty() {
-            <span class="macro">writeln!</span>(w, <span class="string">&quot;\n## Signals&quot;</span>)<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(w, <span class="string">"\n## Signals"</span>)<span class="question-mark">?</span>;
             document_type_signals(env, w, info, signals, <span class="prelude-val">None</span>)<span class="question-mark">?</span>;
 
             <span class="kw">for </span>parent_info <span class="kw">in </span><span class="kw-2">&amp;</span>info.supertypes {
@@ -1581,14 +1582,14 @@
         implements.extend(manual_traits);
 
         <span class="kw">if </span>!implements.is_empty() {
-            <span class="macro">writeln!</span>(w, <span class="string">&quot;\n# Implements\n&quot;</span>)<span class="question-mark">?</span>;
-            <span class="macro">writeln!</span>(w, <span class="string">&quot;{}&quot;</span>, <span class="kw-2">&amp;</span>implements.join(<span class="string">&quot;, &quot;</span>))<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(w, <span class="string">"\n# Implements\n"</span>)<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(w, <span class="string">"{}"</span>, <span class="kw-2">&amp;</span>implements.join(<span class="string">", "</span>))<span class="question-mark">?</span>;
         }
         <span class="prelude-val">Ok</span>(())
     })<span class="question-mark">?</span>;
 
     <span class="kw">if </span>has_builder {
-        <span class="kw">let </span>builder_ty = TypeStruct::new(SType::Impl, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{}Builder&quot;</span>, info.name));
+        <span class="kw">let </span>builder_ty = TypeStruct::new(SType::Impl, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{}Builder"</span>, info.name));
         <span class="kw">let </span><span class="kw-2">mut </span>builder_properties: Vec&lt;<span class="kw">_</span>&gt; = properties.iter().collect();
         <span class="kw">for </span>parent_info <span class="kw">in </span><span class="kw-2">&amp;</span>info.supertypes {
             <span class="kw">match </span>env.library.type_(parent_info.type_id) {
@@ -1612,7 +1613,7 @@
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>doc) = property.doc {
                     <span class="macro">writeln!</span>(
                         w,
-                        <span class="string">&quot;{}&quot;</span>,
+                        <span class="string">"{}"</span>,
                         reformat_doc(
                             <span class="kw-2">&amp;</span>fix_param_names(doc, <span class="kw-2">&amp;</span><span class="prelude-val">None</span>),
                             env,
@@ -1623,7 +1624,7 @@
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>doc) = property.doc_deprecated {
                     <span class="macro">writeln!</span>(
                         w,
-                        <span class="string">&quot;{}&quot;</span>,
+                        <span class="string">"{}"</span>,
                         reformat_doc(
                             <span class="kw-2">&amp;</span>fix_param_names(doc, <span class="kw-2">&amp;</span><span class="prelude-val">None</span>),
                             env,
@@ -1638,22 +1639,22 @@
 
     <span class="kw">if </span>has_trait {
         write_item_doc(w, <span class="kw-2">&amp;</span>ty_ext, |w| {
-            <span class="macro">writeln!</span>(w, <span class="string">&quot;Trait containing all [`struct@{}`] methods.&quot;</span>, ty.name)<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(w, <span class="string">"Trait containing all [`struct@{}`] methods."</span>, ty.name)<span class="question-mark">?</span>;
 
             <span class="kw">let </span><span class="kw-2">mut </span>implementors = std::iter::once(info.type_id)
                 .chain(env.class_hierarchy.subtypes(info.type_id))
                 .filter(|<span class="kw-2">&amp;</span>tid| !env.type_status(<span class="kw-2">&amp;</span>tid.full_name(<span class="kw-2">&amp;</span>env.library)).ignored())
                 .map(|tid| {
                     <span class="macro">format!</span>(
-                        <span class="string">&quot;[`{0}`][struct@crate::{0}]&quot;</span>,
+                        <span class="string">"[`{0}`][struct@crate::{0}]"</span>,
                         env.library.type_(tid).get_name()
                     )
                 })
                 .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
             implementors.sort();
 
-            <span class="macro">writeln!</span>(w, <span class="string">&quot;\n# Implementors\n&quot;</span>)<span class="question-mark">?</span>;
-            <span class="macro">writeln!</span>(w, <span class="string">&quot;{}&quot;</span>, implementors.join(<span class="string">&quot;, &quot;</span>))<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(w, <span class="string">"\n# Implementors\n"</span>)<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(w, <span class="string">"{}"</span>, implementors.join(<span class="string">", "</span>))<span class="question-mark">?</span>;
             <span class="prelude-val">Ok</span>(())
         })<span class="question-mark">?</span>;
     }
@@ -1679,7 +1680,7 @@
                     <span class="prelude-val">Some</span>(LocationInObject::Impl),
                 )
             }
-            <span class="comment">// We use &quot;original_name&quot; here to be sure to get the correct object since the &quot;name&quot;
+            <span class="comment">// We use "original_name" here to be sure to get the correct object since the "name"
             // field could have been renamed.
             </span><span class="kw">else if let </span><span class="prelude-val">Some</span>(trait_name) = configured_functions
                 .iter()
@@ -1688,14 +1689,14 @@
                 (
                     TypeStruct::new(SType::Trait, trait_name),
                     <span class="comment">// Because we cannot sensibly deduce where the docs end up,
-                    // assume they&#39;re outside the docs so that no `Self::` links
+                    // assume they're outside the docs so that no `Self::` links
                     // are generated.  It is currently quite uncommon to specify
                     // the `{}Manual` trait, which would be ObjectLocation::ExtManual.
                     </span><span class="prelude-val">None</span>,
                 )
             } <span class="kw">else if </span>is_manual {
                 (
-                    TypeStruct::new(SType::Trait, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{}ExtManual&quot;</span>, info.name)),
+                    TypeStruct::new(SType::Trait, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{}ExtManual"</span>, info.name)),
                     <span class="prelude-val">Some</span>(LocationInObject::ExtManual),
                 )
             } <span class="kw">else </span>{
@@ -1764,14 +1765,14 @@
             (
                 TypeStruct::new(SType::Trait, trait_name),
                 <span class="comment">// Because we cannot sensibly deduce where the docs end up,
-                // assume they&#39;re outside the docs so that no `Self::` links
+                // assume they're outside the docs so that no `Self::` links
                 // are generated.  It is currently quite uncommon to specify
                 // the `{}Manual` trait, which would be ObjectLocation::ExtManual.
                 </span><span class="prelude-val">None</span>,
             )
         } <span class="kw">else </span>{
             (
-                TypeStruct::new(SType::Trait, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;{}Impl&quot;</span>, info.name)),
+                TypeStruct::new(SType::Trait, <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{}Impl"</span>, info.name)),
                 <span class="prelude-val">Some</span>(LocationInObject::VirtualExt),
             )
         };
@@ -1851,20 +1852,20 @@
     <span class="kw">let </span>object = env.config.objects.get(<span class="kw-2">&amp;</span>info.full_name);
     <span class="kw">let </span>trait_name = object
         .and_then(|o| o.trait_name.clone())
-        .unwrap_or_else(|| <span class="macro">format!</span>(<span class="string">&quot;{}Ext&quot;</span>, info.name));
+        .unwrap_or_else(|| <span class="macro">format!</span>(<span class="string">"{}Ext"</span>, info.name));
     <span class="kw">let </span>generate_doc = object.map_or(<span class="bool-val">true</span>, |r| r.generate_doc);
     <span class="kw">if </span>generate_doc {
         write_item_doc(w, <span class="kw-2">&amp;</span>ty, |w| {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>doc) = record.doc {
-                <span class="macro">writeln!</span>(w, <span class="string">&quot;{}&quot;</span>, reformat_doc(doc, env, <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>info.type_id, <span class="prelude-val">None</span>))))<span class="question-mark">?</span>;
+                <span class="macro">writeln!</span>(w, <span class="string">"{}"</span>, reformat_doc(doc, env, <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>info.type_id, <span class="prelude-val">None</span>))))<span class="question-mark">?</span>;
             }
             <span class="kw">if let </span><span class="prelude-val">Some</span>(ver) = info.deprecated_version {
-                <span class="macro">writeln!</span>(w, <span class="string">&quot;\n# Deprecated since {ver}\n&quot;</span>)<span class="question-mark">?</span>;
+                <span class="macro">writeln!</span>(w, <span class="string">"\n# Deprecated since {ver}\n"</span>)<span class="question-mark">?</span>;
             } <span class="kw">else if </span>record.doc_deprecated.is_some() {
-                <span class="macro">writeln!</span>(w, <span class="string">&quot;\n# Deprecated\n&quot;</span>)<span class="question-mark">?</span>;
+                <span class="macro">writeln!</span>(w, <span class="string">"\n# Deprecated\n"</span>)<span class="question-mark">?</span>;
             }
             <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>doc) = record.doc_deprecated {
-                <span class="macro">writeln!</span>(w, <span class="string">&quot;{}&quot;</span>, reformat_doc(doc, env, <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>info.type_id, <span class="prelude-val">None</span>))))<span class="question-mark">?</span>;
+                <span class="macro">writeln!</span>(w, <span class="string">"{}"</span>, reformat_doc(doc, env, <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>info.type_id, <span class="prelude-val">None</span>))))<span class="question-mark">?</span>;
             }
             <span class="prelude-val">Ok</span>(())
         })<span class="question-mark">?</span>;
@@ -1911,15 +1912,15 @@
     <span class="kw">if </span>config.map_or(<span class="bool-val">true</span>, |c| c.generate_doc) {
         write_item_doc(w, <span class="kw-2">&amp;</span>ty, |w| {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>doc) = enum_.doc {
-                <span class="macro">writeln!</span>(w, <span class="string">&quot;{}&quot;</span>, reformat_doc(doc, env, <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>tid, <span class="prelude-val">None</span>))))<span class="question-mark">?</span>;
+                <span class="macro">writeln!</span>(w, <span class="string">"{}"</span>, reformat_doc(doc, env, <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>tid, <span class="prelude-val">None</span>))))<span class="question-mark">?</span>;
             }
             <span class="kw">if let </span><span class="prelude-val">Some</span>(ver) = enum_.deprecated_version {
-                <span class="macro">writeln!</span>(w, <span class="string">&quot;\n# Deprecated since {ver}\n&quot;</span>)<span class="question-mark">?</span>;
+                <span class="macro">writeln!</span>(w, <span class="string">"\n# Deprecated since {ver}\n"</span>)<span class="question-mark">?</span>;
             } <span class="kw">else if </span>enum_.doc_deprecated.is_some() {
-                <span class="macro">writeln!</span>(w, <span class="string">&quot;\n# Deprecated\n&quot;</span>)<span class="question-mark">?</span>;
+                <span class="macro">writeln!</span>(w, <span class="string">"\n# Deprecated\n"</span>)<span class="question-mark">?</span>;
             }
             <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>doc) = enum_.doc_deprecated {
-                <span class="macro">writeln!</span>(w, <span class="string">&quot;{}&quot;</span>, reformat_doc(doc, env, <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>tid, <span class="prelude-val">None</span>))))<span class="question-mark">?</span>;
+                <span class="macro">writeln!</span>(w, <span class="string">"{}"</span>, reformat_doc(doc, env, <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>tid, <span class="prelude-val">None</span>))))<span class="question-mark">?</span>;
             }
             <span class="prelude-val">Ok</span>(())
         })<span class="question-mark">?</span>;
@@ -1944,10 +1945,10 @@
             };
             write_item_doc(w, <span class="kw-2">&amp;</span>sub_ty, |w| {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>doc) = member.doc {
-                    <span class="macro">writeln!</span>(w, <span class="string">&quot;{}&quot;</span>, reformat_doc(doc, env, <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>tid, <span class="prelude-val">None</span>))))<span class="question-mark">?</span>;
+                    <span class="macro">writeln!</span>(w, <span class="string">"{}"</span>, reformat_doc(doc, env, <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>tid, <span class="prelude-val">None</span>))))<span class="question-mark">?</span>;
                 }
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>doc) = member.doc_deprecated {
-                    <span class="macro">writeln!</span>(w, <span class="string">&quot;{}&quot;</span>, reformat_doc(doc, env, <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>tid, <span class="prelude-val">None</span>))))<span class="question-mark">?</span>;
+                    <span class="macro">writeln!</span>(w, <span class="string">"{}"</span>, reformat_doc(doc, env, <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>tid, <span class="prelude-val">None</span>))))<span class="question-mark">?</span>;
                 }
                 <span class="prelude-val">Ok</span>(())
             })<span class="question-mark">?</span>;
@@ -1969,16 +1970,16 @@
     write_item_doc(w, <span class="kw-2">&amp;</span>ty, |w| {
         <span class="kw">if </span>config.map_or(<span class="bool-val">true</span>, |c| c.generate_doc) {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>doc) = bitfield.doc {
-                <span class="macro">writeln!</span>(w, <span class="string">&quot;{}&quot;</span>, reformat_doc(doc, env, <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>tid, <span class="prelude-val">None</span>))))<span class="question-mark">?</span>;
+                <span class="macro">writeln!</span>(w, <span class="string">"{}"</span>, reformat_doc(doc, env, <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>tid, <span class="prelude-val">None</span>))))<span class="question-mark">?</span>;
             }
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(ver) = bitfield.deprecated_version {
-            <span class="macro">writeln!</span>(w, <span class="string">&quot;\n# Deprecated since {ver}\n&quot;</span>)<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(w, <span class="string">"\n# Deprecated since {ver}\n"</span>)<span class="question-mark">?</span>;
         } <span class="kw">else if </span>bitfield.doc_deprecated.is_some() {
-            <span class="macro">writeln!</span>(w, <span class="string">&quot;\n# Deprecated\n&quot;</span>)<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(w, <span class="string">"\n# Deprecated\n"</span>)<span class="question-mark">?</span>;
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>doc) = bitfield.doc_deprecated {
-            <span class="macro">writeln!</span>(w, <span class="string">&quot;{}&quot;</span>, reformat_doc(doc, env, <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>tid, <span class="prelude-val">None</span>))))<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(w, <span class="string">"{}"</span>, reformat_doc(doc, env, <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>tid, <span class="prelude-val">None</span>))))<span class="question-mark">?</span>;
         }
         <span class="prelude-val">Ok</span>(())
     })<span class="question-mark">?</span>;
@@ -2002,10 +2003,10 @@
             };
             write_item_doc(w, <span class="kw-2">&amp;</span>sub_ty, |w| {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>doc) = member.doc {
-                    <span class="macro">writeln!</span>(w, <span class="string">&quot;{}&quot;</span>, reformat_doc(doc, env, <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>tid, <span class="prelude-val">None</span>))))<span class="question-mark">?</span>;
+                    <span class="macro">writeln!</span>(w, <span class="string">"{}"</span>, reformat_doc(doc, env, <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>tid, <span class="prelude-val">None</span>))))<span class="question-mark">?</span>;
                 }
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>doc) = member.doc_deprecated {
-                    <span class="macro">writeln!</span>(w, <span class="string">&quot;{}&quot;</span>, reformat_doc(doc, env, <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>tid, <span class="prelude-val">None</span>))))<span class="question-mark">?</span>;
+                    <span class="macro">writeln!</span>(w, <span class="string">"{}"</span>, reformat_doc(doc, env, <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>tid, <span class="prelude-val">None</span>))))<span class="question-mark">?</span>;
                 }
                 <span class="prelude-val">Ok</span>(())
             })<span class="question-mark">?</span>;
@@ -2015,19 +2016,19 @@
     <span class="prelude-val">Ok</span>(())
 }
 
-<span class="kw">fn </span>param_name() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>Regex {
+<span class="kw">fn </span>param_name() -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Regex {
     <span class="kw">static </span>REGEX: OnceLock&lt;Regex&gt; = OnceLock::new();
-    REGEX.get_or_init(|| Regex::new(<span class="string">r&quot;@(\w+)\b&quot;</span>).unwrap())
+    REGEX.get_or_init(|| Regex::new(<span class="string">r"@(\w+)\b"</span>).unwrap())
 }
 
-<span class="kw">fn </span>fix_param_names&lt;<span class="lifetime">&#39;a</span>&gt;(doc: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>str, self_name: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;String&gt;) -&gt; Cow&lt;<span class="lifetime">&#39;a</span>, str&gt; {
-    param_name().replace_all(doc, |caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">&#39;_</span>&gt;| {
+<span class="kw">fn </span>fix_param_names&lt;<span class="lifetime">'a</span>&gt;(doc: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, self_name: <span class="kw-2">&amp;</span><span class="prelude-ty">Option</span>&lt;String&gt;) -&gt; Cow&lt;<span class="lifetime">'a</span>, str&gt; {
+    param_name().replace_all(doc, |caps: <span class="kw-2">&amp;</span>Captures&lt;<span class="lifetime">'_</span>&gt;| {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(self_name) = self_name {
             <span class="kw">if </span><span class="kw-2">&amp;</span>caps[<span class="number">1</span>] == self_name {
-                <span class="kw">return </span><span class="string">&quot;@self&quot;</span>.into();
+                <span class="kw">return </span><span class="string">"@self"</span>.into();
             }
         }
-        <span class="macro">format!</span>(<span class="string">&quot;@{}&quot;</span>, nameutil::mangle_keywords(<span class="kw-2">&amp;</span>caps[<span class="number">1</span>]))
+        <span class="macro">format!</span>(<span class="string">"@{}"</span>, nameutil::mangle_keywords(<span class="kw-2">&amp;</span>caps[<span class="number">1</span>]))
     })
 }
 
@@ -2073,19 +2074,19 @@
         <span class="kw">if let </span><span class="prelude-val">Some</span>(doc) = fn_.doc() {
             <span class="macro">writeln!</span>(
                 w,
-                <span class="string">&quot;{}&quot;</span>,
+                <span class="string">"{}"</span>,
                 reformat_doc(<span class="kw-2">&amp;</span>fix_param_names(doc, <span class="kw-2">&amp;</span>self_name), env, in_type)
             )<span class="question-mark">?</span>;
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(ver) = fn_.deprecated_version() {
-            <span class="macro">writeln!</span>(w, <span class="string">&quot;\n# Deprecated since {ver}\n&quot;</span>)<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(w, <span class="string">"\n# Deprecated since {ver}\n"</span>)<span class="question-mark">?</span>;
         } <span class="kw">else if </span>fn_.doc_deprecated().is_some() {
-            <span class="macro">writeln!</span>(w, <span class="string">&quot;\n# Deprecated\n&quot;</span>)<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(w, <span class="string">"\n# Deprecated\n"</span>)<span class="question-mark">?</span>;
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(doc) = fn_.doc_deprecated() {
             <span class="macro">writeln!</span>(
                 w,
-                <span class="string">&quot;{}&quot;</span>,
+                <span class="string">"{}"</span>,
                 reformat_doc(<span class="kw-2">&amp;</span>fix_param_names(doc, <span class="kw-2">&amp;</span>self_name), env, in_type)
             )<span class="question-mark">?</span>;
         }
@@ -2115,10 +2116,10 @@
             <span class="kw">let </span>ignore = IGNORED_C_FN_PARAMS.contains(<span class="kw-2">&amp;</span>param.name.as_str())
                 || doc_ignored_parameters.contains(<span class="kw-2">&amp;</span>param.name)
                 || param.direction == ParameterDirection::Out
-                <span class="comment">// special case error pointer as it&#39;s transformed to a Result
-                </span>|| (param.name == <span class="string">&quot;error&quot; </span>&amp;&amp; param.c_type == <span class="string">&quot;GError**&quot;</span>)
+                <span class="comment">// special case error pointer as it's transformed to a Result
+                </span>|| (param.name == <span class="string">"error" </span>&amp;&amp; param.c_type == <span class="string">"GError**"</span>)
                 <span class="comment">// special case `data` with explicit `gpointer` type as it could be something else (unlike `user_data`)
-                </span>|| (param.name == <span class="string">&quot;data&quot; </span>&amp;&amp; param.c_type == <span class="string">&quot;gpointer&quot;</span>);
+                </span>|| (param.name == <span class="string">"data" </span>&amp;&amp; param.c_type == <span class="string">"gpointer"</span>);
             !ignore
         });
 
@@ -2129,12 +2130,12 @@
             <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>doc) = parameter.doc {
                 <span class="macro">writeln!</span>(
                     w,
-                    <span class="string">&quot;## `{}`&quot;</span>,
+                    <span class="string">"## `{}`"</span>,
                     nameutil::mangle_keywords(parameter.name.as_str())
                 )<span class="question-mark">?</span>;
                 <span class="macro">writeln!</span>(
                     w,
-                    <span class="string">&quot;{}&quot;</span>,
+                    <span class="string">"{}"</span>,
                     reformat_doc(<span class="kw-2">&amp;</span>fix_param_names(doc, <span class="kw-2">&amp;</span>self_name), env, in_type)
                 )<span class="question-mark">?</span>;
             }
@@ -2145,32 +2146,32 @@
             .filter(|param| {
                 param.direction == ParameterDirection::Out
                     &amp;&amp; !doc_ignored_parameters.contains(<span class="kw-2">&amp;</span>param.name)
-                    &amp;&amp; !(param.name == <span class="string">&quot;error&quot; </span>&amp;&amp; param.c_type == <span class="string">&quot;GError**&quot;</span>)
+                    &amp;&amp; !(param.name == <span class="string">"error" </span>&amp;&amp; param.c_type == <span class="string">"GError**"</span>)
             })
             .collect();
 
         <span class="kw">if </span>fn_.ret().doc.is_some() || !out_parameters.is_empty() {
-            <span class="macro">writeln!</span>(w, <span class="string">&quot;\n# Returns\n&quot;</span>)<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(w, <span class="string">"\n# Returns\n"</span>)<span class="question-mark">?</span>;
         }
-        <span class="comment">// document function&#39;s return
+        <span class="comment">// document function's return
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>doc) = fn_.ret().doc {
             <span class="macro">writeln!</span>(
                 w,
-                <span class="string">&quot;{}&quot;</span>,
+                <span class="string">"{}"</span>,
                 reformat_doc(<span class="kw-2">&amp;</span>fix_param_names(doc, <span class="kw-2">&amp;</span>self_name), env, in_type)
             )<span class="question-mark">?</span>;
         }
-        <span class="comment">// document OUT parameters as part of the function&#39;s Return
+        <span class="comment">// document OUT parameters as part of the function's Return
         </span><span class="kw">for </span>parameter <span class="kw">in </span>out_parameters {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>doc) = parameter.doc {
                 <span class="macro">writeln!</span>(
                     w,
-                    <span class="string">&quot;\n## `{}`&quot;</span>,
+                    <span class="string">"\n## `{}`"</span>,
                     nameutil::mangle_keywords(parameter.name.as_str())
                 )<span class="question-mark">?</span>;
                 <span class="macro">writeln!</span>(
                     w,
-                    <span class="string">&quot;{}&quot;</span>,
+                    <span class="string">"{}"</span>,
                     reformat_doc(<span class="kw-2">&amp;</span>fix_param_names(doc, <span class="kw-2">&amp;</span>self_name), env, in_type),
                 )<span class="question-mark">?</span>;
             }
@@ -2212,7 +2213,7 @@
         f.func_name == getter_name || f.new_name.as_ref().map_or(<span class="bool-val">false</span>, |n| n == <span class="kw-2">&amp;</span>getter_name)
     });
 
-    <span class="kw">let </span>setter_name = setter_name.unwrap_or_else(|| <span class="macro">format!</span>(<span class="string">&quot;set_{}&quot;</span>, <span class="kw-2">&amp;</span>name_for_func));
+    <span class="kw">let </span>setter_name = setter_name.unwrap_or_else(|| <span class="macro">format!</span>(<span class="string">"set_{}"</span>, <span class="kw-2">&amp;</span>name_for_func));
     <span class="kw">let </span>has_setter_method = obj_info.functions.iter().any(|f| {
         f.func_name == setter_name || f.new_name.as_ref().map_or(<span class="bool-val">false</span>, |n| n == <span class="kw-2">&amp;</span>setter_name)
     });
@@ -2237,19 +2238,19 @@
             <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>doc) = property.doc {
                 <span class="macro">writeln!</span>(
                     w,
-                    <span class="string">&quot;{}&quot;</span>,
+                    <span class="string">"{}"</span>,
                     reformat_doc(<span class="kw-2">&amp;</span>fix_param_names(doc, <span class="kw-2">&amp;</span><span class="prelude-val">None</span>), env, <span class="prelude-val">Some</span>(in_type))
                 )<span class="question-mark">?</span>;
             }
             <span class="kw">if let </span><span class="prelude-val">Some</span>(ver) = property.deprecated_version {
-                <span class="macro">writeln!</span>(w, <span class="string">&quot;\n# Deprecated since {ver}\n&quot;</span>)<span class="question-mark">?</span>;
+                <span class="macro">writeln!</span>(w, <span class="string">"\n# Deprecated since {ver}\n"</span>)<span class="question-mark">?</span>;
             } <span class="kw">else if </span>property.doc_deprecated.is_some() {
-                <span class="macro">writeln!</span>(w, <span class="string">&quot;\n# Deprecated\n&quot;</span>)<span class="question-mark">?</span>;
+                <span class="macro">writeln!</span>(w, <span class="string">"\n# Deprecated\n"</span>)<span class="question-mark">?</span>;
             }
             <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>doc) = property.doc_deprecated {
                 <span class="macro">writeln!</span>(
                     w,
-                    <span class="string">&quot;{}&quot;</span>,
+                    <span class="string">"{}"</span>,
                     reformat_doc(<span class="kw-2">&amp;</span>fix_param_names(doc, <span class="kw-2">&amp;</span><span class="prelude-val">None</span>), env, <span class="prelude-val">Some</span>(in_type))
                 )<span class="question-mark">?</span>;
             }
@@ -2267,17 +2268,17 @@
     {
         trait_name.clone()
     } <span class="kw">else </span>{
-        <span class="macro">format!</span>(<span class="string">&quot;{}Ext&quot;</span>, env.library.type_(tid).get_name())
+        <span class="macro">format!</span>(<span class="string">"{}Ext"</span>, env.library.type_(tid).get_name())
     };
     <span class="kw">if </span>tid.ns_id == MAIN_NAMESPACE {
-        <span class="macro">format!</span>(<span class="string">&quot;[`{trait_name}`][trait@crate::prelude::{trait_name}]&quot;</span>)
+        <span class="macro">format!</span>(<span class="string">"[`{trait_name}`][trait@crate::prelude::{trait_name}]"</span>)
     } <span class="kw">else if let </span><span class="prelude-val">Some</span>(symbol) = env.symbols.borrow().by_tid(tid) {
         <span class="kw">let </span><span class="kw-2">mut </span>symbol = symbol.clone();
         symbol.make_trait(<span class="kw-2">&amp;</span>trait_name);
-        <span class="macro">format!</span>(<span class="string">&quot;[`trait@{}`]&quot;</span>, <span class="kw-2">&amp;</span>symbol.full_rust_name())
+        <span class="macro">format!</span>(<span class="string">"[`trait@{}`]"</span>, <span class="kw-2">&amp;</span>symbol.full_rust_name())
     } <span class="kw">else </span>{
-        <span class="macro">error!</span>(<span class="string">&quot;Type {} doesn&#39;t have crate&quot;</span>, tid.full_name(<span class="kw-2">&amp;</span>env.library));
-        <span class="macro">format!</span>(<span class="string">&quot;`{trait_name}`&quot;</span>)
+        <span class="macro">error!</span>(<span class="string">"Type {} doesn't have crate"</span>, tid.full_name(<span class="kw-2">&amp;</span>env.library));
+        <span class="macro">format!</span>(<span class="string">"`{trait_name}`"</span>)
     }
 }
 
@@ -2301,7 +2302,7 @@
     manual_trait_iters
         .into_iter()
         .flatten()
-        .map(|name| <span class="macro">format!</span>(<span class="string">&quot;[`{name}`][trait@crate::prelude::{name}]&quot;</span>))
+        .map(|name| <span class="macro">format!</span>(<span class="string">"[`{name}`][trait@crate::prelude::{name}]"</span>))
         .collect()
 }
 
@@ -2313,40 +2314,40 @@
     subtype: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">if let </span><span class="prelude-val">Some</span>(subtype_name) = subtype {
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;&lt;details&gt;&lt;summary&gt;&lt;h4&gt;{subtype_name}&lt;/h4&gt;&lt;/summary&gt;&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"&lt;details&gt;&lt;summary&gt;&lt;h4&gt;{subtype_name}&lt;/h4&gt;&lt;/summary&gt;"</span>)<span class="question-mark">?</span>;
     }
     <span class="kw">for </span>property <span class="kw">in </span>properties {
         <span class="kw">let </span><span class="kw-2">mut </span>details = Vec::new();
         <span class="kw">if </span>property.readable {
-            details.push(<span class="string">&quot;Readable&quot;</span>);
+            details.push(<span class="string">"Readable"</span>);
         }
         <span class="kw">if </span>property.writable {
-            details.push(<span class="string">&quot;Writeable&quot;</span>);
+            details.push(<span class="string">"Writeable"</span>);
         }
         <span class="kw">if </span>property.construct {
-            details.push(<span class="string">&quot;Construct&quot;</span>);
+            details.push(<span class="string">"Construct"</span>);
         }
         <span class="kw">if </span>property.construct_only {
-            details.push(<span class="string">&quot;Construct Only&quot;</span>);
+            details.push(<span class="string">"Construct Only"</span>);
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(doc) = <span class="kw-2">&amp;</span>property.doc {
             <span class="macro">writeln!</span>(
                 w,
-                <span class="string">&quot;\n\n#### `{}`\n {}\n\n{}&quot;</span>,
+                <span class="string">"\n\n#### `{}`\n {}\n\n{}"</span>,
                 property.name,
                 reformat_doc(
                     <span class="kw-2">&amp;</span>fix_param_names(doc, <span class="kw-2">&amp;</span><span class="prelude-val">None</span>),
                     env,
                     <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>info.type_id, <span class="prelude-val">None</span>))
                 ),
-                details.join(<span class="string">&quot; | &quot;</span>),
+                details.join(<span class="string">" | "</span>),
             )<span class="question-mark">?</span>;
         } <span class="kw">else </span>{
-            <span class="macro">writeln!</span>(w, <span class="string">&quot;\n\n#### `{}`\n {}&quot;</span>, property.name, details.join(<span class="string">&quot; | &quot;</span>),)<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(w, <span class="string">"\n\n#### `{}`\n {}"</span>, property.name, details.join(<span class="string">" | "</span>),)<span class="question-mark">?</span>;
         }
     }
     <span class="kw">if </span>subtype.is_some() {
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;&lt;/details&gt;&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"&lt;/details&gt;"</span>)<span class="question-mark">?</span>;
     }
     <span class="prelude-val">Ok</span>(())
 }
@@ -2359,34 +2360,34 @@
     subtype: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">if let </span><span class="prelude-val">Some</span>(subtype_name) = subtype {
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;&lt;details&gt;&lt;summary&gt;&lt;h4&gt;{subtype_name}&lt;/h4&gt;&lt;/summary&gt;&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"&lt;details&gt;&lt;summary&gt;&lt;h4&gt;{subtype_name}&lt;/h4&gt;&lt;/summary&gt;"</span>)<span class="question-mark">?</span>;
     }
     <span class="kw">for </span>signal <span class="kw">in </span>signals {
         <span class="kw">let </span><span class="kw-2">mut </span>details = Vec::new();
         <span class="kw">if </span>signal.is_action {
-            details.push(<span class="string">&quot;Action&quot;</span>);
+            details.push(<span class="string">"Action"</span>);
         }
         <span class="kw">if </span>signal.is_detailed {
-            details.push(<span class="string">&quot;Detailed&quot;</span>);
+            details.push(<span class="string">"Detailed"</span>);
         }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(doc) = <span class="kw-2">&amp;</span>signal.doc {
             <span class="macro">writeln!</span>(
                 w,
-                <span class="string">&quot;\n\n#### `{}`\n {}\n\n{}&quot;</span>,
+                <span class="string">"\n\n#### `{}`\n {}\n\n{}"</span>,
                 signal.name,
                 reformat_doc(
                     <span class="kw-2">&amp;</span>fix_param_names(doc, <span class="kw-2">&amp;</span><span class="prelude-val">None</span>),
                     env,
                     <span class="prelude-val">Some</span>((<span class="kw-2">&amp;</span>info.type_id, <span class="prelude-val">None</span>))
                 ),
-                details.join(<span class="string">&quot; | &quot;</span>),
+                details.join(<span class="string">" | "</span>),
             )<span class="question-mark">?</span>;
         } <span class="kw">else </span>{
-            <span class="macro">writeln!</span>(w, <span class="string">&quot;\n\n#### `{}`\n {}&quot;</span>, signal.name, details.join(<span class="string">&quot; | &quot;</span>),)<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(w, <span class="string">"\n\n#### `{}`\n {}"</span>, signal.name, details.join(<span class="string">" | "</span>),)<span class="question-mark">?</span>;
         }
     }
     <span class="kw">if </span>subtype.is_some() {
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;&lt;/details&gt;&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"&lt;/details&gt;"</span>)<span class="question-mark">?</span>;
     }
     <span class="prelude-val">Ok</span>(())
 }

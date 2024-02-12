@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/trampoline.rs`."><title>trampoline.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/trampoline.rs`."><title>trampoline.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -281,7 +282,7 @@
     <span class="kw">let </span>(self_bound, fn_self_bound) = in_trait
         .then(|| {
             (
-                <span class="macro">format!</span>(<span class="string">&quot;{}: IsA&lt;{}&gt;, &quot;</span>, TYPE_PARAMETERS_START, analysis.type_name),
+                <span class="macro">format!</span>(<span class="string">"{}: IsA&lt;{}&gt;, "</span>, TYPE_PARAMETERS_START, analysis.type_name),
                 <span class="prelude-val">Some</span>(TYPE_PARAMETERS_START.to_string()),
             )
         })
@@ -294,20 +295,20 @@
 
     <span class="macro">writeln!</span>(
         w,
-        <span class="string">&quot;{}unsafe extern \&quot;C\&quot; fn {}&lt;{}F: {}&gt;({}, f: {}){} {{&quot;</span>,
+        <span class="string">"{}unsafe extern \"C\" fn {}&lt;{}F: {}&gt;({}, f: {}){} {{"</span>,
         prepend,
         analysis.name,
         self_bound,
         func_str,
         params_str,
-        use_glib_if_needed(env, <span class="string">&quot;ffi::gpointer&quot;</span>),
+        use_glib_if_needed(env, <span class="string">"ffi::gpointer"</span>),
         ret_str,
     )<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;{prepend}\tlet f: &amp;F = &amp;*(f as *const F);&quot;</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">"{prepend}\tlet f: &amp;F = &amp;*(f as *const F);"</span>)<span class="question-mark">?</span>;
     transformation_vars(w, env, analysis, <span class="kw-2">&amp;</span>prepend)<span class="question-mark">?</span>;
     <span class="kw">let </span>call = trampoline_call_func(env, analysis, in_trait);
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;{prepend}\t{call}&quot;</span>)<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;{prepend}}}&quot;</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">"{prepend}\t{call}"</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">"{prepend}}}"</span>)<span class="question-mark">?</span>;
 
     <span class="prelude-val">Ok</span>(())
 }
@@ -328,17 +329,17 @@
             // is sent to. But it will only be ever owned by a single thread
             // at a time, so signals can only be emitted from one thread at
             // a time and Sync is not needed
-            </span>library::Concurrency::Send =&gt; <span class="string">&quot; + Send&quot;</span>,
+            </span>library::Concurrency::Send =&gt; <span class="string">" + Send"</span>,
             <span class="comment">// If an object is Sync, it can be shared between threads, and as
             // such our callback can be called from arbitrary threads and needs
             // to be Send *AND* Sync
-            </span>library::Concurrency::SendSync =&gt; <span class="string">&quot; + Send + Sync&quot;</span>,
-            library::Concurrency::None =&gt; <span class="string">&quot;&quot;</span>,
+            </span>library::Concurrency::SendSync =&gt; <span class="string">" + Send + Sync"</span>,
+            library::Concurrency::None =&gt; <span class="string">""</span>,
         };
 
-        <span class="macro">format!</span>(<span class="string">&quot;Fn({param_str}){return_str}{concurrency_str} + &#39;static&quot;</span>)
+        <span class="macro">format!</span>(<span class="string">"Fn({param_str}){return_str}{concurrency_str} + 'static"</span>)
     } <span class="kw">else </span>{
-        <span class="macro">format!</span>(<span class="string">&quot;({param_str}){return_str}&quot;</span>,)
+        <span class="macro">format!</span>(<span class="string">"({param_str}){return_str}"</span>,)
     }
 }
 
@@ -358,9 +359,9 @@
                 <span class="kw">continue</span>;
             }
         } <span class="kw">else </span>{
-            param_str.push_str(<span class="string">&quot;, &quot;</span>);
+            param_str.push_str(<span class="string">", "</span>);
             <span class="kw">if </span>!closure {
-                <span class="macro">write!</span>(param_str, <span class="string">&quot;{}: &quot;</span>, par.name).unwrap();
+                <span class="macro">write!</span>(param_str, <span class="string">"{}: "</span>, par.name).unwrap();
             }
         }
 
@@ -383,7 +384,7 @@
         <span class="comment">// TODO: ASYNC??
         </span><span class="prelude-val">Some</span>(bound) =&gt; bound.full_type_parameter_reference(ref_mode, par.nullable, <span class="bool-val">false</span>),
         <span class="comment">// TODO
-        // Some((None, _)) =&gt; panic!(&quot;Trampoline expects type name&quot;),
+        // Some((None, _)) =&gt; panic!("Trampoline expects type name"),
         </span><span class="prelude-val">None </span>=&gt; RustType::builder(env, par.typ)
             .direction(par.direction)
             .nullable(par.nullable)
@@ -397,13 +398,13 @@
     <span class="kw">if </span>analysis.ret.typ == Default::default() {
         String::new()
     } <span class="kw">else if </span>analysis.inhibit {
-        <span class="macro">format!</span>(<span class="string">&quot; -&gt; {inhibit}&quot;</span>, inhibit = use_glib_type(env, <span class="string">&quot;Propagation&quot;</span>))
+        <span class="macro">format!</span>(<span class="string">" -&gt; {inhibit}"</span>, inhibit = use_glib_type(env, <span class="string">"Propagation"</span>))
     } <span class="kw">else if let </span><span class="prelude-val">Some</span>(return_type) =
         analysis
             .ret
             .to_return_value(env, <span class="kw-2">&amp;</span>TryFromGlib::default(), <span class="bool-val">true</span>)
     {
-        <span class="macro">format!</span>(<span class="string">&quot; -&gt; {return_type}&quot;</span>)
+        <span class="macro">format!</span>(<span class="string">" -&gt; {return_type}"</span>)
     } <span class="kw">else </span>{
         String::new()
     }
@@ -412,9 +413,9 @@
 <span class="kw">fn </span>trampoline_parameters(env: <span class="kw-2">&amp;</span>Env, analysis: <span class="kw-2">&amp;</span>Trampoline) -&gt; String {
     <span class="kw">if </span>analysis.is_notify {
         <span class="kw">return </span><span class="macro">format!</span>(
-            <span class="string">&quot;{}, _param_spec: {}&quot;</span>,
+            <span class="string">"{}, _param_spec: {}"</span>,
             trampoline_parameter(env, <span class="kw-2">&amp;</span>analysis.parameters.c_parameters[<span class="number">0</span>]),
-            use_glib_if_needed(env, <span class="string">&quot;ffi::gpointer&quot;</span>),
+            use_glib_if_needed(env, <span class="string">"ffi::gpointer"</span>),
         );
     }
 
@@ -424,12 +425,12 @@
         parameter_strs.push(par_str);
     }
 
-    parameter_strs.join(<span class="string">&quot;, &quot;</span>)
+    parameter_strs.join(<span class="string">", "</span>)
 }
 
 <span class="kw">fn </span>trampoline_parameter(env: <span class="kw-2">&amp;</span>Env, par: <span class="kw-2">&amp;</span>CParameter) -&gt; String {
     <span class="kw">let </span>ffi_type = ffi_type(env, par.typ, <span class="kw-2">&amp;</span>par.c_type);
-    <span class="macro">format!</span>(<span class="string">&quot;{}: {}&quot;</span>, par.name, ffi_type.into_string())
+    <span class="macro">format!</span>(<span class="string">"{}: {}"</span>, par.name, ffi_type.into_string())
 }
 
 <span class="kw">fn </span>trampoline_returns(env: <span class="kw-2">&amp;</span>Env, analysis: <span class="kw-2">&amp;</span>Trampoline) -&gt; String {
@@ -437,7 +438,7 @@
         String::new()
     } <span class="kw">else </span>{
         <span class="kw">let </span>ffi_type = ffi_type(env, analysis.ret.typ, <span class="kw-2">&amp;</span>analysis.ret.c_type);
-        <span class="macro">format!</span>(<span class="string">&quot; -&gt; {}&quot;</span>, ffi_type.into_string())
+        <span class="macro">format!</span>(<span class="string">" -&gt; {}"</span>, ffi_type.into_string())
     }
 }
 
@@ -456,10 +457,10 @@
                 <span class="kw">let </span>c_par = <span class="kw-2">&amp;</span>analysis.parameters.c_parameters[transform.ind_c];
                 <span class="macro">writeln!</span>(
                     w,
-                    <span class="string">&quot;{}\tlet {} = from_glib_full({}({}));&quot;</span>,
+                    <span class="string">"{}\tlet {} = from_glib_full({}({}));"</span>,
                     prepend,
                     transform.name,
-                    use_gtk_type(env, <span class="string">&quot;ffi::gtk_tree_path_new_from_string&quot;</span>),
+                    use_gtk_type(env, <span class="string">"ffi::gtk_tree_path_new_from_string"</span>),
                     c_par.name
                 )<span class="question-mark">?</span>;
             }
@@ -475,7 +476,7 @@
     } <span class="kw">else </span>{
         analysis.ret.trampoline_to_glib(env)
     };
-    <span class="macro">format!</span>(<span class="string">&quot;f({params}){ret}&quot;</span>)
+    <span class="macro">format!</span>(<span class="string">"f({params}){ret}"</span>)
 }
 
 <span class="kw">fn </span>trampoline_call_parameters(env: <span class="kw-2">&amp;</span>Env, analysis: <span class="kw-2">&amp;</span>Trampoline, in_trait: bool) -&gt; String {
@@ -485,7 +486,7 @@
         <span class="kw">let </span>transformation = <span class="kw">match </span>analysis.parameters.get(ind) {
             <span class="prelude-val">Some</span>(transformation) =&gt; transformation,
             <span class="prelude-val">None </span>=&gt; {
-                <span class="macro">error!</span>(<span class="string">&quot;No transformation for {}&quot;</span>, par.name);
+                <span class="macro">error!</span>(<span class="string">"No transformation for {}"</span>, par.name);
                 <span class="kw">continue</span>;
             }
         };
@@ -494,6 +495,6 @@
         need_downcast = <span class="bool-val">false</span>; <span class="comment">// Only downcast first parameter
     </span>}
 
-    parameter_strs.join(<span class="string">&quot;, &quot;</span>)
+    parameter_strs.join(<span class="string">", "</span>)
 }
 </code></pre></div></section></main></body></html>

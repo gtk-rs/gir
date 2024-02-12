@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/analysis/rust_type.rs`."><title>rust_type.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/analysis/rust_type.rs`."><title>rust_type.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -721,7 +722,7 @@
 
     <span class="doccomment">/// Create a `RustTypeBuilder` which allows specifying additional
     /// configuration.
-    </span><span class="kw">pub fn </span>builder(env: <span class="kw-2">&amp;</span>Env, type_id: library::TypeId) -&gt; RustTypeBuilder&lt;<span class="lifetime">&#39;_</span>&gt; {
+    </span><span class="kw">pub fn </span>builder(env: <span class="kw-2">&amp;</span>Env, type_id: library::TypeId) -&gt; RustTypeBuilder&lt;<span class="lifetime">'_</span>&gt; {
         RustTypeBuilder::new(env, type_id)
     }
 
@@ -748,11 +749,11 @@
 
         <span class="kw">if </span>type_id.ns_id != library::MAIN_NAMESPACE
             &amp;&amp; type_id.ns_id != library::INTERNAL_NAMESPACE
-            &amp;&amp; type_id.full_name(<span class="kw-2">&amp;</span>env.library) != <span class="string">&quot;GLib.DestroyNotify&quot;
-            </span>&amp;&amp; type_id.full_name(<span class="kw-2">&amp;</span>env.library) != <span class="string">&quot;GObject.Callback&quot;
+            &amp;&amp; type_id.full_name(<span class="kw-2">&amp;</span>env.library) != <span class="string">"GLib.DestroyNotify"
+            </span>&amp;&amp; type_id.full_name(<span class="kw-2">&amp;</span>env.library) != <span class="string">"GObject.Callback"
         </span>{
             type_name = <span class="macro">format!</span>(
-                <span class="string">&quot;{}::{}&quot;</span>,
+                <span class="string">"{}::{}"</span>,
                 env.namespaces[type_id.ns_id].higher_crate_name,
                 type_name.as_str()
             );
@@ -806,7 +807,7 @@
     <span class="attr">#[inline]
     </span><span class="kw">fn </span>format_parameter(<span class="self">self</span>, direction: ParameterDirection) -&gt; <span class="self">Self </span>{
         <span class="kw">if </span>direction.is_out() {
-            <span class="self">self</span>.alter_type(|type_| <span class="macro">format!</span>(<span class="string">&quot;&amp;mut {type_}&quot;</span>))
+            <span class="self">self</span>.alter_type(|type_| <span class="macro">format!</span>(<span class="string">"&amp;mut {type_}"</span>))
         } <span class="kw">else </span>{
             <span class="self">self
         </span>}
@@ -815,8 +816,8 @@
     <span class="attr">#[inline]
     </span><span class="kw">fn </span>apply_ref_mode(<span class="self">self</span>, ref_mode: RefMode) -&gt; <span class="self">Self </span>{
         <span class="kw">match </span>ref_mode.for_rust_type() {
-            <span class="string">&quot;&quot; </span>=&gt; <span class="self">self</span>,
-            ref_mode =&gt; <span class="self">self</span>.alter_type(|typ_| <span class="macro">format!</span>(<span class="string">&quot;{ref_mode}{typ_}&quot;</span>)),
+            <span class="string">"" </span>=&gt; <span class="self">self</span>,
+            ref_mode =&gt; <span class="self">self</span>.alter_type(|typ_| <span class="macro">format!</span>(<span class="string">"{ref_mode}{typ_}"</span>)),
         }
     }
 }
@@ -851,9 +852,9 @@
         <span class="kw">use </span><span class="self">self</span>::TypeError::<span class="kw-2">*</span>;
         <span class="kw">match </span><span class="self">self </span>{
             <span class="prelude-val">Ok</span>(s) =&gt; s.into_string(),
-            <span class="prelude-val">Err</span>(Ignored(s)) =&gt; <span class="macro">format!</span>(<span class="string">&quot;/*Ignored*/{s}&quot;</span>),
-            <span class="prelude-val">Err</span>(Mismatch(s)) =&gt; <span class="macro">format!</span>(<span class="string">&quot;/*Metadata mismatch*/{s}&quot;</span>),
-            <span class="prelude-val">Err</span>(Unimplemented(s)) =&gt; <span class="macro">format!</span>(<span class="string">&quot;/*Unimplemented*/{s}&quot;</span>),
+            <span class="prelude-val">Err</span>(Ignored(s)) =&gt; <span class="macro">format!</span>(<span class="string">"/*Ignored*/{s}"</span>),
+            <span class="prelude-val">Err</span>(Mismatch(s)) =&gt; <span class="macro">format!</span>(<span class="string">"/*Metadata mismatch*/{s}"</span>),
+            <span class="prelude-val">Err</span>(Unimplemented(s)) =&gt; <span class="macro">format!</span>(<span class="string">"/*Unimplemented*/{s}"</span>),
         }
     }
 }
@@ -870,8 +871,8 @@
     }
 }
 
-<span class="kw">pub struct </span>RustTypeBuilder&lt;<span class="lifetime">&#39;env</span>&gt; {
-    env: <span class="kw-2">&amp;</span><span class="lifetime">&#39;env </span>Env,
+<span class="kw">pub struct </span>RustTypeBuilder&lt;<span class="lifetime">'env</span>&gt; {
+    env: <span class="kw-2">&amp;</span><span class="lifetime">'env </span>Env,
     type_id: library::TypeId,
     direction: ParameterDirection,
     nullable: Nullable,
@@ -882,8 +883,8 @@
     callback_parameters_config: CallbackParameters,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;env</span>&gt; RustTypeBuilder&lt;<span class="lifetime">&#39;env</span>&gt; {
-    <span class="kw">fn </span>new(env: <span class="kw-2">&amp;</span><span class="lifetime">&#39;env </span>Env, type_id: library::TypeId) -&gt; <span class="self">Self </span>{
+<span class="kw">impl</span>&lt;<span class="lifetime">'env</span>&gt; RustTypeBuilder&lt;<span class="lifetime">'env</span>&gt; {
+    <span class="kw">fn </span>new(env: <span class="kw-2">&amp;</span><span class="lifetime">'env </span>Env, type_id: library::TypeId) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             env,
             type_id,
@@ -945,58 +946,58 @@
         <span class="kw">let </span><span class="kw-2">mut </span>rust_type = <span class="kw">match </span><span class="kw-2">*</span>type_ {
             Basic(fund) =&gt; {
                 <span class="kw">match </span>fund {
-                    <span class="prelude-val">None </span>=&gt; err(<span class="string">&quot;()&quot;</span>),
-                    Boolean | Bool =&gt; ok(<span class="string">&quot;bool&quot;</span>),
-                    Int8 =&gt; ok(<span class="string">&quot;i8&quot;</span>),
-                    UInt8 =&gt; ok(<span class="string">&quot;u8&quot;</span>),
-                    Int16 =&gt; ok(<span class="string">&quot;i16&quot;</span>),
-                    UInt16 =&gt; ok(<span class="string">&quot;u16&quot;</span>),
-                    Int32 =&gt; ok(<span class="string">&quot;i32&quot;</span>),
-                    UInt32 =&gt; ok(<span class="string">&quot;u32&quot;</span>),
-                    Int64 =&gt; ok(<span class="string">&quot;i64&quot;</span>),
-                    UInt64 =&gt; ok(<span class="string">&quot;u64&quot;</span>),
+                    <span class="prelude-val">None </span>=&gt; err(<span class="string">"()"</span>),
+                    Boolean | Bool =&gt; ok(<span class="string">"bool"</span>),
+                    Int8 =&gt; ok(<span class="string">"i8"</span>),
+                    UInt8 =&gt; ok(<span class="string">"u8"</span>),
+                    Int16 =&gt; ok(<span class="string">"i16"</span>),
+                    UInt16 =&gt; ok(<span class="string">"u16"</span>),
+                    Int32 =&gt; ok(<span class="string">"i32"</span>),
+                    UInt32 =&gt; ok(<span class="string">"u32"</span>),
+                    Int64 =&gt; ok(<span class="string">"i64"</span>),
+                    UInt64 =&gt; ok(<span class="string">"u64"</span>),
 
-                    Int =&gt; ok(<span class="string">&quot;i32&quot;</span>),  <span class="comment">// maybe dependent on target system
-                    </span>UInt =&gt; ok(<span class="string">&quot;u32&quot;</span>), <span class="comment">// maybe dependent on target system
+                    Int =&gt; ok(<span class="string">"i32"</span>),  <span class="comment">// maybe dependent on target system
+                    </span>UInt =&gt; ok(<span class="string">"u32"</span>), <span class="comment">// maybe dependent on target system
 
-                    </span>Short =&gt; ok_and_use(<span class="string">&quot;libc::c_short&quot;</span>), <span class="comment">// depends of target system
-                    </span>UShort =&gt; ok_and_use(<span class="string">&quot;libc::c_ushort&quot;</span>), <span class="comment">// depends o f target system
-                    </span>Long =&gt; ok_and_use(<span class="string">&quot;libc::c_long&quot;</span>),   <span class="comment">// depends of target system
-                    </span>ULong =&gt; ok_and_use(<span class="string">&quot;libc::c_ulong&quot;</span>), <span class="comment">// depends of target system
+                    </span>Short =&gt; ok_and_use(<span class="string">"libc::c_short"</span>), <span class="comment">// depends of target system
+                    </span>UShort =&gt; ok_and_use(<span class="string">"libc::c_ushort"</span>), <span class="comment">// depends o f target system
+                    </span>Long =&gt; ok_and_use(<span class="string">"libc::c_long"</span>),   <span class="comment">// depends of target system
+                    </span>ULong =&gt; ok_and_use(<span class="string">"libc::c_ulong"</span>), <span class="comment">// depends of target system
 
-                    </span>Size =&gt; ok(<span class="string">&quot;usize&quot;</span>),  <span class="comment">// depends of target system
-                    </span>SSize =&gt; ok(<span class="string">&quot;isize&quot;</span>), <span class="comment">// depends of target system
+                    </span>Size =&gt; ok(<span class="string">"usize"</span>),  <span class="comment">// depends of target system
+                    </span>SSize =&gt; ok(<span class="string">"isize"</span>), <span class="comment">// depends of target system
 
-                    </span>Float =&gt; ok(<span class="string">&quot;f32&quot;</span>),
-                    Double =&gt; ok(<span class="string">&quot;f64&quot;</span>),
+                    </span>Float =&gt; ok(<span class="string">"f32"</span>),
+                    Double =&gt; ok(<span class="string">"f64"</span>),
 
-                    UniChar =&gt; ok(<span class="string">&quot;char&quot;</span>),
+                    UniChar =&gt; ok(<span class="string">"char"</span>),
                     Utf8 =&gt; {
                         <span class="kw">if </span><span class="self">self</span>.ref_mode.is_ref() {
-                            ok(<span class="string">&quot;str&quot;</span>)
+                            ok(<span class="string">"str"</span>)
                         } <span class="kw">else </span>{
-                            ok_and_use(<span class="kw-2">&amp;</span>use_glib_type(<span class="self">self</span>.env, <span class="string">&quot;GString&quot;</span>))
+                            ok_and_use(<span class="kw-2">&amp;</span>use_glib_type(<span class="self">self</span>.env, <span class="string">"GString"</span>))
                         }
                     }
                     Filename =&gt; {
                         <span class="kw">if </span><span class="self">self</span>.ref_mode.is_ref() {
-                            ok_and_use(<span class="string">&quot;std::path::Path&quot;</span>)
+                            ok_and_use(<span class="string">"std::path::Path"</span>)
                         } <span class="kw">else </span>{
-                            ok_and_use(<span class="string">&quot;std::path::PathBuf&quot;</span>)
+                            ok_and_use(<span class="string">"std::path::PathBuf"</span>)
                         }
                     }
                     OsString =&gt; {
                         <span class="kw">if </span><span class="self">self</span>.ref_mode.is_ref() {
-                            ok_and_use(<span class="string">&quot;std::ffi::OsStr&quot;</span>)
+                            ok_and_use(<span class="string">"std::ffi::OsStr"</span>)
                         } <span class="kw">else </span>{
-                            ok_and_use(<span class="string">&quot;std::ffi::OsString&quot;</span>)
+                            ok_and_use(<span class="string">"std::ffi::OsString"</span>)
                         }
                     }
-                    Type =&gt; ok_and_use(<span class="kw-2">&amp;</span>use_glib_type(<span class="self">self</span>.env, <span class="string">&quot;types::Type&quot;</span>)),
-                    Char =&gt; ok_and_use(<span class="kw-2">&amp;</span>use_glib_type(<span class="self">self</span>.env, <span class="string">&quot;Char&quot;</span>)),
-                    UChar =&gt; ok_and_use(<span class="kw-2">&amp;</span>use_glib_type(<span class="self">self</span>.env, <span class="string">&quot;UChar&quot;</span>)),
-                    Unsupported =&gt; err(<span class="string">&quot;Unsupported&quot;</span>),
-                    <span class="kw">_ </span>=&gt; err(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;Basic: {fund:?}&quot;</span>)),
+                    Type =&gt; ok_and_use(<span class="kw-2">&amp;</span>use_glib_type(<span class="self">self</span>.env, <span class="string">"types::Type"</span>)),
+                    Char =&gt; ok_and_use(<span class="kw-2">&amp;</span>use_glib_type(<span class="self">self</span>.env, <span class="string">"Char"</span>)),
+                    UChar =&gt; ok_and_use(<span class="kw-2">&amp;</span>use_glib_type(<span class="self">self</span>.env, <span class="string">"UChar"</span>)),
+                    Unsupported =&gt; err(<span class="string">"Unsupported"</span>),
+                    <span class="kw">_ </span>=&gt; err(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"Basic: {fund:?}"</span>)),
                 }
             }
             Alias(<span class="kw-2">ref </span>alias) =&gt; {
@@ -1012,11 +1013,11 @@
                         .map_any(|<span class="kw">_</span>| alias_rust_type)
                 })
             }
-            Record(library::Record { <span class="kw-2">ref </span>c_type, .. }) <span class="kw">if </span>c_type == <span class="string">&quot;GVariantType&quot; </span>=&gt; {
+            Record(library::Record { <span class="kw-2">ref </span>c_type, .. }) <span class="kw">if </span>c_type == <span class="string">"GVariantType" </span>=&gt; {
                 <span class="kw">let </span>type_name = <span class="kw">if </span><span class="self">self</span>.ref_mode.is_ref() {
-                    <span class="string">&quot;VariantTy&quot;
+                    <span class="string">"VariantTy"
                 </span>} <span class="kw">else </span>{
-                    <span class="string">&quot;VariantType&quot;
+                    <span class="string">"VariantType"
                 </span>};
                 RustType::try_new_and_use_with_name(<span class="self">self</span>.env, <span class="self">self</span>.type_id, type_name)
             }
@@ -1060,9 +1061,9 @@
                     .map_any(|rust_type| {
                         rust_type.alter_type(|typ| {
                             <span class="kw">if </span><span class="self">self</span>.ref_mode.is_ref() {
-                                <span class="macro">format!</span>(<span class="string">&quot;[{typ}]&quot;</span>)
+                                <span class="macro">format!</span>(<span class="string">"[{typ}]"</span>)
                             } <span class="kw">else </span>{
-                                <span class="macro">format!</span>(<span class="string">&quot;Vec&lt;{typ}&gt;&quot;</span>)
+                                <span class="macro">format!</span>(<span class="string">"Vec&lt;{typ}&gt;"</span>)
                             }
                         })
                     })
@@ -1072,29 +1073,29 @@
             {
                 <span class="kw">if let </span>Basic(fund) = <span class="self">self</span>.env.type_(inner_tid) {
                     <span class="kw">let </span>array_type = <span class="kw">match </span>fund {
-                        Int8 =&gt; <span class="prelude-val">Some</span>(<span class="string">&quot;i8&quot;</span>),
-                        UInt8 =&gt; <span class="prelude-val">Some</span>(<span class="string">&quot;u8&quot;</span>),
-                        Int16 =&gt; <span class="prelude-val">Some</span>(<span class="string">&quot;i16&quot;</span>),
-                        UInt16 =&gt; <span class="prelude-val">Some</span>(<span class="string">&quot;u16&quot;</span>),
-                        Int32 =&gt; <span class="prelude-val">Some</span>(<span class="string">&quot;i32&quot;</span>),
-                        UInt32 =&gt; <span class="prelude-val">Some</span>(<span class="string">&quot;u32&quot;</span>),
-                        Int64 =&gt; <span class="prelude-val">Some</span>(<span class="string">&quot;i64&quot;</span>),
-                        UInt64 =&gt; <span class="prelude-val">Some</span>(<span class="string">&quot;u64&quot;</span>),
+                        Int8 =&gt; <span class="prelude-val">Some</span>(<span class="string">"i8"</span>),
+                        UInt8 =&gt; <span class="prelude-val">Some</span>(<span class="string">"u8"</span>),
+                        Int16 =&gt; <span class="prelude-val">Some</span>(<span class="string">"i16"</span>),
+                        UInt16 =&gt; <span class="prelude-val">Some</span>(<span class="string">"u16"</span>),
+                        Int32 =&gt; <span class="prelude-val">Some</span>(<span class="string">"i32"</span>),
+                        UInt32 =&gt; <span class="prelude-val">Some</span>(<span class="string">"u32"</span>),
+                        Int64 =&gt; <span class="prelude-val">Some</span>(<span class="string">"i64"</span>),
+                        UInt64 =&gt; <span class="prelude-val">Some</span>(<span class="string">"u64"</span>),
 
-                        Int =&gt; <span class="prelude-val">Some</span>(<span class="string">&quot;i32&quot;</span>),  <span class="comment">// maybe dependent on target system
-                        </span>UInt =&gt; <span class="prelude-val">Some</span>(<span class="string">&quot;u32&quot;</span>), <span class="comment">// maybe dependent on target system
+                        Int =&gt; <span class="prelude-val">Some</span>(<span class="string">"i32"</span>),  <span class="comment">// maybe dependent on target system
+                        </span>UInt =&gt; <span class="prelude-val">Some</span>(<span class="string">"u32"</span>), <span class="comment">// maybe dependent on target system
 
-                        </span>Float =&gt; <span class="prelude-val">Some</span>(<span class="string">&quot;f32&quot;</span>),
-                        Double =&gt; <span class="prelude-val">Some</span>(<span class="string">&quot;f64&quot;</span>),
+                        </span>Float =&gt; <span class="prelude-val">Some</span>(<span class="string">"f32"</span>),
+                        Double =&gt; <span class="prelude-val">Some</span>(<span class="string">"f64"</span>),
                         <span class="kw">_ </span>=&gt; Option::None,
                     };
 
                     <span class="kw">if let </span><span class="prelude-val">Some</span>(s) = array_type {
                         skip_option = <span class="bool-val">true</span>;
                         <span class="kw">if </span><span class="self">self</span>.ref_mode.is_ref() {
-                            <span class="prelude-val">Ok</span>(<span class="macro">format!</span>(<span class="string">&quot;[{s}]&quot;</span>).into())
+                            <span class="prelude-val">Ok</span>(<span class="macro">format!</span>(<span class="string">"[{s}]"</span>).into())
                         } <span class="kw">else </span>{
-                            <span class="prelude-val">Ok</span>(<span class="macro">format!</span>(<span class="string">&quot;Vec&lt;{s}&gt;&quot;</span>).into())
+                            <span class="prelude-val">Ok</span>(<span class="macro">format!</span>(<span class="string">"Vec&lt;{s}&gt;"</span>).into())
                         }
                     } <span class="kw">else </span>{
                         <span class="prelude-val">Err</span>(TypeError::Unimplemented(type_.get_name()))
@@ -1108,25 +1109,25 @@
             }
             Function(<span class="kw-2">ref </span>f) =&gt; {
                 <span class="kw">let </span>concurrency = <span class="kw">match </span><span class="self">self</span>.concurrency {
-                    <span class="kw">_ if </span><span class="self">self</span>.scope.is_call() =&gt; <span class="string">&quot;&quot;</span>,
-                    library::Concurrency::Send =&gt; <span class="string">&quot; + Send&quot;</span>,
+                    <span class="kw">_ if </span><span class="self">self</span>.scope.is_call() =&gt; <span class="string">""</span>,
+                    library::Concurrency::Send =&gt; <span class="string">" + Send"</span>,
                     <span class="comment">// If an object is Sync, it can be shared between threads, and as
                     // such our callback can be called from arbitrary threads and needs
                     // to be Send *AND* Sync
-                    </span>library::Concurrency::SendSync =&gt; <span class="string">&quot; + Send + Sync&quot;</span>,
-                    library::Concurrency::None =&gt; <span class="string">&quot;&quot;</span>,
+                    </span>library::Concurrency::SendSync =&gt; <span class="string">" + Send + Sync"</span>,
+                    library::Concurrency::None =&gt; <span class="string">""</span>,
                 };
 
                 <span class="kw">let </span>full_name = <span class="self">self</span>.type_id.full_name(<span class="kw-2">&amp;</span><span class="self">self</span>.env.library);
-                <span class="kw">if </span>full_name == <span class="string">&quot;Gio.AsyncReadyCallback&quot; </span>{
-                    <span class="comment">// FIXME need to use the result from use_glib_type(&amp;self.env, &quot;Error&quot;)?
+                <span class="kw">if </span>full_name == <span class="string">"Gio.AsyncReadyCallback" </span>{
+                    <span class="comment">// FIXME need to use the result from use_glib_type(&amp;self.env, "Error")?
                     </span><span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="macro">format!</span>(
-                        <span class="string">&quot;FnOnce(Result&lt;(), {}&gt;) + &#39;static&quot;</span>,
-                        use_glib_type(<span class="self">self</span>.env, <span class="string">&quot;Error&quot;</span>),
+                        <span class="string">"FnOnce(Result&lt;(), {}&gt;) + 'static"</span>,
+                        use_glib_type(<span class="self">self</span>.env, <span class="string">"Error"</span>),
                     )
                     .into());
-                } <span class="kw">else if </span>full_name == <span class="string">&quot;GLib.DestroyNotify&quot; </span>{
-                    <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="macro">format!</span>(<span class="string">&quot;Fn(){concurrency} + &#39;static&quot;</span>).into());
+                } <span class="kw">else if </span>full_name == <span class="string">"GLib.DestroyNotify" </span>{
+                    <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="macro">format!</span>(<span class="string">"Fn(){concurrency} + 'static"</span>).into());
                 }
                 <span class="kw">let </span><span class="kw-2">mut </span>params = Vec::with_capacity(f.parameters.len());
                 <span class="kw">let </span><span class="kw-2">mut </span>err = <span class="bool-val">false</span>;
@@ -1151,18 +1152,18 @@
                             <span class="kw">let </span>y = RustType::try_new(<span class="self">self</span>.env, p.typ)
                                 .unwrap_or_else(|<span class="kw">_</span>| RustType::default());
                             params.push(<span class="macro">format!</span>(
-                                <span class="string">&quot;{}{}&quot;</span>,
-                                <span class="kw">if </span>is_basic || <span class="kw-2">*</span>nullable { <span class="string">&quot;&quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;&amp;&quot; </span>},
+                                <span class="string">"{}{}"</span>,
+                                <span class="kw">if </span>is_basic || <span class="kw-2">*</span>nullable { <span class="string">"" </span>} <span class="kw">else </span>{ <span class="string">"&amp;" </span>},
                                 <span class="kw">if </span>!is_gstring(y.as_str()) {
                                     <span class="kw">if </span>!is_basic &amp;&amp; <span class="kw-2">*</span>nullable {
-                                        p_rust_type.into_string().replace(<span class="string">&quot;Option&lt;&quot;</span>, <span class="string">&quot;Option&lt;&amp;&quot;</span>)
+                                        p_rust_type.into_string().replace(<span class="string">"Option&lt;"</span>, <span class="string">"Option&lt;&amp;"</span>)
                                     } <span class="kw">else </span>{
                                         p_rust_type.into_string()
                                     }
                                 } <span class="kw">else if </span><span class="kw-2">*</span>nullable {
-                                    <span class="string">&quot;Option&lt;&amp;str&gt;&quot;</span>.to_owned()
+                                    <span class="string">"Option&lt;&amp;str&gt;"</span>.to_owned()
                                 } <span class="kw">else </span>{
-                                    <span class="string">&quot;&amp;str&quot;</span>.to_owned()
+                                    <span class="string">"&amp;str"</span>.to_owned()
                                 }
                             ));
                         }
@@ -1173,11 +1174,11 @@
                     }
                 }
                 <span class="kw">let </span>closure_kind = <span class="kw">if </span><span class="self">self</span>.scope.is_call() {
-                    <span class="string">&quot;FnMut&quot;
+                    <span class="string">"FnMut"
                 </span>} <span class="kw">else if </span><span class="self">self</span>.scope.is_async() {
-                    <span class="string">&quot;FnOnce&quot;
+                    <span class="string">"FnOnce"
                 </span>} <span class="kw">else </span>{
-                    <span class="string">&quot;Fn&quot;
+                    <span class="string">"Fn"
                 </span>};
                 <span class="kw">let </span>ret_res = RustType::builder(<span class="self">self</span>.env, f.ret.typ)
                     .direction(f.ret.direction)
@@ -1188,28 +1189,28 @@
                         <span class="kw">let </span>y = RustType::try_new(<span class="self">self</span>.env, f.ret.typ)
                             .unwrap_or_else(|<span class="kw">_</span>| RustType::default());
                         <span class="macro">format!</span>(
-                            <span class="string">&quot;{}({}) -&gt; {}{}&quot;</span>,
+                            <span class="string">"{}({}) -&gt; {}{}"</span>,
                             closure_kind,
-                            params.join(<span class="string">&quot;, &quot;</span>),
+                            params.join(<span class="string">", "</span>),
                             <span class="kw">if </span>!is_gstring(y.as_str()) {
                                 ret_rust_type.as_str()
                             } <span class="kw">else if </span><span class="kw-2">*</span>f.ret.nullable {
-                                <span class="string">&quot;Option&lt;String&gt;&quot;
+                                <span class="string">"Option&lt;String&gt;"
                             </span>} <span class="kw">else </span>{
-                                <span class="string">&quot;String&quot;
+                                <span class="string">"String"
                             </span>},
                             concurrency
                         )
                     }
-                    <span class="prelude-val">Err</span>(TypeError::Unimplemented(<span class="kw-2">ref </span>x)) <span class="kw">if </span>x == <span class="string">&quot;()&quot; </span>=&gt; {
-                        <span class="macro">format!</span>(<span class="string">&quot;{}({}){}&quot;</span>, closure_kind, params.join(<span class="string">&quot;, &quot;</span>), concurrency)
+                    <span class="prelude-val">Err</span>(TypeError::Unimplemented(<span class="kw-2">ref </span>x)) <span class="kw">if </span>x == <span class="string">"()" </span>=&gt; {
+                        <span class="macro">format!</span>(<span class="string">"{}({}){}"</span>, closure_kind, params.join(<span class="string">", "</span>), concurrency)
                     }
                     e =&gt; {
                         err = <span class="bool-val">true</span>;
                         <span class="macro">format!</span>(
-                            <span class="string">&quot;{}({}) -&gt; {}{}&quot;</span>,
+                            <span class="string">"{}({}) -&gt; {}{}"</span>,
                             closure_kind,
-                            params.join(<span class="string">&quot;, &quot;</span>),
+                            params.join(<span class="string">", "</span>),
                             e.into_string(),
                             concurrency
                         )
@@ -1220,18 +1221,18 @@
                 }
                 <span class="prelude-val">Ok</span>(<span class="kw">if </span><span class="kw-2">*</span><span class="self">self</span>.nullable {
                     <span class="kw">if </span><span class="self">self</span>.scope.is_call() {
-                        <span class="macro">format!</span>(<span class="string">&quot;Option&lt;&amp;mut dyn ({ret})&gt;&quot;</span>)
+                        <span class="macro">format!</span>(<span class="string">"Option&lt;&amp;mut dyn ({ret})&gt;"</span>)
                     } <span class="kw">else </span>{
-                        <span class="macro">format!</span>(<span class="string">&quot;Option&lt;Box_&lt;dyn {ret} + &#39;static&gt;&gt;&quot;</span>)
+                        <span class="macro">format!</span>(<span class="string">"Option&lt;Box_&lt;dyn {ret} + 'static&gt;&gt;"</span>)
                     }
                 } <span class="kw">else </span>{
                     <span class="macro">format!</span>(
-                        <span class="string">&quot;{}{}&quot;</span>,
+                        <span class="string">"{}{}"</span>,
                         ret,
                         <span class="kw">if </span><span class="self">self</span>.scope.is_call() {
-                            <span class="string">&quot;&quot;
+                            <span class="string">""
                         </span>} <span class="kw">else </span>{
-                            <span class="string">&quot; + &#39;static&quot;
+                            <span class="string">" + 'static"
                         </span>}
                     )
                 }
@@ -1249,9 +1250,9 @@
                 rust_type = rust_type.map_any(|rust_type| {
                     rust_type
                         .alter_type(|typ_| {
-                            <span class="kw">let </span><span class="kw-2">mut </span>opt = <span class="macro">format!</span>(<span class="string">&quot;Option&lt;{typ_}&gt;&quot;</span>);
+                            <span class="kw">let </span><span class="kw-2">mut </span>opt = <span class="macro">format!</span>(<span class="string">"Option&lt;{typ_}&gt;"</span>);
                             <span class="kw">if </span><span class="self">self</span>.direction == ParameterDirection::In {
-                                opt = <span class="macro">format!</span>(<span class="string">&quot;impl Into&lt;{opt}&gt;&quot;</span>);
+                                opt = <span class="macro">format!</span>(<span class="string">"impl Into&lt;{opt}&gt;"</span>);
                             }
 
                             opt
@@ -1263,14 +1264,14 @@
                 <span class="kw">if </span><span class="self">self</span>.direction == ParameterDirection::In {
                     rust_type = rust_type.map_any(|rust_type| {
                         RustType::new_with_uses(
-                            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;impl Into&lt;{}&gt;&quot;</span>, <span class="kw-2">&amp;</span>rust_type.as_str()),
+                            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"impl Into&lt;{}&gt;"</span>, <span class="kw-2">&amp;</span>rust_type.as_str()),
                             <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>rust_type.as_str()],
                         )
                     });
                 } <span class="kw">else </span>{
                     rust_type = rust_type.map_any(|<span class="kw">_</span>| {
                         RustType::new_with_uses(
-                            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">&quot;Result&lt;{}, {}&gt;&quot;</span>, <span class="kw-2">&amp;</span>ok_type, <span class="kw-2">&amp;</span>err_type),
+                            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"Result&lt;{}, {}&gt;"</span>, <span class="kw-2">&amp;</span>ok_type, <span class="kw-2">&amp;</span>err_type),
                             <span class="kw-2">&amp;</span>[ok_type, err_type],
                         )
                     });
@@ -1289,7 +1290,7 @@
             <span class="kw">match </span>ConversionType::of(<span class="self">self</span>.env, <span class="self">self</span>.type_id) {
                 ConversionType::Pointer | ConversionType::Scalar =&gt; {
                     rust_type = rust_type.map_any(|rust_type| {
-                        rust_type.alter_type(|typ_| <span class="macro">format!</span>(<span class="string">&quot;Option&lt;{typ_}&gt;&quot;</span>))
+                        rust_type.alter_type(|typ_| <span class="macro">format!</span>(<span class="string">"Option&lt;{typ_}&gt;"</span>))
                     });
                 }
                 <span class="kw">_ </span>=&gt; (),
@@ -1305,7 +1306,7 @@
 
         <span class="macro">assert!</span>(
             <span class="self">self</span>.direction != ParameterDirection::None,
-            <span class="string">&quot;undefined direction for parameter with type {type_:?}&quot;
+            <span class="string">"undefined direction for parameter with type {type_:?}"
         </span>);
 
         <span class="kw">let </span>rust_type = RustType::builder(<span class="self">self</span>.env, <span class="self">self</span>.type_id)
@@ -1367,8 +1368,8 @@
                 }
                 <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(TypeError::Unimplemented(into_inner(rust_type))),
             },
-            Function(<span class="kw-2">ref </span>func) <span class="kw">if </span>func.name == <span class="string">&quot;AsyncReadyCallback&quot; </span>=&gt; {
-                <span class="prelude-val">Ok</span>(<span class="string">&quot;AsyncReadyCallback&quot;</span>.into())
+            Function(<span class="kw-2">ref </span>func) <span class="kw">if </span>func.name == <span class="string">"AsyncReadyCallback" </span>=&gt; {
+                <span class="prelude-val">Ok</span>(<span class="string">"AsyncReadyCallback"</span>.into())
             }
             Function(<span class="kw">_</span>) =&gt; rust_type,
             Custom(..) =&gt; rust_type.map(|rust_type| rust_type.format_parameter(<span class="self">self</span>.direction)),

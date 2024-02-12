@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/object.rs`."><title>object.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/object.rs`."><title>object.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -602,15 +603,15 @@
         .iter()
         .any(|f| f.deprecated_version.is_some())
     {
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;#![allow(deprecated)]&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"#![allow(deprecated)]"</span>)<span class="question-mark">?</span>;
     }
     general::uses(w, env, <span class="kw-2">&amp;</span>analysis.imports, analysis.version)<span class="question-mark">?</span>;
 
     <span class="kw">let </span>config = <span class="kw-2">&amp;</span>env.config.objects[<span class="kw-2">&amp;</span>analysis.full_name];
     <span class="kw">if </span>config.default_value.is_some() {
         <span class="macro">log::error!</span>(
-            <span class="string">&quot;`default_value` can only be used on flags and enums. {} is neither. Ignoring \
-             `default_value`.&quot;</span>,
+            <span class="string">"`default_value` can only be used on flags and enums. {} is neither. Ignoring \
+             `default_value`."</span>,
             analysis.name,
         );
     }
@@ -755,14 +756,14 @@
         || !analysis.final_type
     {
         <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
-        <span class="macro">write!</span>(w, <span class="string">&quot;impl {} {{&quot;</span>, analysis.name)<span class="question-mark">?</span>;
+        <span class="macro">write!</span>(w, <span class="string">"impl {} {{"</span>, analysis.name)<span class="question-mark">?</span>;
 
         <span class="kw">if </span>!analysis.final_type {
             <span class="macro">writeln!</span>(
                 w,
-                <span class="string">&quot;
-        pub const NONE: Option&lt;&amp;&#39;static {}&gt; = None;
-    &quot;</span>,
+                <span class="string">"
+        pub const NONE: Option&lt;&amp;'static {}&gt; = None;
+    "</span>,
                 analysis.name
             )<span class="question-mark">?</span>;
         }
@@ -783,10 +784,10 @@
 
         <span class="kw">if </span>has_builder_properties(<span class="kw-2">&amp;</span>analysis.builder_properties) {
             <span class="comment">// generate builder method that returns the corresponding builder
-            </span><span class="kw">let </span>builder_name = <span class="macro">format!</span>(<span class="string">&quot;{}Builder&quot;</span>, analysis.name);
+            </span><span class="kw">let </span>builder_name = <span class="macro">format!</span>(<span class="string">"{}Builder"</span>, analysis.name);
             <span class="macro">writeln!</span>(
                 w,
-                <span class="string">&quot;
+                <span class="string">"
             // rustdoc-stripper-ignore-next
             /// Creates a new builder-pattern struct instance to construct [`{name}`] objects.
             ///
@@ -794,7 +795,7 @@
             pub fn builder() -&gt; {builder_name} {{
                 {builder_name}::new()
             }}
-        &quot;</span>,
+        "</span>,
                 name = analysis.name,
                 builder_name = builder_name
             )<span class="question-mark">?</span>;
@@ -848,7 +849,7 @@
             }
         }
 
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;}}&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"}}"</span>)<span class="question-mark">?</span>;
 
         general::declare_default_from_new(
             w,
@@ -871,7 +872,7 @@
             <span class="prelude-val">None
         </span>},
         analysis.version,
-        <span class="prelude-val">None</span>, <span class="comment">// There is no need for #[cfg()] since it&#39;s applied on the whole file.
+        <span class="prelude-val">None</span>, <span class="comment">// There is no need for #[cfg()] since it's applied on the whole file.
     </span>)<span class="question-mark">?</span>;
 
     <span class="kw">if </span>has_builder_properties(<span class="kw-2">&amp;</span>analysis.builder_properties) {
@@ -885,13 +886,13 @@
 
     <span class="kw">match </span>analysis.concurrency {
         library::Concurrency::Send | library::Concurrency::SendSync =&gt; {
-            <span class="macro">writeln!</span>(w, <span class="string">&quot;unsafe impl Send for {} {{}}&quot;</span>, analysis.name)<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(w, <span class="string">"unsafe impl Send for {} {{}}"</span>, analysis.name)<span class="question-mark">?</span>;
         }
         <span class="kw">_ </span>=&gt; (),
     }
 
     <span class="kw">if let </span>library::Concurrency::SendSync = analysis.concurrency {
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;unsafe impl Sync for {} {{}}&quot;</span>, analysis.name)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"unsafe impl Sync for {} {{}}"</span>, analysis.name)<span class="question-mark">?</span>;
     }
 
     <span class="kw">if </span>analysis.need_generate_trait() {
@@ -903,30 +904,30 @@
 
 <span class="kw">fn </span>generate_builder(w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write, env: <span class="kw-2">&amp;</span>Env, analysis: <span class="kw-2">&amp;</span>analysis::object::Info) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="kw">let </span>glib_crate_name = <span class="kw">if </span>env.namespaces.is_glib_crate {
-        <span class="string">&quot;crate&quot;
+        <span class="string">"crate"
     </span>} <span class="kw">else </span>{
-        <span class="string">&quot;glib&quot;
+        <span class="string">"glib"
     </span>};
 
     <span class="macro">writeln!</span>(
         w,
-        <span class="string">&quot;// rustdoc-stripper-ignore-next
+        <span class="string">"// rustdoc-stripper-ignore-next
         /// A [builder-pattern] type to construct [`{}`] objects.
         ///
-        /// [builder-pattern]: https://doc.rust-lang.org/1.0.0/style/ownership/builders.html&quot;</span>,
+        /// [builder-pattern]: https://doc.rust-lang.org/1.0.0/style/ownership/builders.html"</span>,
         analysis.name,
     )<span class="question-mark">?</span>;
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;#[must_use = \&quot;The builder must be built to be used\&quot;]&quot;</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">"#[must_use = \"The builder must be built to be used\"]"</span>)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(
         w,
-        <span class="string">&quot;pub struct {name}Builder {{
-            builder: {glib_name}::object::ObjectBuilder&lt;&#39;static, {name}&gt;,
+        <span class="string">"pub struct {name}Builder {{
+            builder: {glib_name}::object::ObjectBuilder&lt;'static, {name}&gt;,
         }}
 
         impl {name}Builder {{
         fn new() -&gt; Self {{
             Self {{ builder: {glib_name}::object::Object::builder() }}
-        }}&quot;</span>,
+        }}"</span>,
         name = analysis.name,
         glib_name = glib_crate_name,
     )<span class="question-mark">?</span>;
@@ -941,18 +942,18 @@
                 .direction(direction)
                 .ref_mode(property.set_in_ref_mode)
                 .try_build();
-            <span class="kw">let </span>comment_prefix = <span class="kw">if </span>param_type.is_err() { <span class="string">&quot;//&quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;&quot; </span>};
+            <span class="kw">let </span>comment_prefix = <span class="kw">if </span>param_type.is_err() { <span class="string">"//" </span>} <span class="kw">else </span>{ <span class="string">"" </span>};
             <span class="kw">let </span><span class="kw-2">mut </span>param_type_str = param_type.into_string();
             <span class="kw">let </span>(param_type_override, bounds, conversion) = <span class="kw">match </span>param_type_str.as_str() {
-                <span class="string">&quot;&amp;str&quot; </span>=&gt; (
-                    <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">&quot;impl Into&lt;{glib_crate_name}::GString&gt;&quot;</span>)),
+                <span class="string">"&amp;str" </span>=&gt; (
+                    <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">"impl Into&lt;{glib_crate_name}::GString&gt;"</span>)),
                     String::new(),
-                    <span class="string">&quot;.into()&quot;</span>,
+                    <span class="string">".into()"</span>,
                 ),
-                <span class="string">&quot;&amp;[&amp;str]&quot; </span>=&gt; (
-                    <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">&quot;impl Into&lt;{glib_crate_name}::StrV&gt;&quot;</span>)),
-                    String::from(<span class="string">&quot;&quot;</span>),
-                    <span class="string">&quot;.into()&quot;</span>,
+                <span class="string">"&amp;[&amp;str]" </span>=&gt; (
+                    <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">"impl Into&lt;{glib_crate_name}::StrV&gt;"</span>)),
+                    String::from(<span class="string">""</span>),
+                    <span class="string">".into()"</span>,
                 ),
                 <span class="kw">_ if </span>!property.bounds.is_empty() =&gt; {
                     <span class="kw">let </span>(bounds, <span class="kw">_</span>) = function::bounds(<span class="kw-2">&amp;</span>property.bounds, <span class="kw-2">&amp;</span>[], <span class="bool-val">false</span>, <span class="bool-val">false</span>);
@@ -961,32 +962,32 @@
                         bound.full_type_parameter_reference(RefMode::ByRef, Nullable(<span class="bool-val">false</span>), <span class="bool-val">false</span>)
                     });
                     <span class="kw">let </span>conversion = param_bound.and_then(|bound| <span class="kw">match </span>bound.bound_type {
-                        BoundType::AsRef(<span class="kw">_</span>) =&gt; <span class="prelude-val">Some</span>(<span class="string">&quot;.as_ref().clone()&quot;</span>),
+                        BoundType::AsRef(<span class="kw">_</span>) =&gt; <span class="prelude-val">Some</span>(<span class="string">".as_ref().clone()"</span>),
                         <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
                     });
-                    (alias, bounds, conversion.unwrap_or(<span class="string">&quot;.clone().upcast()&quot;</span>))
+                    (alias, bounds, conversion.unwrap_or(<span class="string">".clone().upcast()"</span>))
                 }
-                typ <span class="kw">if </span>typ.starts_with(<span class="string">&#39;&amp;&#39;</span>) =&gt; {
+                typ <span class="kw">if </span>typ.starts_with(<span class="string">'&amp;'</span>) =&gt; {
                     <span class="kw">let </span>should_clone =
                         <span class="kw">if let </span><span class="kw">crate</span>::library::Type::Record(record) = env.type_(property.typ) {
                             <span class="kw">match </span>RecordType::of(record) {
-                                RecordType::Boxed =&gt; <span class="string">&quot;&quot;</span>,
+                                RecordType::Boxed =&gt; <span class="string">""</span>,
                                 RecordType::AutoBoxed =&gt; {
                                     <span class="kw">if </span>!record.has_copy() {
-                                        <span class="string">&quot;&quot;
+                                        <span class="string">""
                                     </span>} <span class="kw">else </span>{
-                                        <span class="string">&quot;.clone()&quot;
+                                        <span class="string">".clone()"
                                     </span>}
                                 }
-                                <span class="kw">_ </span>=&gt; <span class="string">&quot;.clone()&quot;</span>,
+                                <span class="kw">_ </span>=&gt; <span class="string">".clone()"</span>,
                             }
                         } <span class="kw">else </span>{
-                            <span class="string">&quot;.clone()&quot;
+                            <span class="string">".clone()"
                         </span>};
 
                     (<span class="prelude-val">None</span>, String::new(), should_clone)
                 }
-                <span class="kw">_ </span>=&gt; (<span class="prelude-val">None</span>, String::new(), <span class="string">&quot;&quot;</span>),
+                <span class="kw">_ </span>=&gt; (<span class="prelude-val">None</span>, String::new(), <span class="string">""</span>),
             };
             <span class="kw">if let </span><span class="prelude-val">Some</span>(param_type_override) = param_type_override {
                 param_type_str = param_type_override.to_string();
@@ -998,19 +999,19 @@
             <span class="kw">let </span>deprecated_string =
                 cfg_deprecated_string(env, <span class="prelude-val">Some</span>(<span class="kw-2">*</span>super_tid), property.deprecated_version, <span class="bool-val">false</span>, <span class="number">1</span>);
             <span class="kw">let </span>version_prefix = version_condition_string
-                .map(|version| <span class="macro">format!</span>(<span class="string">&quot;{comment_prefix}{version}\n&quot;</span>))
+                .map(|version| <span class="macro">format!</span>(<span class="string">"{comment_prefix}{version}\n"</span>))
                 .unwrap_or_default();
 
             <span class="kw">let </span>deprecation_prefix = deprecated_string
-                .map(|version| <span class="macro">format!</span>(<span class="string">&quot;{comment_prefix}{version}\n&quot;</span>))
+                .map(|version| <span class="macro">format!</span>(<span class="string">"{comment_prefix}{version}\n"</span>))
                 .unwrap_or_default();
 
             <span class="macro">writeln!</span>(
                 w,
-                <span class="string">&quot;
+                <span class="string">"
                         {version_prefix}{deprecation_prefix}    {comment_prefix}pub fn {name}{bounds}(self, {name}: {param_type_str}) -&gt; Self {{
-                        {comment_prefix}    Self {{ builder: self.builder.property(\&quot;{property_name}\&quot;, {name}{conversion}), }}
-                        {comment_prefix}}}&quot;</span>,
+                        {comment_prefix}    Self {{ builder: self.builder.property(\"{property_name}\", {name}{conversion}), }}
+                        {comment_prefix}}}"</span>,
                 property_name = property.name,
             )<span class="question-mark">?</span>;
         }
@@ -1018,34 +1019,34 @@
 
     <span class="macro">writeln!</span>(
         w,
-        <span class="string">&quot;
+        <span class="string">"
     // rustdoc-stripper-ignore-next
     /// Build the [`{name}`].
-    #[must_use = \&quot;Building the object from the builder is usually expensive and is not expected to have side effects\&quot;]
-    pub fn build(self) -&gt; {name} {{&quot;</span>,
+    #[must_use = \"Building the object from the builder is usually expensive and is not expected to have side effects\"]
+    pub fn build(self) -&gt; {name} {{"</span>,
         name = analysis.name,
     )<span class="question-mark">?</span>;
 
     <span class="comment">// The split allows us to not have clippy::let_and_return lint disabled
     </span><span class="kw">if let </span><span class="prelude-val">Some</span>(code) = analysis.builder_postprocess.as_ref() {
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;    let ret = self.builder.build();&quot;</span>)<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;        {{\n            {code}\n        }}&quot;</span>)<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;    ret\n    }}&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"    let ret = self.builder.build();"</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"        {{\n            {code}\n        }}"</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"    ret\n    }}"</span>)<span class="question-mark">?</span>;
     } <span class="kw">else </span>{
-        <span class="macro">writeln!</span>(w, <span class="string">&quot;    self.builder.build() }}&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(w, <span class="string">"    self.builder.build() }}"</span>)<span class="question-mark">?</span>;
     }
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;}}&quot;</span>)
+    <span class="macro">writeln!</span>(w, <span class="string">"}}"</span>)
 }
 
 <span class="kw">fn </span>generate_trait(w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write, env: <span class="kw-2">&amp;</span>Env, analysis: <span class="kw-2">&amp;</span>analysis::object::Info) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="macro">write!</span>(
         w,
-        <span class="string">&quot;mod sealed {{
+        <span class="string">"mod sealed {{
     pub trait Sealed {{}}
     impl&lt;T: super::IsA&lt;super::{1}&gt;&gt; Sealed for T {{}}
 }}
 
-pub trait {}: IsA&lt;{}&gt; + sealed::Sealed + &#39;static {{&quot;</span>,
+pub trait {}: IsA&lt;{}&gt; + sealed::Sealed + 'static {{"</span>,
         analysis.trait_name, analysis.name
     )<span class="question-mark">?</span>;
 
@@ -1075,12 +1076,12 @@ pub trait {}: IsA&lt;{}&gt; + sealed::Sealed + &#39;static {{&quot;</span>,
     {
         signal::generate(w, env, signal_analysis, <span class="bool-val">true</span>, <span class="bool-val">false</span>, <span class="number">1</span>)<span class="question-mark">?</span>;
     }
-    <span class="macro">writeln!</span>(w, <span class="string">&quot;}}&quot;</span>)<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(w, <span class="string">"}}"</span>)<span class="question-mark">?</span>;
 
     <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(
         w,
-        <span class="string">&quot;impl&lt;O: IsA&lt;{}&gt;&gt; {} for O {{}}&quot;</span>,
+        <span class="string">"impl&lt;O: IsA&lt;{}&gt;&gt; {} for O {{}}"</span>,
         analysis.name, analysis.trait_name,
     )<span class="question-mark">?</span>;
 
@@ -1114,11 +1115,11 @@ pub trait {}: IsA&lt;{}&gt; + sealed::Sealed + &#39;static {{&quot;</span>,
 
     contents.push(String::new());
     contents.extend_from_slice(<span class="kw-2">&amp;</span>cfgs);
-    contents.push(<span class="macro">format!</span>(<span class="string">&quot;mod {module_name};&quot;</span>));
+    contents.push(<span class="macro">format!</span>(<span class="string">"mod {module_name};"</span>));
     contents.extend_from_slice(<span class="kw-2">&amp;</span>cfgs);
 
     contents.push(<span class="macro">format!</span>(
-        <span class="string">&quot;{} use self::{}::{};&quot;</span>,
+        <span class="string">"{} use self::{}::{};"</span>,
         analysis.visibility.export_visibility(),
         module_name,
         analysis.name,
@@ -1126,20 +1127,20 @@ pub trait {}: IsA&lt;{}&gt; + sealed::Sealed + &#39;static {{&quot;</span>,
 
     <span class="kw">if </span>analysis.need_generate_trait() {
         <span class="kw">for </span>cfg <span class="kw">in </span><span class="kw-2">&amp;</span>cfgs {
-            traits.push(<span class="macro">format!</span>(<span class="string">&quot;\t{cfg}&quot;</span>));
+            traits.push(<span class="macro">format!</span>(<span class="string">"\t{cfg}"</span>));
         }
         traits.push(<span class="macro">format!</span>(
-            <span class="string">&quot;\tpub use super::{}::{};&quot;</span>,
+            <span class="string">"\tpub use super::{}::{};"</span>,
             module_name, analysis.trait_name
         ));
     }
 
     <span class="kw">if </span>has_builder_properties(<span class="kw-2">&amp;</span>analysis.builder_properties) {
         <span class="kw">for </span>cfg <span class="kw">in </span><span class="kw-2">&amp;</span>cfgs {
-            builders.push(<span class="macro">format!</span>(<span class="string">&quot;\t{cfg}&quot;</span>));
+            builders.push(<span class="macro">format!</span>(<span class="string">"\t{cfg}"</span>));
         }
         builders.push(<span class="macro">format!</span>(
-            <span class="string">&quot;\tpub use super::{}::{}Builder;&quot;</span>,
+            <span class="string">"\tpub use super::{}::{}Builder;"</span>,
             module_name, analysis.name
         ));
     }

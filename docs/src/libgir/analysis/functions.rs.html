@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/analysis/functions.rs`."><title>functions.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-9ee3a5e31a2afa3e.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.75.0 (82e1608df 2023-12-21)" data-channel="1.75.0" data-search-js="search-8fbf244ebcf71464.js" data-settings-js="settings-74424d7eec62a23e.js" ><script src="../../../static.files/storage-fec3eaa3851e447d.js"></script><script defer src="../../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-9dd44ab47b99a0fb.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-5d8b3c7633ad77ba.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/analysis/functions.rs`."><title>functions.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ac92e1bbe349e143.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.76.0 (07dca489a 2024-02-04)" data-channel="1.76.0" data-search-js="search-2b6ce74ff89ae146.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../../static.files/storage-f2adc0d6ca4d09fb.js"></script><script defer src="../../../static.files/src-script-39ed315d46fb705f.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-305769736d49e732.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-feafe1bb7466e4bd.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><div class="sidebar-resizer"></div>
+    <main><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" tabindex="-1"><a href="../../../help.html" title="help">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1419,7 +1420,7 @@
     <span class="doccomment">/// Whether the function is hidden (an implementation detail)
     /// Like the ref/unref/copy/free functions
     </span><span class="kw">pub </span>hidden: bool,
-    <span class="doccomment">/// Whether the function can&#39;t be generated
+    <span class="doccomment">/// Whether the function can't be generated
     </span><span class="kw">pub </span>commented: bool,
     <span class="doccomment">/// In order to generate docs links we need to know in which namespace
     /// this potential global function is defined
@@ -1434,8 +1435,8 @@
 
     <span class="kw">pub fn </span>is_special(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="self">self</span>.codegen_name()
-            .trim_end_matches(<span class="string">&#39;_&#39;</span>)
-            .rsplit(<span class="string">&#39;_&#39;</span>)
+            .trim_end_matches(<span class="string">'_'</span>)
+            .rsplit(<span class="string">'_'</span>)
             .next()
             .map_or(<span class="bool-val">false</span>, |i| i.parse::&lt;special_functions::Type&gt;().is_ok())
     }
@@ -1458,10 +1459,10 @@
     ) -&gt; String {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(p) = parent {
             <span class="kw">if </span>is_self {
-                <span class="macro">format!</span>(<span class="string">&quot;[`{f}()`][Self::{f}()]&quot;</span>, f = <span class="self">self</span>.codegen_name())
+                <span class="macro">format!</span>(<span class="string">"[`{f}()`][Self::{f}()]"</span>, f = <span class="self">self</span>.codegen_name())
             } <span class="kw">else </span>{
                 <span class="macro">format!</span>(
-                    <span class="string">&quot;[`{visible_parent}::{f}()`][crate::{p}::{f}()]&quot;</span>,
+                    <span class="string">"[`{visible_parent}::{f}()`][crate::{p}::{f}()]"</span>,
                     visible_parent = visible_parent.unwrap_or(p),
                     p = p,
                     f = <span class="self">self</span>.codegen_name()
@@ -1469,7 +1470,7 @@
             }
         } <span class="kw">else </span>{
             <span class="macro">format!</span>(
-                <span class="string">&quot;[`{fn_name}()`][crate::{fn_name}()]&quot;</span>,
+                <span class="string">"[`{fn_name}()`][crate::{fn_name}()]"</span>,
                 fn_name = <span class="self">self</span>.codegen_name()
             )
         }
@@ -1480,8 +1481,8 @@
             </span>.parameters
             .rust_parameters
             .iter()
-            .any(|param| param.typ.full_name(<span class="kw-2">&amp;</span>env.library) == <span class="string">&quot;Gio.AsyncResult&quot;</span>);
-        <span class="self">self</span>.name.ends_with(<span class="string">&quot;_finish&quot;</span>) &amp;&amp; has_async_result
+            .any(|param| param.typ.full_name(<span class="kw-2">&amp;</span>env.library) == <span class="string">"Gio.AsyncResult"</span>);
+        <span class="self">self</span>.name.ends_with(<span class="string">"_finish"</span>) &amp;&amp; has_async_result
     }
 }
 
@@ -1498,13 +1499,13 @@
 ) -&gt; Vec&lt;Info&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>funcs = Vec::new();
 
-    <span class="lifetime">&#39;func</span>: <span class="kw">for </span>func <span class="kw">in </span>functions {
+    <span class="lifetime">'func</span>: <span class="kw">for </span>func <span class="kw">in </span>functions {
         <span class="kw">let </span>func = func.borrow();
         <span class="kw">let </span>configured_functions = obj.functions.matched(<span class="kw-2">&amp;</span>func.name);
         <span class="kw">let </span><span class="kw-2">mut </span>status = obj.status;
         <span class="kw">for </span>f <span class="kw">in </span><span class="kw-2">&amp;</span>configured_functions {
             <span class="kw">match </span>f.status {
-                GStatus::Ignore =&gt; <span class="kw">continue </span><span class="lifetime">&#39;func</span>,
+                GStatus::Ignore =&gt; <span class="kw">continue </span><span class="lifetime">'func</span>,
                 GStatus::Manual =&gt; {
                     status = GStatus::Manual;
                     <span class="kw">break</span>;
@@ -1572,7 +1573,7 @@
 
     <span class="kw">let </span>glib_name = env.library.type_(type_tid).get_glib_name().unwrap();
     <span class="kw">let </span>ffi_name = ffi_type::ffi_type(env, type_tid, glib_name).unwrap();
-    <span class="kw">let </span>pointer_type = <span class="kw">if </span>is_boxed { <span class="string">&quot;*const&quot; </span>} <span class="kw">else </span>{ <span class="string">&quot;*mut&quot; </span>};
+    <span class="kw">let </span>pointer_type = <span class="kw">if </span>is_boxed { <span class="string">"*const" </span>} <span class="kw">else </span>{ <span class="string">"*mut" </span>};
     parameters.rust_parameters[idx].typ = type_tid;
     parameters.c_parameters[idx].typ = type_tid;
     parameters.c_parameters[idx].instance_parameter = instance_parameter;
@@ -1587,10 +1588,10 @@
             transfer: Transfer::None,
             ref_mode: RefMode::ByRef,
             to_glib_extra: Default::default(),
-            explicit_target_type: <span class="macro">format!</span>(<span class="string">&quot;{} {}&quot;</span>, pointer_type, ffi_name.as_str()),
+            explicit_target_type: <span class="macro">format!</span>(<span class="string">"{} {}"</span>, pointer_type, ffi_name.as_str()),
             pointer_cast: <span class="macro">format!</span>(
-                <span class="string">&quot; as {}&quot;</span>,
-                nameutil::use_glib_if_needed(env, <span class="string">&quot;ffi::gconstpointer&quot;</span>)
+                <span class="string">" as {}"</span>,
+                nameutil::use_glib_if_needed(env, <span class="string">"ffi::gconstpointer"</span>)
             ),
             in_trait,
             nullable: <span class="bool-val">false</span>,
@@ -1608,18 +1609,18 @@
     parameters: <span class="kw-2">&amp;mut </span>Parameters,
 ) {
     <span class="comment">// Workaround for some _hash() / _compare() / _equal() functions taking
-    // &quot;gconstpointer&quot; as arguments instead of the actual type
-    </span><span class="kw">if </span>name == <span class="string">&quot;hash&quot;
+    // "gconstpointer" as arguments instead of the actual type
+    </span><span class="kw">if </span>name == <span class="string">"hash"
         </span>&amp;&amp; parameters.c_parameters.len() == <span class="number">1
-        </span>&amp;&amp; parameters.c_parameters[<span class="number">0</span>].c_type == <span class="string">&quot;gconstpointer&quot;
+        </span>&amp;&amp; parameters.c_parameters[<span class="number">0</span>].c_type == <span class="string">"gconstpointer"
     </span>{
         fixup_gpointer_parameter(env, type_tid, is_boxed, in_trait, parameters, <span class="number">0</span>);
     }
 
-    <span class="kw">if </span>(name == <span class="string">&quot;compare&quot; </span>|| name == <span class="string">&quot;equal&quot; </span>|| name == <span class="string">&quot;is_equal&quot;</span>)
+    <span class="kw">if </span>(name == <span class="string">"compare" </span>|| name == <span class="string">"equal" </span>|| name == <span class="string">"is_equal"</span>)
         &amp;&amp; parameters.c_parameters.len() == <span class="number">2
-        </span>&amp;&amp; parameters.c_parameters[<span class="number">0</span>].c_type == <span class="string">&quot;gconstpointer&quot;
-        </span>&amp;&amp; parameters.c_parameters[<span class="number">1</span>].c_type == <span class="string">&quot;gconstpointer&quot;
+        </span>&amp;&amp; parameters.c_parameters[<span class="number">0</span>].c_type == <span class="string">"gconstpointer"
+        </span>&amp;&amp; parameters.c_parameters[<span class="number">1</span>].c_type == <span class="string">"gconstpointer"
     </span>{
         fixup_gpointer_parameter(env, type_tid, is_boxed, in_trait, parameters, <span class="number">0</span>);
         fixup_gpointer_parameter(env, type_tid, is_boxed, in_trait, parameters, <span class="number">1</span>);
@@ -1665,7 +1666,7 @@
     <span class="kw">let </span><span class="kw-2">mut </span>to_remove = Vec::new();
 
     {
-        <span class="comment">// When closure data and destroy are specified in gir, they don&#39;t take into
+        <span class="comment">// When closure data and destroy are specified in gir, they don't take into
         // account the actual closure parameter.
         </span><span class="kw">let </span><span class="kw-2">mut </span>c_parameters = Vec::new();
         <span class="kw">for </span>(pos, par) <span class="kw">in </span>parameters.c_parameters.iter().enumerate() {
@@ -1689,7 +1690,7 @@
             <span class="kw">let </span>par = <span class="kw-2">&amp;</span>parameters.c_parameters[pos];
             <span class="macro">assert!</span>(
                 !par.instance_parameter || pos == <span class="number">0</span>,
-                <span class="string">&quot;Wrong instance parameter in {}&quot;</span>,
+                <span class="string">"Wrong instance parameter in {}"</span>,
                 func.c_identifier.as_ref().unwrap()
             );
             <span class="kw">if let </span><span class="prelude-val">Ok</span>(rust_type) = RustType::builder(env, par.typ)
@@ -1710,7 +1711,7 @@
                     configured_functions,
                 );
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(to_glib_extra) = to_glib_extra {
-                    <span class="kw">if </span>par.c_type != <span class="string">&quot;GDestroyNotify&quot; </span>{
+                    <span class="kw">if </span>par.c_type != <span class="string">"GDestroyNotify" </span>{
                         to_glib_extras.insert(pos, to_glib_extra);
                     }
                 }
@@ -1720,7 +1721,7 @@
             </span>};
 
             <span class="kw">if </span>rust_type.is_function() {
-                <span class="kw">if </span>par.c_type != <span class="string">&quot;GDestroyNotify&quot; </span>{
+                <span class="kw">if </span>par.c_type != <span class="string">"GDestroyNotify" </span>{
                     <span class="kw">let </span>callback_parameters_config = configured_functions.iter().find_map(|f| {
                         f.parameters
                             .iter()
@@ -1746,7 +1747,7 @@
                             <span class="kw">if </span><span class="kw-2">*</span>user_data != callback.user_data_index {
                                 <span class="macro">warn_main!</span>(
                                     type_tid,
-                                    <span class="string">&quot;`{}`: Different destructors cannot share the same user data&quot;</span>,
+                                    <span class="string">"`{}`: Different destructors cannot share the same user data"</span>,
                                     func_name
                                 );
                                 <span class="kw-2">*</span>commented = <span class="bool-val">true</span>;
@@ -1772,7 +1773,7 @@
                     rust_type,
                     <span class="prelude-val">None</span>,
                 ) {
-                    <span class="comment">// We just assume that for API &quot;cleanness&quot;, the destroy callback will always
+                    <span class="comment">// We just assume that for API "cleanness", the destroy callback will always
                     // be |-&gt; *after* &lt;-| the initial callback.
                     </span><span class="kw">if let </span><span class="prelude-val">Some</span>(user_data_index) = cross_user_data_check.get(<span class="kw-2">&amp;</span>pos) {
                         callback.user_data_index = <span class="kw-2">*</span>user_data_index;
@@ -1780,7 +1781,7 @@
                     } <span class="kw">else </span>{
                         <span class="macro">warn_main!</span>(
                             type_tid,
-                            <span class="string">&quot;`{}`: no user data point to the destroy callback&quot;</span>,
+                            <span class="string">"`{}`: no user data point to the destroy callback"</span>,
                             func_name,
                         );
                         <span class="kw-2">*</span>commented = <span class="bool-val">true</span>;
@@ -1813,14 +1814,14 @@
             ) {
                 <span class="macro">warn_main!</span>(
                     type_tid,
-                    <span class="string">&quot;`{}`: destructor without linked callback&quot;</span>,
+                    <span class="string">"`{}`: destructor without linked callback"</span>,
                     func_name
                 );
             }
         }
     }
 
-    <span class="comment">// Check for cross &quot;user data&quot;.
+    <span class="comment">// Check for cross "user data".
     </span><span class="kw">if </span>cross_user_data_check
         .values()
         .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
@@ -1830,7 +1831,7 @@
         <span class="kw-2">*</span>commented = <span class="bool-val">true</span>;
         <span class="macro">warn_main!</span>(
             type_tid,
-            <span class="string">&quot;`{}`: Different user data share the same destructors&quot;</span>,
+            <span class="string">"`{}`: Different user data share the same destructors"</span>,
             func.name
         );
     }
@@ -1847,7 +1848,7 @@
             .collect::&lt;HashSet&lt;<span class="kw">_</span>&gt;&gt;() <span class="comment">// To prevent duplicates.
             </span>.into_iter()
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-        s.sort(); <span class="comment">// We need to sort the array, otherwise the indexes won&#39;t be working
+        s.sort(); <span class="comment">// We need to sort the array, otherwise the indexes won't be working
                   // anymore.
         </span><span class="kw">for </span>pos <span class="kw">in </span>s.iter().rev() {
             params.remove(<span class="kw-2">**</span>pos);
@@ -1863,7 +1864,7 @@
     } <span class="kw">else </span>{
         <span class="macro">warn_main!</span>(
             type_tid,
-            <span class="string">&quot;`{}`: this is supposed to be a callback function but no callback was found...&quot;</span>,
+            <span class="string">"`{}`: this is supposed to be a callback function but no callback was found..."</span>,
             func.name
         );
         <span class="kw-2">*</span>commented = <span class="bool-val">true</span>;
@@ -1886,7 +1887,7 @@
     <span class="kw">let </span>ns_id = type_tid.map_or(MAIN_NAMESPACE, |t| t.ns_id);
     <span class="kw">let </span>type_tid = type_tid.unwrap_or_default();
     <span class="kw">let </span>r#async = func.parameters.iter().any(|parameter| {
-        parameter.scope == ParameterScope::Async &amp;&amp; parameter.c_type == <span class="string">&quot;GAsyncReadyCallback&quot;
+        parameter.scope == ParameterScope::Async &amp;&amp; parameter.c_type == <span class="string">"GAsyncReadyCallback"
     </span>});
     <span class="kw">let </span>has_callback_parameter = !r#async
         &amp;&amp; func
@@ -1914,14 +1915,14 @@
         &amp;&amp; func
             .parameters
             .iter()
-            .any(|par| par.c_type == <span class="string">&quot;GDestroyNotify&quot;</span>)
+            .any(|par| par.c_type == <span class="string">"GDestroyNotify"</span>)
     {
         <span class="comment">// In here, We have a DestroyNotify callback but no other callback is provided.
         // A good example of this situation is this function:
         // https://developer.gnome.org/gio/stable/GTlsPassword.html#g-tls-password-set-value-full
         </span><span class="macro">warn_main!</span>(
             type_tid,
-            <span class="string">&quot;Function \&quot;{}\&quot; with destroy callback without callbacks&quot;</span>,
+            <span class="string">"Function \"{}\" with destroy callback without callbacks"</span>,
             func.name
         );
         commented = <span class="bool-val">true</span>;
@@ -1937,14 +1938,14 @@
             <span class="kw">if </span>func.kind == library::FunctionKind::Constructor &amp;&amp; is_constructor {
                 <span class="macro">warn_main!</span>(
                     type_tid,
-                    <span class="string">&quot;`{}`: config forces &#39;constructor&#39; on an already gir-annotated &#39;constructor&#39;&quot;</span>,
+                    <span class="string">"`{}`: config forces 'constructor' on an already gir-annotated 'constructor'"</span>,
                     func_name
                 );
             }
 
-            <span class="kw">if </span>name.starts_with(<span class="string">&quot;new_from&quot;</span>)
-                || name.starts_with(<span class="string">&quot;new_with&quot;</span>)
-                || name.starts_with(<span class="string">&quot;new_for&quot;</span>)
+            <span class="kw">if </span>name.starts_with(<span class="string">"new_from"</span>)
+                || name.starts_with(<span class="string">"new_with"</span>)
+                || name.starts_with(<span class="string">"new_for"</span>)
             {
                 new_name = <span class="prelude-val">Some</span>(name[<span class="number">4</span>..].to_string());
             }
@@ -2025,7 +2026,7 @@
     <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>f) = ret.parameter {
         <span class="kw">if let </span>Type::Function(<span class="kw">_</span>) = env.library.type_(f.lib_par.typ) {
             <span class="kw">if </span>env.config.work_mode.is_normal() {
-                <span class="macro">warn!</span>(<span class="string">&quot;Function \&quot;{}\&quot; returns callback&quot;</span>, func.name);
+                <span class="macro">warn!</span>(<span class="string">"Function \"{}\" returns callback"</span>, func.name);
                 commented = <span class="bool-val">true</span>;
             }
         }
@@ -2073,7 +2074,7 @@
                 }
                 <span class="macro">assert!</span>(
                     !par.instance_parameter || pos == <span class="number">0</span>,
-                    <span class="string">&quot;Wrong instance parameter in {}&quot;</span>,
+                    <span class="string">"Wrong instance parameter in {}"</span>,
                     func.c_identifier.as_ref().unwrap()
                 );
                 <span class="kw">if let </span><span class="prelude-val">Ok</span>(rust_type) = RustType::builder(env, par.typ)
@@ -2081,7 +2082,7 @@
                     .try_from_glib(<span class="kw-2">&amp;</span>par.try_from_glib)
                     .try_build()
                 {
-                    <span class="kw">if </span>!rust_type.as_str().ends_with(<span class="string">&quot;GString&quot;</span>) || par.c_type == <span class="string">&quot;gchar***&quot; </span>{
+                    <span class="kw">if </span>!rust_type.as_str().ends_with(<span class="string">"GString"</span>) || par.c_type == <span class="string">"gchar***" </span>{
                         used_types.extend(rust_type.into_used_types());
                     }
                 }
@@ -2175,15 +2176,15 @@
     <span class="kw">if </span>unsupported_outs {
         <span class="macro">warn_main!</span>(
             type_tid,
-            <span class="string">&quot;Function {} has unsupported outs&quot;</span>,
+            <span class="string">"Function {} has unsupported outs"</span>,
             func.c_identifier.as_ref().unwrap_or(<span class="kw-2">&amp;</span>func.name)
         );
         commented = <span class="bool-val">true</span>;
     }
 
     <span class="kw">if </span>r#async &amp;&amp; status.need_generate() &amp;&amp; !commented {
-        imports.add(<span class="string">&quot;std::boxed::Box as Box_&quot;</span>);
-        imports.add(<span class="string">&quot;std::pin::Pin&quot;</span>);
+        imports.add(<span class="string">"std::boxed::Box as Box_"</span>);
+        imports.add(<span class="string">"std::pin::Pin"</span>);
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>trampoline) = trampoline {
             <span class="kw">for </span>out <span class="kw">in </span><span class="kw-2">&amp;</span>trampoline.output_params {
@@ -2209,7 +2210,7 @@
         <span class="kw">if </span>(!destroys.is_empty() || !callbacks.is_empty())
             &amp;&amp; callbacks.iter().any(|c| !c.scope.is_call())
         {
-            imports.add(<span class="string">&quot;std::boxed::Box as Box_&quot;</span>);
+            imports.add(<span class="string">"std::boxed::Box as Box_"</span>);
         }
 
         <span class="kw">for </span>transformation <span class="kw">in </span><span class="kw-2">&amp;mut </span>parameters.transformations {
@@ -2222,13 +2223,13 @@
 
         imports.add_used_types(<span class="kw-2">&amp;</span>used_types);
         <span class="kw">if </span>ret.base_tid.is_some() {
-            imports.add(<span class="string">&quot;glib::prelude::*&quot;</span>);
+            imports.add(<span class="string">"glib::prelude::*"</span>);
         }
 
         <span class="kw">if </span>func.name.parse::&lt;special_functions::Type&gt;().is_err()
             || parameters.c_parameters.iter().any(|p| p.move_)
         {
-            imports.add(<span class="string">&quot;glib::translate::*&quot;</span>);
+            imports.add(<span class="string">"glib::translate::*"</span>);
         }
         bounds.update_imports(imports);
     }
@@ -2306,7 +2307,7 @@
     }) = callback_info
     {
         <span class="comment">// Checks for /*Ignored*/ or other error comments
-        </span><span class="kw-2">*</span>commented |= callback_type.contains(<span class="string">&quot;/*&quot;</span>);
+        </span><span class="kw-2">*</span>commented |= callback_type.contains(<span class="string">"/*"</span>);
         <span class="kw">let </span>func_name = func.c_identifier.as_ref().unwrap();
         <span class="kw">let </span>finish_func_name = finish_function_name(func_name);
         <span class="kw">let </span><span class="kw-2">mut </span>output_params = <span class="macro">vec!</span>[];
@@ -2341,8 +2342,8 @@
         <span class="kw">if </span>trampoline.is_some() || async_future.is_some() {
             <span class="macro">warn_main!</span>(
                 type_tid,
-                <span class="string">&quot;{}: Cannot handle callbacks and async parameters at the same time for the \
-                 moment&quot;</span>,
+                <span class="string">"{}: Cannot handle callbacks and async parameters at the same time for the \
+                 moment"</span>,
                 func.name
             );
             <span class="kw-2">*</span>commented = <span class="bool-val">true</span>;
@@ -2352,7 +2353,7 @@
             <span class="kw">if </span>success_parameters.is_empty() {
                 <span class="macro">warn_main!</span>(
                     type_tid,
-                    <span class="string">&quot;{}: missing success parameters for async future&quot;</span>,
+                    <span class="string">"{}: missing success parameters for async future"</span>,
                     func.name
                 );
             }
@@ -2364,8 +2365,8 @@
         <span class="kw-2">*</span>trampoline = <span class="prelude-val">Some</span>(AsyncTrampoline {
             is_method,
             has_error_parameter: error_parameters.is_some(),
-            name: <span class="macro">format!</span>(<span class="string">&quot;{codegen_name}_trampoline&quot;</span>),
-            finish_func_name: <span class="macro">format!</span>(<span class="string">&quot;{}::{}&quot;</span>, env.main_sys_crate_name(), finish_func_name),
+            name: <span class="macro">format!</span>(<span class="string">"{codegen_name}_trampoline"</span>),
+            finish_func_name: <span class="macro">format!</span>(<span class="string">"{}::{}"</span>, env.main_sys_crate_name(), finish_func_name),
             callback_type,
             bound_name,
             output_params,
@@ -2375,12 +2376,12 @@
         <span class="kw">if </span>!no_future {
             <span class="kw-2">*</span>async_future = <span class="prelude-val">Some</span>(AsyncFuture {
                 is_method,
-                name: <span class="macro">format!</span>(<span class="string">&quot;{}_future&quot;</span>, codegen_name.trim_end_matches(<span class="string">&quot;_async&quot;</span>)),
+                name: <span class="macro">format!</span>(<span class="string">"{}_future"</span>, codegen_name.trim_end_matches(<span class="string">"_async"</span>)),
                 success_parameters,
                 error_parameters,
                 assertion: <span class="kw">match </span>SafetyAssertionMode::of(env, is_method, parameters) {
                     SafetyAssertionMode::None =&gt; SafetyAssertionMode::None,
-                    <span class="comment">// &quot;_future&quot; functions calls the &quot;async&quot; one which has the init check, so no
+                    <span class="comment">// "_future" functions calls the "async" one which has the init check, so no
                     // need to do it twice.
                     </span><span class="kw">_ </span>=&gt; SafetyAssertionMode::Skip,
                 },
@@ -2407,11 +2408,11 @@
     <span class="kw">let </span><span class="kw-2">mut </span>imports_to_add = Vec::new();
 
     <span class="kw">if let </span>Type::Function(func) = rust_type {
-        <span class="kw">if </span>par.c_type != <span class="string">&quot;GDestroyNotify&quot; </span>{
+        <span class="kw">if </span>par.c_type != <span class="string">"GDestroyNotify" </span>{
             <span class="kw">if let </span><span class="prelude-val">Some</span>(user_data) = par.user_data_index {
                 <span class="kw">if </span>user_data &gt;= c_parameters.len() {
                     <span class="macro">warn_main!</span>(type_tid,
-                               <span class="string">&quot;function `{}` has an invalid user data index of {} when there are {} parameters&quot;</span>,
+                               <span class="string">"function `{}` has an invalid user data index of {} when there are {} parameters"</span>,
                                func_name,
                                user_data,
                                c_parameters.len());
@@ -2420,7 +2421,7 @@
                     <span class="kw-2">*</span>commented = <span class="bool-val">true</span>;
                     <span class="macro">warn_main!</span>(
                         type_tid,
-                        <span class="string">&quot;function `{}`&#39;s callback `{}` has invalid user data&quot;</span>,
+                        <span class="string">"function `{}`'s callback `{}` has invalid user data"</span>,
                         func_name,
                         par.name
                     );
@@ -2430,7 +2431,7 @@
                 <span class="kw-2">*</span>commented = <span class="bool-val">true</span>;
                 <span class="macro">warn_main!</span>(
                     type_tid,
-                    <span class="string">&quot;function `{}`&#39;s callback `{}` without associated user data&quot;</span>,
+                    <span class="string">"function `{}`'s callback `{}` without associated user data"</span>,
                     func_name,
                     par.name
                 );
@@ -2440,19 +2441,19 @@
                 <span class="kw">if </span>destroy_index &gt;= c_parameters.len() {
                     <span class="macro">warn_main!</span>(
                         type_tid,
-                        <span class="string">&quot;function `{}` has an invalid destroy index of {} when there are {} \
-                         parameters&quot;</span>,
+                        <span class="string">"function `{}` has an invalid destroy index of {} when there are {} \
+                         parameters"</span>,
                         func_name,
                         destroy_index,
                         c_parameters.len()
                     );
                     <span class="kw">return </span><span class="prelude-val">None</span>;
                 }
-                <span class="kw">if </span>c_parameters[destroy_index].<span class="number">0</span>.c_type != <span class="string">&quot;GDestroyNotify&quot; </span>{
+                <span class="kw">if </span>c_parameters[destroy_index].<span class="number">0</span>.c_type != <span class="string">"GDestroyNotify" </span>{
                     <span class="kw-2">*</span>commented = <span class="bool-val">true</span>;
                     <span class="macro">warn_main!</span>(
                         type_tid,
-                        <span class="string">&quot;function `{}`&#39;s callback `{}` has invalid destroy callback&quot;</span>,
+                        <span class="string">"function `{}`'s callback `{}` has invalid destroy callback"</span>,
                         func_name,
                         par.name
                     );
@@ -2461,15 +2462,15 @@
             }
         }
 
-        <span class="comment">// If we don&#39;t have a &quot;user data&quot; parameter, we can&#39;t get the closure so there&#39;s
+        <span class="comment">// If we don't have a "user data" parameter, we can't get the closure so there's
         // nothing we can do...
-        </span><span class="kw">if </span>par.c_type != <span class="string">&quot;GDestroyNotify&quot;
+        </span><span class="kw">if </span>par.c_type != <span class="string">"GDestroyNotify"
             </span>&amp;&amp; (func.parameters.is_empty() || !func.parameters.iter().any(|c| c.closure.is_some()))
         {
             <span class="kw-2">*</span>commented = <span class="bool-val">true</span>;
             <span class="macro">warn_main!</span>(
                 type_tid,
-                <span class="string">&quot;Closure type `{}` doesn&#39;t provide user data for function {}&quot;</span>,
+                <span class="string">"Closure type `{}` doesn't provide user data for function {}"</span>,
                 par.c_type,
                 func_name,
             );
@@ -2483,7 +2484,7 @@
             <span class="kw-2">&amp;</span>[],
             callback_parameters_config,
         );
-        <span class="kw">if </span>par.c_type != <span class="string">&quot;GDestroyNotify&quot; </span>&amp;&amp; !<span class="kw-2">*</span>commented {
+        <span class="kw">if </span>par.c_type != <span class="string">"GDestroyNotify" </span>&amp;&amp; !<span class="kw-2">*</span>commented {
             <span class="kw-2">*</span>commented |= func.parameters.iter().any(|p| {
                 <span class="kw">if </span>p.closure.is_none() {
                     <span class="kw">crate</span>::analysis::trampolines::type_error(env, p).is_some()
@@ -2506,17 +2507,17 @@
             .direction(ParameterDirection::Return)
             .try_build()
         {
-            <span class="kw">if </span>!rust_type.as_str().ends_with(<span class="string">&quot;GString&quot;</span>)
-                &amp;&amp; !rust_type.as_str().ends_with(<span class="string">&quot;GAsyncResult&quot;</span>)
+            <span class="kw">if </span>!rust_type.as_str().ends_with(<span class="string">"GString"</span>)
+                &amp;&amp; !rust_type.as_str().ends_with(<span class="string">"GAsyncResult"</span>)
             {
                 imports_to_add.extend(rust_type.into_used_types());
             }
         }
         <span class="kw">let </span>user_data_index = par.user_data_index.unwrap_or(<span class="number">0</span>);
-        <span class="kw">if </span>par.c_type != <span class="string">&quot;GDestroyNotify&quot; </span>&amp;&amp; c_parameters.len() &lt;= user_data_index {
+        <span class="kw">if </span>par.c_type != <span class="string">"GDestroyNotify" </span>&amp;&amp; c_parameters.len() &lt;= user_data_index {
             <span class="macro">warn_main!</span>(
                 type_tid,
-                <span class="string">&quot;`{}`: Invalid user data index of `{}`&quot;</span>,
+                <span class="string">"`{}`: Invalid user data index of `{}`"</span>,
                 func.name,
                 user_data_index
             );
@@ -2528,7 +2529,7 @@
         } {
             <span class="macro">warn_main!</span>(
                 type_tid,
-                <span class="string">&quot;`{}`: Invalid destroy index of `{}`&quot;</span>,
+                <span class="string">"`{}`: Invalid destroy index of `{}`"</span>,
                 func.name,
                 par.destroy_index.unwrap()
             );
@@ -2555,7 +2556,7 @@
                         {
                             <span class="prelude-val">Ok</span>(rust_type) =&gt; rust_type.into_string(),
                             <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; {
-                                <span class="macro">warn_main!</span>(type_tid, <span class="string">&quot;`{}`: unknown type&quot;</span>, func.name);
+                                <span class="macro">warn_main!</span>(type_tid, <span class="string">"`{}`: unknown type"</span>, func.name);
                                 <span class="kw">return </span><span class="prelude-val">None</span>;
                             }
                         },
@@ -2566,8 +2567,8 @@
                     concurrency: library::Concurrency::None,
                     is_notify: <span class="bool-val">false</span>,
                     scope: par.scope,
-                    <span class="comment">// If destroy callback, id doesn&#39;t matter.
-                    </span>user_data_index: <span class="kw">if </span>par.c_type != <span class="string">&quot;GDestroyNotify&quot; </span>{
+                    <span class="comment">// If destroy callback, id doesn't matter.
+                    </span>user_data_index: <span class="kw">if </span>par.c_type != <span class="string">"GDestroyNotify" </span>{
                         c_parameters[user_data_index].<span class="number">1
                     </span>} <span class="kw">else </span>{
                         <span class="number">0
@@ -2585,8 +2586,8 @@
     </span>}
 }
 
-<span class="kw">pub fn </span>find_function&lt;<span class="lifetime">&#39;a</span>&gt;(env: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Env, c_identifier: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Function&gt; {
-    <span class="kw">let </span>find = |functions: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[Function]| -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Function&gt; {
+<span class="kw">pub fn </span>find_function&lt;<span class="lifetime">'a</span>&gt;(env: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Env, c_identifier: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Function&gt; {
+    <span class="kw">let </span>find = |functions: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[Function]| -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Function&gt; {
         <span class="kw">for </span>function <span class="kw">in </span>functions {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>func_c_identifier) = function.c_identifier {
                 <span class="kw">if </span>func_c_identifier == c_identifier {
@@ -2619,16 +2620,16 @@
 
 <span class="doccomment">/// Given async function name tries to guess the name of finish function.
 </span><span class="kw">pub fn </span>finish_function_name(<span class="kw-2">mut </span>func_name: <span class="kw-2">&amp;</span>str) -&gt; String {
-    <span class="kw">if </span>func_name.ends_with(<span class="string">&quot;_async&quot;</span>) {
-        <span class="kw">let </span>len = func_name.len() - <span class="string">&quot;_async&quot;</span>.len();
+    <span class="kw">if </span>func_name.ends_with(<span class="string">"_async"</span>) {
+        <span class="kw">let </span>len = func_name.len() - <span class="string">"_async"</span>.len();
         func_name = <span class="kw-2">&amp;</span>func_name[<span class="number">0</span>..len];
     }
-    <span class="macro">format!</span>(<span class="string">&quot;{}_finish&quot;</span>, <span class="kw-2">&amp;</span>func_name)
+    <span class="macro">format!</span>(<span class="string">"{}_finish"</span>, <span class="kw-2">&amp;</span>func_name)
 }
 
-<span class="kw">pub fn </span>find_index_to_ignore&lt;<span class="lifetime">&#39;a</span>&gt;(
-    parameters: <span class="kw">impl </span>IntoIterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>library::Parameter&gt;,
-    ret: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>library::Parameter&gt;,
+<span class="kw">pub fn </span>find_index_to_ignore&lt;<span class="lifetime">'a</span>&gt;(
+    parameters: <span class="kw">impl </span>IntoIterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>library::Parameter&gt;,
+    ret: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>library::Parameter&gt;,
 ) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
     parameters
         .into_iter()
@@ -2644,10 +2645,10 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_finish_function_name() {
         <span class="macro">assert_eq!</span>(
-            <span class="string">&quot;g_file_copy_finish&quot;</span>,
-            <span class="kw-2">&amp;</span>finish_function_name(<span class="string">&quot;g_file_copy_async&quot;</span>)
+            <span class="string">"g_file_copy_finish"</span>,
+            <span class="kw-2">&amp;</span>finish_function_name(<span class="string">"g_file_copy_async"</span>)
         );
-        <span class="macro">assert_eq!</span>(<span class="string">&quot;g_bus_get_finish&quot;</span>, <span class="kw-2">&amp;</span>finish_function_name(<span class="string">&quot;g_bus_get&quot;</span>));
+        <span class="macro">assert_eq!</span>(<span class="string">"g_bus_get_finish"</span>, <span class="kw-2">&amp;</span>finish_function_name(<span class="string">"g_bus_get"</span>));
     }
 }
 </code></pre></div></section></main></body></html>
