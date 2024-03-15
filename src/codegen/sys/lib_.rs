@@ -25,18 +25,6 @@ pub fn generate(env: &Env) {
     save_to_file(&path, env.config.make_backup, |w| generate_lib(w, env));
 }
 
-fn write_link_attr(w: &mut dyn Write, shared_libs: &[String]) -> Result<()> {
-    for it in shared_libs {
-        writeln!(
-            w,
-            "#[link(name = \"{}\")]",
-            shared_lib_name_to_link_name(it)
-        )?;
-    }
-
-    Ok(())
-}
-
 fn generate_lib(w: &mut dyn Write, env: &Env) -> Result<()> {
     general::start_comments(w, &env.config)?;
     statics::begin(w)?;
@@ -89,7 +77,6 @@ fn generate_lib(w: &mut dyn Write, env: &Env) -> Result<()> {
     }
 
     if !env.namespaces.main().shared_libs.is_empty() {
-        write_link_attr(w, &env.namespaces.main().shared_libs)?;
         writeln!(w, "extern \"C\" {{")?;
         functions::generate_enums_funcs(w, env, &enums)?;
         functions::generate_bitfields_funcs(w, env, &bitfields)?;
