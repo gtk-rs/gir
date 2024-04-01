@@ -230,6 +230,13 @@ pub enum Basic {
     Type,
     IntPtr,
     UIntPtr,
+    TimeT,
+    OffT,
+    DevT,
+    GidT,
+    PidT,
+    SockLenT,
+    UidT,
     // Same encoding as Filename but can contains any string
     // Not defined in GLib directly
     OsString,
@@ -303,6 +310,13 @@ const BASIC: &[(&str, Basic)] = &[
     // TODO: this is temporary name, change it when type added to GLib
     ("os_string", Basic::OsString),
     ("bool", Basic::Bool),
+    ("time_t", Basic::TimeT),
+    ("off_t", Basic::OffT),
+    ("dev_t", Basic::DevT),
+    ("gid_t", Basic::GidT),
+    ("pid_t", Basic::PidT),
+    ("socklen_t", Basic::SockLenT),
+    ("uid_t", Basic::UidT),
 ];
 
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord)]
