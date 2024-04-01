@@ -63,7 +63,6 @@ trait FunctionLikeType {
     fn doc_deprecated(&self) -> &Option<String>;
     fn ret(&self) -> &Parameter;
     fn parameters(&self) -> &[Parameter];
-    fn version(&self) -> &Option<Version>;
     fn deprecated_version(&self) -> &Option<Version>;
 }
 
@@ -81,9 +80,6 @@ macro_rules! impl_function_like_type {
             }
             fn parameters(&self) -> &[Parameter] {
                 &self.parameters
-            }
-            fn version(&self) -> &Option<Version> {
-                &self.version
             }
             fn deprecated_version(&self) -> &Option<Version> {
                 &self.deprecated_version

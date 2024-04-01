@@ -3,8 +3,9 @@ use std::{borrow::Cow, ops::Deref};
 use log::info;
 
 use super::{
-    child_properties::ChildProperties, imports::Imports, info_base::InfoBase,
-    signatures::Signatures, *,
+    child_properties, child_properties::ChildProperties, class_builder, functions, general,
+    imports::Imports, info_base::InfoBase, properties, signals, signatures::Signatures,
+    special_functions, supertypes, Type, TypeId,
 };
 use crate::{
     config::gobjects::{GObject, GStatus},

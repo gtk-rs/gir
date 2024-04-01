@@ -242,7 +242,7 @@ impl<'env> RustTypeBuilder<'env> {
         mut self,
         callback_parameters_config: &[CallbackParameter],
     ) -> Self {
-        self.callback_parameters_config = callback_parameters_config.to_owned();
+        callback_parameters_config.clone_into(&mut self.callback_parameters_config);
         self
     }
 

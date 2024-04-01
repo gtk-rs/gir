@@ -8,7 +8,6 @@ use std::{
 };
 
 use xml::{
-    self,
     attribute::OwnedAttribute,
     common::{Position, TextPosition},
     name::OwnedName,

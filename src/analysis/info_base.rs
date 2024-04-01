@@ -1,4 +1,4 @@
-use super::{imports::Imports, *};
+use super::{functions, imports::Imports, special_functions};
 use crate::{codegen::Visibility, library, version::Version};
 
 #[derive(Debug, Default)]

@@ -1,6 +1,9 @@
 use log::info;
 
-use super::{function_parameters::TransformationType, imports::Imports, *};
+use super::{
+    function_parameters::TransformationType, functions, imports::Imports, library,
+    special_functions,
+};
 use crate::{codegen::Visibility, config::gobjects::GObject, env::Env, nameutil::*, traits::*};
 
 #[derive(Debug, Default)]
@@ -83,7 +86,7 @@ pub fn new(env: &Env, obj: &GObject, imports: &mut Imports) -> Option<Info> {
                 .unwrap();
 
             if let TransformationType::ToGlibScalar { name, .. } = &mut t.transformation_type {
-                *name = "self".to_owned();
+                "self".clone_into(name);
             } else {
                 panic!(
                     "Bitfield function instance param must be passed as scalar, not {:?}",

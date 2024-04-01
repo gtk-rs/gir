@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fs::File, io::prelude::*};
 
 use log::info;
-use toml::{self, value::Table, Value};
+use toml::{value::Table, Value};
 
 use super::collect_versions;
 use crate::{config::Config, env::Env, file_saver::save_to_file, nameutil, version::Version};

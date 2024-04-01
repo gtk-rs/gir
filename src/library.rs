@@ -2,7 +2,6 @@ use std::{
     cmp::{Ord, Ordering, PartialOrd},
     collections::{BTreeMap, BTreeSet, HashMap, HashSet},
     fmt,
-    iter::Iterator,
     ops::{Deref, DerefMut},
     str::FromStr,
 };

@@ -88,7 +88,7 @@ impl Library {
                 return;
             }
             if let Some(s) = c_types.get(&tid) {
-                *c_type = s.clone();
+                c_type.clone_from(s);
             }
         }
 

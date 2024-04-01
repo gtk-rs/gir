@@ -38,7 +38,7 @@ impl ToReturnValue for library::Parameter {
             && self.direction == library::ParameterDirection::Return
             && is_gstring(&name)
         {
-            name = "String".to_owned();
+            "String".clone_into(&mut name);
         }
         let type_str = match ConversionType::of(env, self.typ) {
             ConversionType::Unknown => format!("/*Unknown conversion*/{name}"),

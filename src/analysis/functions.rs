@@ -307,7 +307,7 @@ fn find_callback_bound_to_destructor(
     for call in callbacks {
         if call.destroy_index == destroy_index {
             destroy.nullable = call.nullable;
-            destroy.bound_name = call.bound_name.clone();
+            destroy.bound_name.clone_from(&call.bound_name);
             return true;
         }
     }
@@ -512,7 +512,9 @@ fn analyze_callbacks(
         for (pos, typ) in to_replace {
             let ty = env.library.type_(typ);
             params[pos].typ = typ;
-            params[pos].c_type = ty.get_glib_name().unwrap().to_owned();
+            ty.get_glib_name()
+                .unwrap()
+                .clone_into(&mut params[pos].c_type);
         }
         let mut s = to_remove
             .iter()

@@ -128,7 +128,7 @@ impl TransformationType {
 
     pub fn set_to_glib_extra(&mut self, to_glib_extra_: &str) {
         if let Self::ToGlibPointer { to_glib_extra, .. } = self {
-            *to_glib_extra = to_glib_extra_.to_owned();
+            to_glib_extra_.clone_into(to_glib_extra);
         }
     }
 }

@@ -1,8 +1,8 @@
 use std::ops::Deref;
 
-use log::info;
-
-use super::{imports::Imports, info_base::InfoBase, record_type::RecordType, *};
+use super::{
+    functions, imports::Imports, info_base::InfoBase, record_type::RecordType, special_functions,
+};
 use crate::{
     config::{
         derives::{Derive, Derives},
@@ -70,7 +70,7 @@ fn filter_derives(derives: &[Derive], names: &[&str]) -> Derives {
 }
 
 pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
-    info!("Analyzing record {}", obj.name);
+    log::info!("Analyzing record {}", obj.name);
     let full_name = obj.name.clone();
 
     let record_tid = env.library.find_type(0, &full_name)?;
@@ -191,7 +191,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
                 "Have to use get_type function for {full_name} but version is higher than for the type ({get_type_version:?} > {version:?})"
             );
         } else {
-            error!("Missing memory management functions for {}", full_name);
+            log::error!("Missing memory management functions for {}", full_name);
         }
     }
 
