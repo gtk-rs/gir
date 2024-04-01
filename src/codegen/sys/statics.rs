@@ -20,7 +20,10 @@ pub fn after_extern_crates(w: &mut dyn Write) -> Result<()> {
         "#[allow(unused_imports)]",
         "use libc::{c_int, c_char, c_uchar, c_float, c_uint, c_double,",
         "    c_short, c_ushort, c_long, c_ulong,",
-        "    c_void, size_t, ssize_t, intptr_t, uintptr_t, FILE};",
+        "    c_void, size_t, ssize_t, time_t, off_t, intptr_t, uintptr_t, FILE};",
+        "#[cfg(unix)]",
+        "#[allow(unused_imports)]",
+        "use libc::{dev_t, gid_t, pid_t, socklen_t, uid_t};",
     ];
 
     write_vec(w, &v)
