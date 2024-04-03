@@ -107,6 +107,13 @@
 <a href="#105" id="105">105</a>
 <a href="#106" id="106">106</a>
 <a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::sync::Arc;
 
 <span class="kw">use crate</span>::{env, library::<span class="kw-2">*</span>};
@@ -180,6 +187,13 @@
                 Filename =&gt; <span class="self">Self</span>::Pointer,
                 OsString =&gt; <span class="self">Self</span>::Pointer,
                 Type =&gt; <span class="self">Self</span>::Scalar,
+                TimeT =&gt; <span class="self">Self</span>::Direct,
+                OffT =&gt; <span class="self">Self</span>::Direct,
+                DevT =&gt; <span class="self">Self</span>::Direct,
+                GidT =&gt; <span class="self">Self</span>::Direct,
+                PidT =&gt; <span class="self">Self</span>::Direct,
+                SockLenT =&gt; <span class="self">Self</span>::Direct,
+                UidT =&gt; <span class="self">Self</span>::Direct,
                 <span class="prelude-val">None </span>=&gt; <span class="self">Self</span>::Unknown,
                 IntPtr =&gt; <span class="self">Self</span>::Direct,
                 UIntPtr =&gt; <span class="self">Self</span>::Direct,

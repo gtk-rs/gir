@@ -91,6 +91,9 @@
 <a href="#89" id="89">89</a>
 <a href="#90" id="90">90</a>
 <a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::io::{<span class="prelude-ty">Result</span>, Write};
 
 <span class="kw">use </span><span class="kw">super</span>::<span class="kw">super</span>::general::write_vec;
@@ -113,7 +116,10 @@
         <span class="string">"#[allow(unused_imports)]"</span>,
         <span class="string">"use libc::{c_int, c_char, c_uchar, c_float, c_uint, c_double,"</span>,
         <span class="string">"    c_short, c_ushort, c_long, c_ulong,"</span>,
-        <span class="string">"    c_void, size_t, ssize_t, intptr_t, uintptr_t, FILE};"</span>,
+        <span class="string">"    c_void, size_t, ssize_t, time_t, off_t, intptr_t, uintptr_t, FILE};"</span>,
+        <span class="string">"#[cfg(unix)]"</span>,
+        <span class="string">"#[allow(unused_imports)]"</span>,
+        <span class="string">"use libc::{dev_t, gid_t, pid_t, socklen_t, uid_t};"</span>,
     ];
 
     write_vec(w, <span class="kw-2">&amp;</span>v)
