@@ -85,10 +85,7 @@ pub fn only_for_gobject(w: &mut dyn Write) -> Result<()> {
 }
 
 pub fn only_for_gtk(w: &mut dyn Write) -> Result<()> {
-    let v = vec![
-        "",
-        "pub const GTK_ENTRY_BUFFER_MAX_SIZE: u16 = u16::MAX;",
-    ];
+    let v = vec!["", "pub const GTK_ENTRY_BUFFER_MAX_SIZE: u16 = u16::MAX;"];
 
     write_vec(w, &v)
 }

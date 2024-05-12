@@ -379,7 +379,7 @@ fn parse_object(
         .lookup("align")
         .and_then(Value::as_integer)
         .and_then(|v| {
-            if v.count_ones() != 1 || v > i64::from(u32::max_value()) || v < 0 {
+            if v.count_ones() != 1 || v > i64::from(u32::MAX) || v < 0 {
                 warn!(
                     "`align` configuration must be a power of two of type u32, found {}",
                     v
