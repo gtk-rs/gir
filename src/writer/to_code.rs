@@ -163,7 +163,7 @@ impl ToCode for Chunk {
                 }
                 let self_str = if in_trait { "Self, " } else { "" };
                 v.push(format!(
-                    "\tSome(std::mem::transmute::<_, unsafe extern \"C\" fn()>({trampoline}::<{self_str}F> as *const ())), Box_::into_raw(f))"
+                    "\tSome(std::mem::transmute::<*const (), unsafe extern \"C\" fn()>({trampoline}::<{self_str}F> as *const ())), Box_::into_raw(f))"
                 ));
                 v
             }
