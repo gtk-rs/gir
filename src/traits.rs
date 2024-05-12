@@ -1,9 +1,5 @@
 pub use crate::config::{matchable::Matchable, parameter_matchable::ParameterMatchable};
 
-pub trait AsStr {
-    fn as_str(&self) -> &str;
-}
-
 pub trait IntoString {
     fn into_string(self) -> String;
 }

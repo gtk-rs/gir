@@ -151,7 +151,7 @@ impl Builder {
         if !self.callbacks.is_empty() || !self.destroys.is_empty() {
             for (pos, callback) in self.callbacks.iter().enumerate() {
                 let user_data_index = callback.user_data_index;
-                if group_by_user_data.get(&user_data_index).is_some() {
+                if group_by_user_data.contains_key(&user_data_index) {
                     continue;
                 }
                 let calls = self
