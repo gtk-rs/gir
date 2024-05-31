@@ -427,7 +427,7 @@ impl Library {
         // for that reason.
         // FIXME: without class_hierarchy this function O(n2) due inner loop in
         // `has_subtypes`
-        let mut final_types: Vec<TypeId> = Vec::new();
+        let mut overridden_final_types: Vec<(TypeId, bool)> = Vec::new();
 
         for (ns_id, ns) in self.namespaces.iter().enumerate() {
             for (id, type_) in ns.types.iter().enumerate() {
@@ -442,16 +442,21 @@ impl Library {
                     let full_name = tid.full_name(self);
                     let obj = config.objects.get(&*full_name);
 
-                    let is_final = if let Some(GObject {
+                    if let Some(GObject {
                         final_type: Some(final_type),
                         ..
                     }) = obj
                     {
                         // The config might also be used to override a type that is wrongly
                         // detected as final type otherwise
-                        *final_type
+                        overridden_final_types.push((tid, *final_type));
+                    } else if klass.final_type {
+                        continue;
                     } else if klass.type_struct.is_none() {
-                        !self.has_subtypes(tid)
+                        let is_final = !self.has_subtypes(tid);
+                        if is_final {
+                            overridden_final_types.push((tid, true));
+                        }
                     } else {
                         let has_subtypes = self.has_subtypes(tid);
                         let instance_struct_known = !klass.fields.is_empty();
@@ -468,18 +473,19 @@ impl Library {
                             unreachable!("Can't find class for {}", full_name);
                         };
 
-                        !has_subtypes && (!instance_struct_known || !class_struct_known)
+                        let is_final =
+                            !has_subtypes && (!instance_struct_known || !class_struct_known);
+                        if is_final {
+                            overridden_final_types.push((tid, true));
+                        }
                     };
-                    if is_final {
-                        final_types.push(tid);
-                    }
                 }
             }
         }
 
-        for tid in final_types {
+        for (tid, new_is_final) in overridden_final_types {
             if let Type::Class(Class { final_type, .. }) = self.type_mut(tid) {
-                *final_type = true;
+                *final_type = new_is_final;
             } else {
                 unreachable!();
             }
