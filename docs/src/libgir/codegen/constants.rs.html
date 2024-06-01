@@ -60,6 +60,7 @@
 <a href="#58" id="58">58</a>
 <a href="#59" id="59">59</a>
 <a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::path::Path;
 
 <span class="kw">use crate</span>::{
@@ -81,6 +82,7 @@
 
     <span class="kw">let </span>sys_crate_name = env.main_sys_crate_name();
     imports.add(<span class="string">"glib::GStr"</span>);
+    imports.add(<span class="string">"crate::ffi"</span>);
 
     file_saver::save_to_file(path, env.config.make_backup, |w| {
         general::start_comments(w, <span class="kw-2">&amp;</span>env.config)<span class="question-mark">?</span>;

@@ -1077,6 +1077,19 @@
 <a href="#1075" id="1075">1075</a>
 <a href="#1076" id="1076">1076</a>
 <a href="#1077" id="1077">1077</a>
+<a href="#1078" id="1078">1078</a>
+<a href="#1079" id="1079">1079</a>
+<a href="#1080" id="1080">1080</a>
+<a href="#1081" id="1081">1081</a>
+<a href="#1082" id="1082">1082</a>
+<a href="#1083" id="1083">1083</a>
+<a href="#1084" id="1084">1084</a>
+<a href="#1085" id="1085">1085</a>
+<a href="#1086" id="1086">1086</a>
+<a href="#1087" id="1087">1087</a>
+<a href="#1088" id="1088">1088</a>
+<a href="#1089" id="1089">1089</a>
+<a href="#1090" id="1090">1090</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     collections::BTreeMap,
     fmt::{Display, Write <span class="kw">as </span>FmtWrite},
@@ -1259,8 +1272,9 @@
     unref_func: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;,
     parents: <span class="kw-2">&amp;</span>[StatusedTypeId],
     visibility: Visibility,
+    type_id: TypeId,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-    <span class="kw">let </span>sys_crate_name = env.main_sys_crate_name();
+    <span class="kw">let </span>sys_crate_name = env.sys_crate_import(type_id);
     <span class="macro">writeln!</span>(w, <span class="string">"{} {{"</span>, use_glib_type(env, <span class="string">"wrapper!"</span>))<span class="question-mark">?</span>;
     doc_alias(w, glib_name, <span class="string">""</span>, <span class="number">1</span>)<span class="question-mark">?</span>;
     external_doc_link(
@@ -1341,8 +1355,9 @@
     is_interface: bool,
     parents: <span class="kw-2">&amp;</span>[StatusedTypeId],
     visibility: Visibility,
+    type_id: TypeId,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-    <span class="kw">let </span>sys_crate_name = env.main_sys_crate_name();
+    <span class="kw">let </span>sys_crate_name = env.sys_crate_import(type_id);
     <span class="kw">let </span>class_name = {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(s) = glib_class_name {
             <span class="macro">format!</span>(<span class="string">", {sys_crate_name}::{s}"</span>)
@@ -1454,8 +1469,9 @@
     get_type_fn: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;,
     derive: <span class="kw-2">&amp;</span>[Derive],
     visibility: Visibility,
+    type_id: TypeId,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-    <span class="kw">let </span>sys_crate_name = env.main_sys_crate_name();
+    <span class="kw">let </span>sys_crate_name = env.sys_crate_import(type_id);
     <span class="macro">writeln!</span>(w, <span class="string">"{} {{"</span>, use_glib_type(env, <span class="string">"wrapper!"</span>))<span class="question-mark">?</span>;
 
     derives(w, derive, <span class="number">1</span>)<span class="question-mark">?</span>;
@@ -1519,6 +1535,7 @@
     get_type_fn: <span class="prelude-ty">Option</span>&lt;(String, <span class="prelude-ty">Option</span>&lt;Version&gt;)&gt;,
     derive: <span class="kw-2">&amp;</span>[Derive],
     visibility: Visibility,
+    type_id: TypeId,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
 
@@ -1539,6 +1556,7 @@
                 <span class="prelude-val">Some</span>(get_type_fn),
                 derive,
                 visibility,
+                type_id,
             )<span class="question-mark">?</span>;
 
             <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
@@ -1557,6 +1575,7 @@
                 <span class="prelude-val">None</span>,
                 derive,
                 visibility,
+                type_id,
             )<span class="question-mark">?</span>;
         } <span class="kw">else </span>{
             define_boxed_type_internal(
@@ -1573,6 +1592,7 @@
                 <span class="prelude-val">Some</span>(get_type_fn),
                 derive,
                 visibility,
+                type_id,
             )<span class="question-mark">?</span>;
         }
     } <span class="kw">else </span>{
@@ -1590,6 +1610,7 @@
             <span class="prelude-val">None</span>,
             derive,
             visibility,
+            type_id,
         )<span class="question-mark">?</span>;
     }
 
@@ -1608,8 +1629,9 @@
     get_type_fn: <span class="kw-2">&amp;</span>str,
     derive: <span class="kw-2">&amp;</span>[Derive],
     visibility: Visibility,
+    type_id: TypeId,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-    <span class="kw">let </span>sys_crate_name = env.main_sys_crate_name();
+    <span class="kw">let </span>sys_crate_name = env.sys_crate_import(type_id);
     <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(w, <span class="string">"{} {{"</span>, use_glib_type(env, <span class="string">"wrapper!"</span>))<span class="question-mark">?</span>;
     derives(w, derive, <span class="number">1</span>)<span class="question-mark">?</span>;
@@ -1672,8 +1694,9 @@
     get_type_fn: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;,
     derive: <span class="kw-2">&amp;</span>[Derive],
     visibility: Visibility,
+    type_id: TypeId,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-    <span class="kw">let </span>sys_crate_name = env.main_sys_crate_name();
+    <span class="kw">let </span>sys_crate_name = env.sys_crate_import(type_id);
     <span class="macro">writeln!</span>(w, <span class="string">"{} {{"</span>, use_glib_type(env, <span class="string">"wrapper!"</span>))<span class="question-mark">?</span>;
     derives(w, derive, <span class="number">1</span>)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(
@@ -1703,6 +1726,7 @@
     get_type_fn: <span class="prelude-ty">Option</span>&lt;(String, <span class="prelude-ty">Option</span>&lt;Version&gt;)&gt;,
     derive: <span class="kw-2">&amp;</span>[Derive],
     visibility: Visibility,
+    type_id: TypeId,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
     <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
 
@@ -1719,12 +1743,13 @@
                 <span class="prelude-val">Some</span>(get_type_fn),
                 derive,
                 visibility,
+                type_id,
             )<span class="question-mark">?</span>;
 
             <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
             not_version_condition_no_docsrs(w, env, <span class="prelude-val">None</span>, get_type_version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
             define_shared_type_internal(
-                w, env, type_name, glib_name, ref_fn, unref_fn, <span class="prelude-val">None</span>, derive, visibility,
+                w, env, type_name, glib_name, ref_fn, unref_fn, <span class="prelude-val">None</span>, derive, visibility, type_id,
             )<span class="question-mark">?</span>;
         } <span class="kw">else </span>{
             define_shared_type_internal(
@@ -1737,11 +1762,12 @@
                 <span class="prelude-val">Some</span>(get_type_fn),
                 derive,
                 visibility,
+                type_id,
             )<span class="question-mark">?</span>;
         }
     } <span class="kw">else </span>{
         define_shared_type_internal(
-            w, env, type_name, glib_name, ref_fn, unref_fn, <span class="prelude-val">None</span>, derive, visibility,
+            w, env, type_name, glib_name, ref_fn, unref_fn, <span class="prelude-val">None</span>, derive, visibility, type_id,
         )<span class="question-mark">?</span>;
     }
 

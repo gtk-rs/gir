@@ -573,6 +573,10 @@
 <a href="#571" id="571">571</a>
 <a href="#572" id="572">572</a>
 <a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     collections::{BTreeMap, HashSet},
     io::{<span class="prelude-ty">Result</span>, Write},
@@ -666,6 +670,7 @@
                 analysis.unref_fn.as_deref(),
                 <span class="kw-2">&amp;</span>analysis.supertypes,
                 analysis.visibility,
+                analysis.type_id,
             )<span class="question-mark">?</span>;
         } <span class="kw">else </span>{
             general::define_object_type(
@@ -678,6 +683,7 @@
                 analysis.is_interface,
                 <span class="kw-2">&amp;</span>analysis.supertypes,
                 analysis.visibility,
+                analysis.type_id,
             )<span class="question-mark">?</span>;
         }
     } <span class="kw">else </span>{
@@ -720,6 +726,7 @@
                     analysis.is_interface,
                     <span class="kw-2">&amp;</span>supertypes,
                     analysis.visibility,
+                    analysis.type_id,
                 )<span class="question-mark">?</span>;
 
                 <span class="kw">for </span>t <span class="kw">in </span>stypes {
@@ -750,6 +757,7 @@
             analysis.is_interface,
             <span class="kw-2">&amp;</span>supertypes,
             analysis.visibility,
+            analysis.type_id,
         )<span class="question-mark">?</span>;
     }
 

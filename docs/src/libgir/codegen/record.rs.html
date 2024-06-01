@@ -179,6 +179,9 @@
 <a href="#177" id="177">177</a>
 <a href="#178" id="178">178</a>
 <a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::io::{<span class="prelude-ty">Result</span>, Write};
 
 <span class="kw">use super</span>::{function, general, trait_impls};
@@ -209,6 +212,7 @@
                 glib_get_type,
                 <span class="kw-2">&amp;</span>analysis.derives,
                 analysis.visibility,
+                analysis.type_id,
             )<span class="question-mark">?</span>;
         } <span class="kw">else </span>{
             <span class="macro">panic!</span>(
@@ -236,6 +240,7 @@
             }),
             <span class="kw-2">&amp;</span>analysis.derives,
             analysis.visibility,
+            analysis.type_id,
         )<span class="question-mark">?</span>;
     } <span class="kw">else if let </span>(<span class="prelude-val">Some</span>(copy_fn), <span class="prelude-val">Some</span>(free_fn)) = (
         analysis.specials.traits().get(<span class="kw-2">&amp;</span>Type::Copy),
@@ -261,6 +266,7 @@
             }),
             <span class="kw-2">&amp;</span>analysis.derives,
             analysis.visibility,
+            analysis.type_id,
         )<span class="question-mark">?</span>;
     } <span class="kw">else </span>{
         <span class="macro">panic!</span>(

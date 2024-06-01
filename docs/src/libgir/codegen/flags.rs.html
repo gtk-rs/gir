@@ -457,7 +457,7 @@
     config: <span class="kw-2">&amp;</span>GObject,
     analysis: <span class="kw-2">&amp;</span>Info,
 ) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-    <span class="kw">let </span>sys_crate_name = env.main_sys_crate_name();
+    <span class="kw">let </span>sys_crate_name = env.sys_crate_import(analysis.type_id);
     cfg_condition_no_doc(w, config.cfg_condition.as_ref(), <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
     version_condition_no_doc(w, env, <span class="prelude-val">None</span>, flags.version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(w, <span class="string">"bitflags! {{"</span>)<span class="question-mark">?</span>;

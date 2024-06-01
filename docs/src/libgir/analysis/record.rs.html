@@ -224,6 +224,7 @@
 <a href="#222" id="222">222</a>
 <a href="#223" id="223">223</a>
 <a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::ops::Deref;
 
 <span class="kw">use </span>log::info;
@@ -314,6 +315,7 @@
     <span class="kw">let </span>boxed_inline = obj.boxed_inline;
 
     <span class="kw">let </span><span class="kw-2">mut </span>imports = Imports::with_defined(<span class="kw-2">&amp;</span>env.library, <span class="kw-2">&amp;</span>name);
+    imports.add(<span class="string">"crate::ffi"</span>);
 
     <span class="kw">let </span><span class="kw-2">mut </span>functions = functions::analyze(
         env,

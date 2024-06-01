@@ -360,6 +360,7 @@
 <a href="#358" id="358">358</a>
 <a href="#359" id="359">359</a>
 <a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::collections::BTreeMap;
 
 <span class="kw">use </span>imports::Imports;
@@ -641,6 +642,7 @@
 
     <span class="kw">let </span><span class="kw-2">mut </span>imports = imports::Imports::new(<span class="kw-2">&amp;</span>env.library);
     imports.add(<span class="string">"glib::translate::*"</span>);
+    imports.add(<span class="string">"crate:ffi"</span>);
 
     <span class="kw">let </span>functions = functions::analyze(
         env,

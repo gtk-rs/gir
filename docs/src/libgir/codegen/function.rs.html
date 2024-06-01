@@ -489,6 +489,12 @@
 <a href="#487" id="487">487</a>
 <a href="#488" id="488">488</a>
 <a href="#489" id="489">489</a>
+<a href="#490" id="490">490</a>
+<a href="#491" id="491">491</a>
+<a href="#492" id="492">492</a>
+<a href="#493" id="493">493</a>
+<a href="#494" id="494">494</a>
+<a href="#495" id="495">495</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     fmt,
     io::{<span class="prelude-ty">Result</span>, Write},
@@ -629,7 +635,7 @@
     )<span class="question-mark">?</span>;
 
     <span class="kw">if </span>!only_declaration {
-        <span class="kw">let </span>body = body_chunk(env, analysis).to_code(env);
+        <span class="kw">let </span>body = body_chunk(env, analysis, parent_type_id).to_code(env);
         <span class="kw">for </span>s <span class="kw">in </span>body {
             <span class="macro">writeln!</span>(w, <span class="string">"{}{}"</span>, tabs(indent), s)<span class="question-mark">?</span>;
         }
@@ -824,7 +830,11 @@
     (type_names, bounds)
 }
 
-<span class="kw">pub fn </span>body_chunk(env: <span class="kw-2">&amp;</span>Env, analysis: <span class="kw-2">&amp;</span>analysis::functions::Info) -&gt; Chunk {
+<span class="kw">pub fn </span>body_chunk(
+    env: <span class="kw-2">&amp;</span>Env,
+    analysis: <span class="kw-2">&amp;</span>analysis::functions::Info,
+    parent_type_id: <span class="prelude-ty">Option</span>&lt;TypeId&gt;,
+) -&gt; Chunk {
     <span class="kw">if </span>analysis.commented {
         <span class="kw">return </span>ffi_function_todo(env, <span class="kw-2">&amp;</span>analysis.glib_name);
     }
@@ -832,12 +842,14 @@
     <span class="kw">let </span>outs_as_return = !analysis.outs.is_empty();
 
     <span class="kw">let </span><span class="kw-2">mut </span>builder = function_body_chunk::Builder::new();
+    <span class="kw">let </span>sys_crate_name = <span class="kw">if let </span><span class="prelude-val">Some</span>(ty_id) = parent_type_id {
+        env.sys_crate_import(ty_id)
+    } <span class="kw">else </span>{
+        env.main_sys_crate_name().to_owned()
+    };
+
     builder
-        .glib_name(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-            <span class="string">"{}::{}"</span>,
-            env.main_sys_crate_name(),
-            analysis.glib_name
-        ))
+        .glib_name(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"{}::{}"</span>, sys_crate_name, analysis.glib_name))
         .assertion(analysis.assertion)
         .ret(<span class="kw-2">&amp;</span>analysis.ret)
         .transformations(<span class="kw-2">&amp;</span>analysis.parameters.transformations)

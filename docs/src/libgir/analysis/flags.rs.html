@@ -112,6 +112,7 @@
 <a href="#110" id="110">110</a>
 <a href="#111" id="111">111</a>
 <a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>log::info;
 
 <span class="kw">use super</span>::{function_parameters::TransformationType, imports::Imports, <span class="kw-2">*</span>};
@@ -153,6 +154,7 @@
     <span class="kw">if </span>obj.status.need_generate() {
         <span class="comment">// Mark the type as available within the bitfield namespace:
         </span>imports.add_defined(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"crate::{name}"</span>));
+        imports.add(<span class="string">"crate::ffi"</span>);
 
         <span class="kw">let </span>imports = <span class="kw-2">&amp;mut </span>imports.with_defaults(flags.version, <span class="kw-2">&amp;</span><span class="prelude-val">None</span>);
         imports.add(<span class="string">"glib::translate::*"</span>);

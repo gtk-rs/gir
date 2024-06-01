@@ -653,7 +653,7 @@
 
     <span class="kw">let </span><span class="kw-2">mut </span>members: Vec&lt;Member&lt;<span class="lifetime">'_</span>&gt;&gt; = Vec::new();
     <span class="kw">let </span><span class="kw-2">mut </span>vals: HashSet&lt;String&gt; = HashSet::new();
-    <span class="kw">let </span>sys_crate_name = env.main_sys_crate_name();
+    <span class="kw">let </span>sys_crate_name = env.sys_crate_import(analysis.type_id);
 
     <span class="kw">for </span>member <span class="kw">in </span><span class="kw-2">&amp;</span>enum_.members {
         <span class="kw">let </span>member_config = config.members.matched(<span class="kw-2">&amp;</span>member.name);
