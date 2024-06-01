@@ -98,6 +98,8 @@ pub struct Info {
     /// this potential global function is defined
     pub ns_id: NsId,
     pub generate_doc: bool,
+    pub get_property: Option<String>,
+    pub set_property: Option<String>,
 }
 
 impl Info {
@@ -942,6 +944,8 @@ fn analyze_function(
         hidden: false,
         ns_id,
         generate_doc,
+        get_property: func.get_property.clone(),
+        set_property: func.set_property.clone(),
     }
 }
 

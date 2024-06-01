@@ -106,6 +106,16 @@ pub fn generate(
     if analysis.codegen_name() != analysis.func_name {
         doc_alias(w, &analysis.func_name, comment_prefix, indent)?;
     }
+    if let Some(get_property) = &analysis.get_property {
+        if get_property != analysis.codegen_name() {
+            doc_alias(w, get_property, comment_prefix, indent)?;
+        }
+    }
+    if let Some(set_property) = &analysis.set_property {
+        if set_property != analysis.codegen_name() {
+            doc_alias(w, set_property, comment_prefix, indent)?;
+        }
+    }
     // Don't add a guard for public or copy/equal functions
     let dead_code_cfg = if !analysis.visibility.is_public() && !analysis.is_special() {
         "#[allow(dead_code)]"
