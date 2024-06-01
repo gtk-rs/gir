@@ -138,7 +138,7 @@ pub fn generate(
     )?;
 
     if !only_declaration {
-        let body = body_chunk(env, analysis).to_code(env);
+        let body = body_chunk(env, analysis, parent_type_id).to_code(env);
         for s in body {
             writeln!(w, "{}{}", tabs(indent), s)?;
         }
@@ -333,7 +333,11 @@ pub fn bounds(
     (type_names, bounds)
 }
 
-pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
+pub fn body_chunk(
+    env: &Env,
+    analysis: &analysis::functions::Info,
+    parent_type_id: Option<TypeId>,
+) -> Chunk {
     if analysis.commented {
         return ffi_function_todo(env, &analysis.glib_name);
     }
@@ -341,12 +345,14 @@ pub fn body_chunk(env: &Env, analysis: &analysis::functions::Info) -> Chunk {
     let outs_as_return = !analysis.outs.is_empty();
 
     let mut builder = function_body_chunk::Builder::new();
+    let sys_crate_name = if let Some(ty_id) = parent_type_id {
+        env.sys_crate_import(ty_id)
+    } else {
+        env.main_sys_crate_name().to_owned()
+    };
+
     builder
-        .glib_name(&format!(
-            "{}::{}",
-            env.main_sys_crate_name(),
-            analysis.glib_name
-        ))
+        .glib_name(&format!("{}::{}", sys_crate_name, analysis.glib_name))
         .assertion(analysis.assertion)
         .ret(&analysis.ret)
         .transformations(&analysis.parameters.transformations)
