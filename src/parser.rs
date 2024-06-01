@@ -173,6 +173,7 @@ impl Library {
         };
 
         let is_abstract = elem.attr("abstract").map_or(false, |x| x == "1");
+        let final_type = elem.attr("final").map_or(false, |x| x == "1");
 
         let mut fns = Vec::new();
         let mut signals = Vec::new();
@@ -255,7 +256,7 @@ impl Library {
             properties,
             parent,
             implements: impls,
-            final_type: false, // this will be set during postprocessing
+            final_type,
             doc,
             doc_deprecated,
             version,
