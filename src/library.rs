@@ -516,6 +516,8 @@ pub struct Property {
     pub deprecated_version: Option<Version>,
     pub doc: Option<String>,
     pub doc_deprecated: Option<String>,
+    pub getter: Option<String>,
+    pub setter: Option<String>,
 }
 
 #[derive(Clone, Debug)]
