@@ -652,6 +652,12 @@
 <a href="#650" id="650">650</a>
 <a href="#651" id="651">651</a>
 <a href="#652" id="652">652</a>
+<a href="#653" id="653">653</a>
+<a href="#654" id="654">654</a>
+<a href="#655" id="655">655</a>
+<a href="#656" id="656">656</a>
+<a href="#657" id="657">657</a>
+<a href="#658" id="658">658</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::collections::HashMap;
 
 <span class="kw">use </span>log::{error, info};
@@ -1081,7 +1087,7 @@
         // for that reason.
         // FIXME: without class_hierarchy this function O(n2) due inner loop in
         // `has_subtypes`
-        </span><span class="kw">let </span><span class="kw-2">mut </span>final_types: Vec&lt;TypeId&gt; = Vec::new();
+        </span><span class="kw">let </span><span class="kw-2">mut </span>overridden_final_types: Vec&lt;(TypeId, bool)&gt; = Vec::new();
 
         <span class="kw">for </span>(ns_id, ns) <span class="kw">in </span><span class="self">self</span>.namespaces.iter().enumerate() {
             <span class="kw">for </span>(id, type_) <span class="kw">in </span>ns.types.iter().enumerate() {
@@ -1096,16 +1102,21 @@
                     <span class="kw">let </span>full_name = tid.full_name(<span class="self">self</span>);
                     <span class="kw">let </span>obj = config.objects.get(<span class="kw-2">&amp;*</span>full_name);
 
-                    <span class="kw">let </span>is_final = <span class="kw">if let </span><span class="prelude-val">Some</span>(GObject {
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(GObject {
                         final_type: <span class="prelude-val">Some</span>(final_type),
                         ..
                     }) = obj
                     {
                         <span class="comment">// The config might also be used to override a type that is wrongly
                         // detected as final type otherwise
-                        </span><span class="kw-2">*</span>final_type
+                        </span>overridden_final_types.push((tid, <span class="kw-2">*</span>final_type));
+                    } <span class="kw">else if </span>klass.final_type {
+                        <span class="kw">continue</span>;
                     } <span class="kw">else if </span>klass.type_struct.is_none() {
-                        !<span class="self">self</span>.has_subtypes(tid)
+                        <span class="kw">let </span>is_final = !<span class="self">self</span>.has_subtypes(tid);
+                        <span class="kw">if </span>is_final {
+                            overridden_final_types.push((tid, <span class="bool-val">true</span>));
+                        }
                     } <span class="kw">else </span>{
                         <span class="kw">let </span>has_subtypes = <span class="self">self</span>.has_subtypes(tid);
                         <span class="kw">let </span>instance_struct_known = !klass.fields.is_empty();
@@ -1122,18 +1133,19 @@
                             <span class="macro">unreachable!</span>(<span class="string">"Can't find class for {}"</span>, full_name);
                         };
 
-                        !has_subtypes &amp;&amp; (!instance_struct_known || !class_struct_known)
+                        <span class="kw">let </span>is_final =
+                            !has_subtypes &amp;&amp; (!instance_struct_known || !class_struct_known);
+                        <span class="kw">if </span>is_final {
+                            overridden_final_types.push((tid, <span class="bool-val">true</span>));
+                        }
                     };
-                    <span class="kw">if </span>is_final {
-                        final_types.push(tid);
-                    }
                 }
             }
         }
 
-        <span class="kw">for </span>tid <span class="kw">in </span>final_types {
+        <span class="kw">for </span>(tid, new_is_final) <span class="kw">in </span>overridden_final_types {
             <span class="kw">if let </span>Type::Class(Class { final_type, .. }) = <span class="self">self</span>.type_mut(tid) {
-                <span class="kw-2">*</span>final_type = <span class="bool-val">true</span>;
+                <span class="kw-2">*</span>final_type = new_is_final;
             } <span class="kw">else </span>{
                 <span class="macro">unreachable!</span>();
             }
