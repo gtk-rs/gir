@@ -107,7 +107,11 @@ impl Bounds {
                 ));
                 if r#async && (par.name == "callback" || par.name.ends_with("_callback")) {
                     let func_name = func.c_identifier.as_ref().unwrap();
-                    let finish_func_name = finish_function_name(func_name);
+                    let finish_func_name = if let Some(finish_func_name) = &func.finish_func {
+                        finish_func_name.to_string()
+                    } else {
+                        finish_function_name(func_name)
+                    };
                     if let Some(function) = find_function(env, &finish_func_name) {
                         // FIXME: This should work completely based on the analysis of the finish()
                         // function but that a) happens afterwards and b) is

@@ -984,7 +984,11 @@ fn analyze_async(
         // Checks for /*Ignored*/ or other error comments
         *commented |= callback_type.contains("/*");
         let func_name = func.c_identifier.as_ref().unwrap();
-        let finish_func_name = finish_function_name(func_name);
+        let finish_func_name = if let Some(finish_func_name) = &func.finish_func {
+            finish_func_name.to_string()
+        } else {
+            finish_function_name(func_name)
+        };
         let mut output_params = vec![];
         let mut ffi_ret = None;
         if let Some(function) = find_function(env, &finish_func_name) {
