@@ -560,9 +560,10 @@ fn analyze_function(
 ) -> Info {
     let ns_id = type_tid.map_or(MAIN_NAMESPACE, |t| t.ns_id);
     let type_tid = type_tid.unwrap_or_default();
-    let r#async = func.parameters.iter().any(|parameter| {
-        parameter.scope == ParameterScope::Async && parameter.c_type == "GAsyncReadyCallback"
-    });
+    let r#async = func.finish_func.is_some()
+        || func.parameters.iter().any(|parameter| {
+            parameter.scope == ParameterScope::Async && parameter.c_type == "GAsyncReadyCallback"
+        });
     let has_callback_parameter = !r#async
         && func
             .parameters
