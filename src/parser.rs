@@ -1331,6 +1331,8 @@ impl Library {
         let mut typ = None;
         let mut doc = None;
         let mut doc_deprecated = None;
+        let mut gtk_getter = None;
+        let mut gtk_setter = None;
 
         parser.elements(|parser, elem| match elem.name() {
             "type" | "array" => {
@@ -1353,10 +1355,28 @@ impl Library {
             }
             "doc" => parser.text().map(|t| doc = Some(t)),
             "doc-deprecated" => parser.text().map(|t| doc_deprecated = Some(t)),
-            "attribute" => parser.ignore_element(),
+            "attribute" => {
+                if let (Some(name), Some(value)) = (elem.attr("name"), elem.attr("value")) {
+                    match name {
+                        "org.gtk.Property.get" => {
+                            gtk_getter = Some(value.to_string());
+                            Ok(())
+                        }
+                        "org.gtk.Property.set" => {
+                            gtk_setter = Some(value.to_string());
+                            Ok(())
+                        }
+                        _ => parser.ignore_element()
+                    }
+                } else {
+                    parser.ignore_element()
+                }
+            }
             _ => Err(parser.unexpected_element(elem)),
         })?;
 
+        let getter = elem.attr("getter").map(ToString::to_string).or(gtk_getter);
+        let setter = elem.attr("setter").map(ToString::to_string).or(gtk_setter);
         if has_empty_type_tag {
             return Ok(None);
         }
@@ -1375,6 +1395,8 @@ impl Library {
                 deprecated_version,
                 doc,
                 doc_deprecated,
+                getter,
+                setter,
             }))
         } else {
             Err(parser.fail_with_position(
