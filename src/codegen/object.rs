@@ -91,6 +91,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Info)
                 analysis.unref_fn.as_deref(),
                 &analysis.supertypes,
                 analysis.visibility,
+                analysis.type_id,
             )?;
         } else {
             general::define_object_type(
@@ -103,6 +104,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Info)
                 analysis.is_interface,
                 &analysis.supertypes,
                 analysis.visibility,
+                analysis.type_id,
             )?;
         }
     } else {
@@ -145,6 +147,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Info)
                     analysis.is_interface,
                     &supertypes,
                     analysis.visibility,
+                    analysis.type_id,
                 )?;
 
                 for t in stypes {
@@ -175,6 +178,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Info)
             analysis.is_interface,
             &supertypes,
             analysis.visibility,
+            analysis.type_id,
         )?;
     }
 
