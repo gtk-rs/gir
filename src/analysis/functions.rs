@@ -890,6 +890,8 @@ fn analyze_function(
             }
         }
 
+        imports.add("crate::ffi");
+
         imports.add_used_types(&used_types);
         if ret.base_tid.is_some() {
             imports.add("glib::prelude::*");

@@ -39,6 +39,7 @@ pub fn new(env: &Env, obj: &GObject, imports: &mut Imports) -> Option<Info> {
     if obj.status.need_generate() {
         // Mark the type as available within the enum namespace:
         imports.add_defined(&format!("crate::{name}"));
+        imports.add("crate::ffi");
 
         let imports = &mut imports.with_defaults(enumeration.version, &None);
         imports.add("glib::translate::*");
