@@ -290,6 +290,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         && !is_fundamental
         && (has_signals || has_methods || !properties.is_empty() || !child_properties.is_empty());
 
+    imports.add("crate::ffi");
     if is_fundamental {
         imports.add("glib::translate::*");
         imports.add("glib::prelude::*");
@@ -375,6 +376,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
 
     let mut imports = Imports::with_defined(&env.library, &name);
     imports.add("glib::prelude::*");
+    imports.add("crate::ffi");
 
     let supertypes = supertypes::analyze(env, iface_tid, version, &mut imports, false);
     let supertypes_properties = supertypes

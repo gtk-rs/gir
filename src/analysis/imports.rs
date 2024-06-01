@@ -125,9 +125,6 @@ impl Imports {
     /// It also extends the checks in case you are implementing "X". For
     /// example, you don't want to import "X" or "crate::X" in this case.
     fn common_checks(&self, name: &str) -> bool {
-        // The ffi namespace is used directly, including it is a programmer error.
-        assert_ne!(name, "crate::ffi");
-
         if (!name.contains("::") && name != "xlib") || self.defined.contains(name) {
             false
         } else if let Some(name) = name.strip_prefix("crate::") {

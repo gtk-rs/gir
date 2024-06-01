@@ -88,6 +88,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
     let boxed_inline = obj.boxed_inline;
 
     let mut imports = Imports::with_defined(&env.library, &name);
+    imports.add("crate::ffi");
 
     let mut functions = functions::analyze(
         env,
