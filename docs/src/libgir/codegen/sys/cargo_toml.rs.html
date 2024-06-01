@@ -402,7 +402,7 @@
                 .iter()
                 .filter(|(<span class="kw-2">&amp;</span>v, <span class="kw">_</span>)| v &gt; env.config.min_cfg_version)
                 .for_each(|(v, lib_version)| {
-                    <span class="kw">let </span>version_section = upsert_table(meta, <span class="kw-2">&amp;</span>v.to_feature());
+                    <span class="kw">let </span>version_section = upsert_table(meta, v.to_feature());
                     <span class="comment">// Allow system-deps version for this feature level to be overridden by hand
                     </span>version_section
                         .entry(<span class="string">"version"</span>)
