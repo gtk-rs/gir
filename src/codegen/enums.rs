@@ -89,7 +89,7 @@ fn generate_enum(
 
     let mut members: Vec<Member<'_>> = Vec::new();
     let mut vals: HashSet<String> = HashSet::new();
-    let sys_crate_name = env.main_sys_crate_name();
+    let sys_crate_name = env.sys_crate_import(analysis.type_id);
 
     for member in &enum_.members {
         let member_config = config.members.matched(&member.name);

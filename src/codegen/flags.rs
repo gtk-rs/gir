@@ -75,7 +75,7 @@ fn generate_flags(
     config: &GObject,
     analysis: &Info,
 ) -> Result<()> {
-    let sys_crate_name = env.main_sys_crate_name();
+    let sys_crate_name = env.sys_crate_import(analysis.type_id);
     cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
     version_condition_no_doc(w, env, None, flags.version, false, 0)?;
     writeln!(w, "bitflags! {{")?;

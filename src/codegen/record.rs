@@ -28,6 +28,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
                 glib_get_type,
                 &analysis.derives,
                 analysis.visibility,
+                analysis.type_id,
             )?;
         } else {
             panic!(
@@ -55,6 +56,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
             }),
             &analysis.derives,
             analysis.visibility,
+            analysis.type_id,
         )?;
     } else if let (Some(copy_fn), Some(free_fn)) = (
         analysis.specials.traits().get(&Type::Copy),
@@ -80,6 +82,7 @@ pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::record::Info)
             }),
             &analysis.derives,
             analysis.visibility,
+            analysis.type_id,
         )?;
     } else {
         panic!(

@@ -180,8 +180,9 @@ pub fn define_fundamental_type(
     unref_func: Option<&str>,
     parents: &[StatusedTypeId],
     visibility: Visibility,
+    type_id: TypeId,
 ) -> Result<()> {
-    let sys_crate_name = env.main_sys_crate_name();
+    let sys_crate_name = env.sys_crate_import(type_id);
     writeln!(w, "{} {{", use_glib_type(env, "wrapper!"))?;
     doc_alias(w, glib_name, "", 1)?;
     external_doc_link(
@@ -262,8 +263,9 @@ pub fn define_object_type(
     is_interface: bool,
     parents: &[StatusedTypeId],
     visibility: Visibility,
+    type_id: TypeId,
 ) -> Result<()> {
-    let sys_crate_name = env.main_sys_crate_name();
+    let sys_crate_name = env.sys_crate_import(type_id);
     let class_name = {
         if let Some(s) = glib_class_name {
             format!(", {sys_crate_name}::{s}")
@@ -375,8 +377,9 @@ fn define_boxed_type_internal(
     get_type_fn: Option<&str>,
     derive: &[Derive],
     visibility: Visibility,
+    type_id: TypeId,
 ) -> Result<()> {
-    let sys_crate_name = env.main_sys_crate_name();
+    let sys_crate_name = env.sys_crate_import(type_id);
     writeln!(w, "{} {{", use_glib_type(env, "wrapper!"))?;
 
     derives(w, derive, 1)?;
@@ -440,6 +443,7 @@ pub fn define_boxed_type(
     get_type_fn: Option<(String, Option<Version>)>,
     derive: &[Derive],
     visibility: Visibility,
+    type_id: TypeId,
 ) -> Result<()> {
     writeln!(w)?;
 
@@ -460,6 +464,7 @@ pub fn define_boxed_type(
                 Some(get_type_fn),
                 derive,
                 visibility,
+                type_id,
             )?;
 
             writeln!(w)?;
@@ -478,6 +483,7 @@ pub fn define_boxed_type(
                 None,
                 derive,
                 visibility,
+                type_id,
             )?;
         } else {
             define_boxed_type_internal(
@@ -494,6 +500,7 @@ pub fn define_boxed_type(
                 Some(get_type_fn),
                 derive,
                 visibility,
+                type_id,
             )?;
         }
     } else {
@@ -511,6 +518,7 @@ pub fn define_boxed_type(
             None,
             derive,
             visibility,
+            type_id,
         )?;
     }
 
@@ -529,8 +537,9 @@ pub fn define_auto_boxed_type(
     get_type_fn: &str,
     derive: &[Derive],
     visibility: Visibility,
+    type_id: TypeId,
 ) -> Result<()> {
-    let sys_crate_name = env.main_sys_crate_name();
+    let sys_crate_name = env.sys_crate_import(type_id);
     writeln!(w)?;
     writeln!(w, "{} {{", use_glib_type(env, "wrapper!"))?;
     derives(w, derive, 1)?;
@@ -593,8 +602,9 @@ fn define_shared_type_internal(
     get_type_fn: Option<&str>,
     derive: &[Derive],
     visibility: Visibility,
+    type_id: TypeId,
 ) -> Result<()> {
-    let sys_crate_name = env.main_sys_crate_name();
+    let sys_crate_name = env.sys_crate_import(type_id);
     writeln!(w, "{} {{", use_glib_type(env, "wrapper!"))?;
     derives(w, derive, 1)?;
     writeln!(
@@ -624,6 +634,7 @@ pub fn define_shared_type(
     get_type_fn: Option<(String, Option<Version>)>,
     derive: &[Derive],
     visibility: Visibility,
+    type_id: TypeId,
 ) -> Result<()> {
     writeln!(w)?;
 
@@ -640,12 +651,13 @@ pub fn define_shared_type(
                 Some(get_type_fn),
                 derive,
                 visibility,
+                type_id,
             )?;
 
             writeln!(w)?;
             not_version_condition_no_docsrs(w, env, None, get_type_version, false, 0)?;
             define_shared_type_internal(
-                w, env, type_name, glib_name, ref_fn, unref_fn, None, derive, visibility,
+                w, env, type_name, glib_name, ref_fn, unref_fn, None, derive, visibility, type_id,
             )?;
         } else {
             define_shared_type_internal(
@@ -658,11 +670,12 @@ pub fn define_shared_type(
                 Some(get_type_fn),
                 derive,
                 visibility,
+                type_id,
             )?;
         }
     } else {
         define_shared_type_internal(
-            w, env, type_name, glib_name, ref_fn, unref_fn, None, derive, visibility,
+            w, env, type_name, glib_name, ref_fn, unref_fn, None, derive, visibility, type_id,
         )?;
     }
 
