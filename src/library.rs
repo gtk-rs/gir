@@ -555,6 +555,7 @@ pub struct Function {
     pub doc_deprecated: Option<String>,
     pub get_property: Option<String>,
     pub set_property: Option<String>,
+    pub finish_func: Option<String>,
 }
 
 #[derive(Debug)]

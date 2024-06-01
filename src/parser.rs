@@ -597,6 +597,7 @@ impl Library {
                 doc_deprecated,
                 get_property: None,
                 set_property: None,
+                finish_func: None,
             })
         } else {
             Err(parser.fail("Missing <return-value> element"))
@@ -1022,6 +1023,14 @@ impl Library {
         let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
         let mut gtk_get_property = None;
         let mut gtk_set_property = None;
+        let finish_func = c_identifier.and_then(|c_identifier| {
+            elem.attr("finish-func").map(|finish_func_name| {
+                format!(
+                    "{}{finish_func_name}",
+                    c_identifier.strip_suffix(&fn_name).unwrap()
+                )
+            })
+        });
 
         let mut params = Vec::new();
         let mut ret = None;
@@ -1113,6 +1122,7 @@ impl Library {
                 doc_deprecated,
                 get_property,
                 set_property,
+                finish_func,
             })
         } else {
             Err(parser.fail_with_position(
