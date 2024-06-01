@@ -143,6 +143,19 @@ fn analyze_property(
     let mut set_func_name = format!("set_{name_for_func}");
     let mut set_prop_name = Some(format!("set_property_{name_for_func}"));
 
+    let has_getter = prop.getter.as_ref().is_some_and(|getter| {
+        obj.functions
+            .matched(getter)
+            .iter()
+            .all(|f| f.status.need_generate())
+    });
+    let has_setter = prop.setter.as_ref().is_some_and(|setter| {
+        obj.functions
+            .matched(setter)
+            .iter()
+            .all(|f| f.status.need_generate())
+    });
+
     let mut readable = prop.readable;
     let mut writable = if prop.construct_only {
         false
@@ -219,7 +232,7 @@ fn analyze_property(
 
     let (get_out_ref_mode, set_in_ref_mode, nullable) = get_property_ref_modes(env, prop);
 
-    let getter = if readable {
+    let getter = if readable && !has_getter {
         if let Ok(rust_type) = RustType::builder(env, prop.typ)
             .direction(library::ParameterDirection::Out)
             .try_build()
@@ -249,7 +262,7 @@ fn analyze_property(
         None
     };
 
-    let setter = if writable {
+    let setter = if writable && !has_setter {
         if let Ok(rust_type) = RustType::builder(env, prop.typ)
             .direction(library::ParameterDirection::In)
             .try_build()
