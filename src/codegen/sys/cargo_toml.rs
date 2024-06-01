@@ -155,7 +155,7 @@ fn fill_in(root: &mut Table, env: &Env) {
                 .iter()
                 .filter(|(&v, _)| v > env.config.min_cfg_version)
                 .for_each(|(v, lib_version)| {
-                    let version_section = upsert_table(meta, &v.to_feature());
+                    let version_section = upsert_table(meta, v.to_feature());
                     // Allow system-deps version for this feature level to be overridden by hand
                     version_section
                         .entry("version")
