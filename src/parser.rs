@@ -1020,8 +1020,8 @@ impl Library {
         let is_method = kind == FunctionKind::Method;
         let version = self.read_version(parser, ns_id, elem)?;
         let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
-        let get_property = elem.attr("get-property").map(ToString::to_string);
-        let set_property = elem.attr("set-property").map(ToString::to_string);
+        let mut gtk_get_property = None;
+        let mut gtk_set_property = None;
 
         let mut params = Vec::new();
         let mut ret = None;
@@ -1046,9 +1046,34 @@ impl Library {
             "doc-deprecated" => parser.text().map(|t| doc_deprecated = Some(t)),
             "doc-version" => parser.ignore_element(),
             "source-position" => parser.ignore_element(),
-            "attribute" => parser.ignore_element(),
+            "attribute" => {
+                if let (Some(name), Some(value)) = (elem.attr("name"), elem.attr("value")) {
+                    match name {
+                        "org.gtk.Method.get_property" => {
+                            gtk_get_property = Some(value.to_string());
+                            Ok(())
+                        }
+                        "org.gtk.Method.set_property" => {
+                            gtk_set_property = Some(value.to_string());
+                            Ok(())
+                        }
+                        _ => parser.ignore_element(),
+                    }
+                } else {
+                    parser.ignore_element()
+                }
+            }
             _ => Err(parser.unexpected_element(elem)),
         })?;
+
+        let get_property = elem
+            .attr("get-property")
+            .map(ToString::to_string)
+            .or(gtk_get_property);
+        let set_property = elem
+            .attr("set-property")
+            .map(ToString::to_string)
+            .or(gtk_set_property);
         // The last argument of a callback is ALWAYS user data, so it has to be marked as such
         // in case it's missing.
         if is_callback && params.last().map(|x| x.closure.is_none()).unwrap_or(false) {
@@ -1366,7 +1391,7 @@ impl Library {
                             gtk_setter = Some(value.to_string());
                             Ok(())
                         }
-                        _ => parser.ignore_element()
+                        _ => parser.ignore_element(),
                     }
                 } else {
                     parser.ignore_element()
