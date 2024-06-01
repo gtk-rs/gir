@@ -595,6 +595,8 @@ impl Library {
                 deprecated_version,
                 doc,
                 doc_deprecated,
+                get_property: None,
+                set_property: None,
             })
         } else {
             Err(parser.fail("Missing <return-value> element"))
@@ -1018,6 +1020,8 @@ impl Library {
         let is_method = kind == FunctionKind::Method;
         let version = self.read_version(parser, ns_id, elem)?;
         let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
+        let get_property = elem.attr("get-property").map(ToString::to_string);
+        let set_property = elem.attr("set-property").map(ToString::to_string);
 
         let mut params = Vec::new();
         let mut ret = None;
@@ -1082,6 +1086,8 @@ impl Library {
                 deprecated_version,
                 doc,
                 doc_deprecated,
+                get_property,
+                set_property,
             })
         } else {
             Err(parser.fail_with_position(
