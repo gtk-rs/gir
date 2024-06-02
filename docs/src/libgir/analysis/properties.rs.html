@@ -415,6 +415,19 @@
 <a href="#413" id="413">413</a>
 <a href="#414" id="414">414</a>
 <a href="#415" id="415">415</a>
+<a href="#416" id="416">416</a>
+<a href="#417" id="417">417</a>
+<a href="#418" id="418">418</a>
+<a href="#419" id="419">419</a>
+<a href="#420" id="420">420</a>
+<a href="#421" id="421">421</a>
+<a href="#422" id="422">422</a>
+<a href="#423" id="423">423</a>
+<a href="#424" id="424">424</a>
+<a href="#425" id="425">425</a>
+<a href="#426" id="426">426</a>
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>log::warn;
 
 <span class="kw">use crate</span>::{
@@ -560,6 +573,19 @@
     <span class="kw">let </span><span class="kw-2">mut </span>set_func_name = <span class="macro">format!</span>(<span class="string">"set_{name_for_func}"</span>);
     <span class="kw">let </span><span class="kw-2">mut </span>set_prop_name = <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">"set_property_{name_for_func}"</span>));
 
+    <span class="kw">let </span>has_getter = prop.getter.as_ref().is_some_and(|getter| {
+        obj.functions
+            .matched(getter)
+            .iter()
+            .all(|f| f.status.need_generate())
+    });
+    <span class="kw">let </span>has_setter = prop.setter.as_ref().is_some_and(|setter| {
+        obj.functions
+            .matched(setter)
+            .iter()
+            .all(|f| f.status.need_generate())
+    });
+
     <span class="kw">let </span><span class="kw-2">mut </span>readable = prop.readable;
     <span class="kw">let </span><span class="kw-2">mut </span>writable = <span class="kw">if </span>prop.construct_only {
         <span class="bool-val">false
@@ -636,7 +662,7 @@
 
     <span class="kw">let </span>(get_out_ref_mode, set_in_ref_mode, nullable) = get_property_ref_modes(env, prop);
 
-    <span class="kw">let </span>getter = <span class="kw">if </span>readable {
+    <span class="kw">let </span>getter = <span class="kw">if </span>readable &amp;&amp; !has_getter {
         <span class="kw">if let </span><span class="prelude-val">Ok</span>(rust_type) = RustType::builder(env, prop.typ)
             .direction(library::ParameterDirection::Out)
             .try_build()
@@ -666,7 +692,7 @@
         <span class="prelude-val">None
     </span>};
 
-    <span class="kw">let </span>setter = <span class="kw">if </span>writable {
+    <span class="kw">let </span>setter = <span class="kw">if </span>writable &amp;&amp; !has_setter {
         <span class="kw">if let </span><span class="prelude-val">Ok</span>(rust_type) = RustType::builder(env, prop.typ)
             .direction(library::ParameterDirection::In)
             .try_build()

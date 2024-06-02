@@ -1324,6 +1324,10 @@
 <a href="#1322" id="1322">1322</a>
 <a href="#1323" id="1323">1323</a>
 <a href="#1324" id="1324">1324</a>
+<a href="#1325" id="1325">1325</a>
+<a href="#1326" id="1326">1326</a>
+<a href="#1327" id="1327">1327</a>
+<a href="#1328" id="1328">1328</a>
 </pre></div><pre class="rust"><code><span class="comment">// TODO: better heuristic (https://bugzilla.gnome.org/show_bug.cgi?id=623635#c5)
 // TODO: ProgressCallback types (not specific to async).
 // TODO: add annotation for methods like g_file_replace_contents_bytes_async
@@ -1424,6 +1428,8 @@
     /// this potential global function is defined
     </span><span class="kw">pub </span>ns_id: NsId,
     <span class="kw">pub </span>generate_doc: bool,
+    <span class="kw">pub </span>get_property: <span class="prelude-ty">Option</span>&lt;String&gt;,
+    <span class="kw">pub </span>set_property: <span class="prelude-ty">Option</span>&lt;String&gt;,
 }
 
 <span class="kw">impl </span>Info {
@@ -2270,6 +2276,8 @@
         hidden: <span class="bool-val">false</span>,
         ns_id,
         generate_doc,
+        get_property: func.get_property.clone(),
+        set_property: func.set_property.clone(),
     }
 }
 
