@@ -1556,6 +1556,22 @@
 <a href="#1554" id="1554">1554</a>
 <a href="#1555" id="1555">1555</a>
 <a href="#1556" id="1556">1556</a>
+<a href="#1557" id="1557">1557</a>
+<a href="#1558" id="1558">1558</a>
+<a href="#1559" id="1559">1559</a>
+<a href="#1560" id="1560">1560</a>
+<a href="#1561" id="1561">1561</a>
+<a href="#1562" id="1562">1562</a>
+<a href="#1563" id="1563">1563</a>
+<a href="#1564" id="1564">1564</a>
+<a href="#1565" id="1565">1565</a>
+<a href="#1566" id="1566">1566</a>
+<a href="#1567" id="1567">1567</a>
+<a href="#1568" id="1568">1568</a>
+<a href="#1569" id="1569">1569</a>
+<a href="#1570" id="1570">1570</a>
+<a href="#1571" id="1571">1571</a>
+<a href="#1572" id="1572">1572</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     path::{Path, PathBuf},
     str::FromStr,
@@ -2155,6 +2171,9 @@
                 doc_deprecated,
                 get_property: <span class="prelude-val">None</span>,
                 set_property: <span class="prelude-val">None</span>,
+                finish_func: <span class="prelude-val">None</span>,
+                async_func: <span class="prelude-val">None</span>,
+                sync_func: <span class="prelude-val">None</span>,
             })
         } <span class="kw">else </span>{
             <span class="prelude-val">Err</span>(parser.fail(<span class="string">"Missing &lt;return-value&gt; element"</span>))
@@ -2580,6 +2599,16 @@
         <span class="kw">let </span>deprecated_version = <span class="self">self</span>.read_deprecated_version(parser, ns_id, elem)<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>gtk_get_property = <span class="prelude-val">None</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>gtk_set_property = <span class="prelude-val">None</span>;
+        <span class="kw">let </span>finish_func = c_identifier.and_then(|c_identifier| {
+            elem.attr(<span class="string">"finish-func"</span>).map(|finish_func_name| {
+                <span class="macro">format!</span>(
+                    <span class="string">"{}{finish_func_name}"</span>,
+                    c_identifier.strip_suffix(<span class="kw-2">&amp;</span>fn_name).unwrap()
+                )
+            })
+        });
+        <span class="kw">let </span>async_func = elem.attr(<span class="string">"async-func"</span>).map(ToString::to_string);
+        <span class="kw">let </span>sync_func = elem.attr(<span class="string">"sync-func"</span>).map(ToString::to_string);
 
         <span class="kw">let </span><span class="kw-2">mut </span>params = Vec::new();
         <span class="kw">let </span><span class="kw-2">mut </span>ret = <span class="prelude-val">None</span>;
@@ -2671,6 +2700,9 @@
                 doc_deprecated,
                 get_property,
                 set_property,
+                finish_func,
+                async_func,
+                sync_func,
             })
         } <span class="kw">else </span>{
             <span class="prelude-val">Err</span>(parser.fail_with_position(

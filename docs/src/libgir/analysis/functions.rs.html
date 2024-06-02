@@ -1328,6 +1328,11 @@
 <a href="#1326" id="1326">1326</a>
 <a href="#1327" id="1327">1327</a>
 <a href="#1328" id="1328">1328</a>
+<a href="#1329" id="1329">1329</a>
+<a href="#1330" id="1330">1330</a>
+<a href="#1331" id="1331">1331</a>
+<a href="#1332" id="1332">1332</a>
+<a href="#1333" id="1333">1333</a>
 </pre></div><pre class="rust"><code><span class="comment">// TODO: better heuristic (https://bugzilla.gnome.org/show_bug.cgi?id=623635#c5)
 // TODO: ProgressCallback types (not specific to async).
 // TODO: add annotation for methods like g_file_replace_contents_bytes_async
@@ -1890,9 +1895,10 @@
 ) -&gt; Info {
     <span class="kw">let </span>ns_id = type_tid.map_or(MAIN_NAMESPACE, |t| t.ns_id);
     <span class="kw">let </span>type_tid = type_tid.unwrap_or_default();
-    <span class="kw">let </span>r#async = func.parameters.iter().any(|parameter| {
-        parameter.scope == ParameterScope::Async &amp;&amp; parameter.c_type == <span class="string">"GAsyncReadyCallback"
-    </span>});
+    <span class="kw">let </span>r#async = func.finish_func.is_some()
+        || func.parameters.iter().any(|parameter| {
+            parameter.scope == ParameterScope::Async &amp;&amp; parameter.c_type == <span class="string">"GAsyncReadyCallback"
+        </span>});
     <span class="kw">let </span>has_callback_parameter = !r#async
         &amp;&amp; func
             .parameters
@@ -2314,7 +2320,11 @@
         <span class="comment">// Checks for /*Ignored*/ or other error comments
         </span><span class="kw-2">*</span>commented |= callback_type.contains(<span class="string">"/*"</span>);
         <span class="kw">let </span>func_name = func.c_identifier.as_ref().unwrap();
-        <span class="kw">let </span>finish_func_name = finish_function_name(func_name);
+        <span class="kw">let </span>finish_func_name = <span class="kw">if let </span><span class="prelude-val">Some</span>(finish_func_name) = <span class="kw-2">&amp;</span>func.finish_func {
+            finish_func_name.to_string()
+        } <span class="kw">else </span>{
+            finish_function_name(func_name)
+        };
         <span class="kw">let </span><span class="kw-2">mut </span>output_params = <span class="macro">vec!</span>[];
         <span class="kw">let </span><span class="kw-2">mut </span>ffi_ret = <span class="prelude-val">None</span>;
         <span class="kw">if let </span><span class="prelude-val">Some</span>(function) = find_function(env, <span class="kw-2">&amp;</span>finish_func_name) {
