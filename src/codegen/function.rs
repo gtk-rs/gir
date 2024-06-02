@@ -106,12 +106,13 @@ pub fn generate(
     if analysis.codegen_name() != analysis.func_name {
         doc_alias(w, &analysis.func_name, comment_prefix, indent)?;
     }
+    // TODO Warn the user if both get_property and set_property are set as it is
+    // an error on the gir data.
     if let Some(get_property) = &analysis.get_property {
         if get_property != analysis.codegen_name() {
             doc_alias(w, get_property, comment_prefix, indent)?;
         }
-    }
-    if let Some(set_property) = &analysis.set_property {
+    } else if let Some(set_property) = &analysis.set_property {
         if set_property != analysis.codegen_name() {
             doc_alias(w, set_property, comment_prefix, indent)?;
         }
