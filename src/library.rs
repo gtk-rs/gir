@@ -556,6 +556,8 @@ pub struct Function {
     pub get_property: Option<String>,
     pub set_property: Option<String>,
     pub finish_func: Option<String>,
+    pub async_func: Option<String>,
+    pub sync_func: Option<String>,
 }
 
 #[derive(Debug)]
