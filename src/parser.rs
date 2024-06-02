@@ -598,6 +598,8 @@ impl Library {
                 get_property: None,
                 set_property: None,
                 finish_func: None,
+                async_func: None,
+                sync_func: None,
             })
         } else {
             Err(parser.fail("Missing <return-value> element"))
@@ -1031,6 +1033,8 @@ impl Library {
                 )
             })
         });
+        let async_func = elem.attr("async-func").map(ToString::to_string);
+        let sync_func = elem.attr("sync-func").map(ToString::to_string);
 
         let mut params = Vec::new();
         let mut ret = None;
@@ -1123,6 +1127,8 @@ impl Library {
                 get_property,
                 set_property,
                 finish_func,
+                async_func,
+                sync_func,
             })
         } else {
             Err(parser.fail_with_position(
