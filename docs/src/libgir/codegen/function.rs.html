@@ -505,6 +505,7 @@
 <a href="#503" id="503">503</a>
 <a href="#504" id="504">504</a>
 <a href="#505" id="505">505</a>
+<a href="#506" id="506">506</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     fmt,
     io::{<span class="prelude-ty">Result</span>, Write},
@@ -613,12 +614,13 @@
     <span class="kw">if </span>analysis.codegen_name() != analysis.func_name {
         doc_alias(w, <span class="kw-2">&amp;</span>analysis.func_name, comment_prefix, indent)<span class="question-mark">?</span>;
     }
-    <span class="kw">if let </span><span class="prelude-val">Some</span>(get_property) = <span class="kw-2">&amp;</span>analysis.get_property {
+    <span class="comment">// TODO Warn the user if both get_property and set_property are set as it is
+    // an error on the gir data.
+    </span><span class="kw">if let </span><span class="prelude-val">Some</span>(get_property) = <span class="kw-2">&amp;</span>analysis.get_property {
         <span class="kw">if </span>get_property != analysis.codegen_name() {
             doc_alias(w, get_property, comment_prefix, indent)<span class="question-mark">?</span>;
         }
-    }
-    <span class="kw">if let </span><span class="prelude-val">Some</span>(set_property) = <span class="kw-2">&amp;</span>analysis.set_property {
+    } <span class="kw">else if let </span><span class="prelude-val">Some</span>(set_property) = <span class="kw-2">&amp;</span>analysis.set_property {
         <span class="kw">if </span>set_property != analysis.codegen_name() {
             doc_alias(w, set_property, comment_prefix, indent)<span class="question-mark">?</span>;
         }
