@@ -731,7 +731,7 @@ fn create_enum_doc(w: &mut dyn Write, env: &Env, enum_: &Enumeration, tid: TypeI
                 m.members
                     .matched(&member.name)
                     .first()
-                    .map(|m| m.generate_doc)
+                    .map(|m| m.generate_doc && !m.status.ignored())
             })
             .unwrap_or(true);
 
