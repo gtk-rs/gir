@@ -10,7 +10,7 @@ use crate::{
         signatures::{Signature, Signatures},
         trampolines,
     },
-    config::{self, GObject, PropertyGenerateFlags},
+    config::{self, gobjects::GStatus, GObject, PropertyGenerateFlags},
     env::Env,
     library, nameutil,
     traits::*,
@@ -45,6 +45,7 @@ pub fn analyze(
     imports: &mut Imports,
     signatures: &Signatures,
     deps: &[library::TypeId],
+    functions: &[crate::analysis::functions::Info],
 ) -> (Vec<Property>, Vec<signals::Info>) {
     let mut properties = Vec::new();
     let mut notify_signals = Vec::new();
@@ -80,6 +81,7 @@ pub fn analyze(
             imports,
             signatures,
             deps,
+            functions,
         );
 
         if let Some(notify_signal) = notify_signal {
@@ -108,6 +110,7 @@ fn analyze_property(
     imports: &mut Imports,
     signatures: &Signatures,
     deps: &[library::TypeId],
+    functions: &[crate::analysis::functions::Info],
 ) -> (Option<Property>, Option<Property>, Option<signals::Info>) {
     let type_name = type_tid.full_name(&env.library);
     let name = prop.name.clone();
@@ -142,19 +145,6 @@ fn analyze_property(
 
     let mut set_func_name = format!("set_{name_for_func}");
     let mut set_prop_name = Some(format!("set_property_{name_for_func}"));
-
-    let has_getter = prop.getter.as_ref().is_some_and(|getter| {
-        obj.functions
-            .matched(getter)
-            .iter()
-            .all(|f| f.status.need_generate())
-    });
-    let has_setter = prop.setter.as_ref().is_some_and(|setter| {
-        obj.functions
-            .matched(setter)
-            .iter()
-            .all(|f| f.status.need_generate())
-    });
 
     let mut readable = prop.readable;
     let mut writable = if prop.construct_only {
@@ -231,6 +221,18 @@ fn analyze_property(
     }
 
     let (get_out_ref_mode, set_in_ref_mode, nullable) = get_property_ref_modes(env, prop);
+
+    let getter_func = functions.iter().find(|f| {
+        f.get_property.as_ref() == Some(&prop.name) && Some(&f.name) == prop.getter.as_ref()
+    });
+    let setter_func = functions.iter().find(|f| {
+        f.set_property.as_ref() == Some(&prop.name) && Some(&f.name) == prop.setter.as_ref()
+    });
+
+    let has_getter =
+        getter_func.is_some_and(|g| matches!(g.status, GStatus::Generate | GStatus::Manual));
+    let has_setter =
+        setter_func.is_some_and(|s| matches!(s.status, GStatus::Generate | GStatus::Manual));
 
     let getter = if readable && !has_getter {
         if let Ok(rust_type) = RustType::builder(env, prop.typ)

@@ -268,6 +268,7 @@ pub fn class(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<Info>
         &mut imports,
         &signatures,
         deps,
+        &functions,
     );
 
     let builder_properties =
@@ -429,6 +430,7 @@ pub fn interface(env: &Env, obj: &GObject, deps: &[library::TypeId]) -> Option<I
         &mut imports,
         &signatures,
         deps,
+        &functions,
     );
 
     let base = InfoBase {
