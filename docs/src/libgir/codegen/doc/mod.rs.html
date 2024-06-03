@@ -1193,8 +1193,6 @@
 <a href="#1191" id="1191">1191</a>
 <a href="#1192" id="1192">1192</a>
 <a href="#1193" id="1193">1193</a>
-<a href="#1194" id="1194">1194</a>
-<a href="#1195" id="1195">1195</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     borrow::Cow,
     collections::{BTreeSet, HashSet},
@@ -1602,6 +1600,9 @@
             }
         }
         <span class="kw">for </span>property <span class="kw">in </span><span class="kw-2">&amp;</span>builder_properties {
+            <span class="kw">if </span>!property.writable {
+                <span class="kw">continue</span>;
+            }
             <span class="kw">let </span>ty = TypeStruct {
                 ty: SType::Fn,
                 name: nameutil::signal_to_snake(<span class="kw-2">&amp;</span>property.name),
@@ -1805,19 +1806,25 @@
     }
 
     <span class="kw">for </span>property <span class="kw">in </span>properties {
-        <span class="kw">let </span>getter_name = info
-            .properties
-            .iter()
-            .filter(|p| p.is_get)
-            .find(|p| p.name == property.name)
-            .map(|p| p.func_name.clone());
+        <span class="kw">let </span>getter_name = <span class="kw">if </span>property.getter.is_some() {
+            <span class="prelude-val">None </span><span class="comment">// Don't generate a getter for the property, there is a getter
+        </span>} <span class="kw">else </span>{
+            info.properties
+                .iter()
+                .filter(|p| p.is_get)
+                .find(|p| p.name == property.name)
+                .map(|p| p.func_name.clone())
+        };
+        <span class="kw">let </span>setter_name = <span class="kw">if </span>property.setter.is_some() {
+            <span class="prelude-val">None </span><span class="comment">// don't generate a setter for the property, there is a setter
+        </span>} <span class="kw">else </span>{
+            info.properties
+                .iter()
+                .filter(|p| !p.is_get)
+                .find(|p| p.name == property.name)
+                .map(|p| p.func_name.clone())
+        };
 
-        <span class="kw">let </span>setter_name = info
-            .properties
-            .iter()
-            .filter(|p| !p.is_get)
-            .find(|p| p.name == property.name)
-            .map(|p| p.func_name.clone());
         <span class="kw">let </span>(ty, object_location) = <span class="kw">if </span>has_trait {
             <span class="kw">let </span>configured_properties = obj.properties.matched(<span class="kw-2">&amp;</span>property.name);
             <span class="kw">if let </span><span class="prelude-val">Some</span>(trait_name) = configured_properties
@@ -2206,26 +2213,15 @@
     {
         <span class="kw">return </span><span class="prelude-val">Ok</span>(());
     }
-    <span class="kw">let </span>name_for_func = nameutil::signal_to_snake(<span class="kw-2">&amp;</span>property.name);
-    <span class="kw">let </span>getter_name = getter_name.unwrap_or_else(|| name_for_func.clone());
-    <span class="kw">let </span>has_getter_method = obj_info.functions.iter().any(|f| {
-        f.func_name == getter_name || f.new_name.as_ref().map_or(<span class="bool-val">false</span>, |n| n == <span class="kw-2">&amp;</span>getter_name)
-    });
-
-    <span class="kw">let </span>setter_name = setter_name.unwrap_or_else(|| <span class="macro">format!</span>(<span class="string">"set_{}"</span>, <span class="kw-2">&amp;</span>name_for_func));
-    <span class="kw">let </span>has_setter_method = obj_info.functions.iter().any(|f| {
-        f.func_name == setter_name || f.new_name.as_ref().map_or(<span class="bool-val">false</span>, |n| n == <span class="kw-2">&amp;</span>setter_name)
-    });
-
     <span class="kw">let </span><span class="kw-2">mut </span>v = Vec::with_capacity(<span class="number">2</span>);
 
-    <span class="kw">if </span>property.readable &amp;&amp; !has_getter_method {
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(getter_name) = getter_name {
         v.push(TypeStruct {
             parent: parent.clone(),
             ..TypeStruct::new(SType::Fn, <span class="kw-2">&amp;</span>getter_name)
         });
     }
-    <span class="kw">if </span>property.writable &amp;&amp; !property.construct_only &amp;&amp; !has_setter_method {
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(setter_name) = setter_name {
         v.push(TypeStruct {
             parent,
             ..TypeStruct::new(SType::Fn, <span class="kw-2">&amp;</span>setter_name)
