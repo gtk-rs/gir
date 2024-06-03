@@ -405,6 +405,9 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
             }
         }
         for property in &builder_properties {
+            if !property.writable {
+                continue;
+            }
             let ty = TypeStruct {
                 ty: SType::Fn,
                 name: nameutil::signal_to_snake(&property.name),
