@@ -323,13 +323,12 @@ fn generate_enums(w: &mut dyn Write, env: &Env, items: &[&Enumeration]) -> Resul
             let member_config = config
                 .as_ref()
                 .map_or_else(Vec::new, |c| c.members.matched(&member.name));
-            let is_alias = member_config.iter().any(|m| m.alias);
             let version = member_config
                 .iter()
                 .find_map(|m| m.version)
                 .or(member.version);
 
-            if is_alias {
+            if member_config.iter().any(|m| m.status.ignored()) {
                 continue;
             }
 
