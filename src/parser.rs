@@ -195,11 +195,13 @@ impl Library {
             "signal" => self
                 .read_signal(parser, ns_id, elem)
                 .map(|s| signals.push(s)),
-            "property" => self.read_property(parser, ns_id, elem).map(|p| {
-                if let Some(p) = p {
-                    properties.push(p);
-                }
-            }),
+            "property" => self
+                .read_property(parser, ns_id, elem, &symbol_prefix)
+                .map(|p| {
+                    if let Some(p) = p {
+                        properties.push(p);
+                    }
+                }),
             "field" => self.read_field(parser, ns_id, elem).map(|f| {
                 fields.push(f);
             }),
@@ -704,11 +706,13 @@ impl Library {
             "signal" => self
                 .read_signal(parser, ns_id, elem)
                 .map(|s| signals.push(s)),
-            "property" => self.read_property(parser, ns_id, elem).map(|p| {
-                if let Some(p) = p {
-                    properties.push(p);
-                }
-            }),
+            "property" => self
+                .read_property(parser, ns_id, elem, &symbol_prefix)
+                .map(|p| {
+                    if let Some(p) = p {
+                        properties.push(p);
+                    }
+                }),
             "doc" => parser.text().map(|t| doc = Some(t)),
             "doc-deprecated" => parser.text().map(|t| doc_deprecated = Some(t)),
             "virtual-method" => self
@@ -1079,14 +1083,8 @@ impl Library {
             _ => Err(parser.unexpected_element(elem)),
         })?;
 
-        let get_property = elem
-            .attr("get-property")
-            .map(ToString::to_string)
-            .or(gtk_get_property);
-        let set_property = elem
-            .attr("set-property")
-            .map(ToString::to_string)
-            .or(gtk_set_property);
+        let get_property = gtk_get_property.or(elem.attr("get-property").map(ToString::to_string));
+        let set_property = gtk_set_property.or(elem.attr("set-property").map(ToString::to_string));
         // The last argument of a callback is ALWAYS user data, so it has to be marked as such
         // in case it's missing.
         if is_callback && params.last().map(|x| x.closure.is_none()).unwrap_or(false) {
@@ -1357,6 +1355,7 @@ impl Library {
         parser: &mut XmlParser<'_>,
         ns_id: u16,
         elem: &Element,
+        symbol_prefix: &str,
     ) -> Result<Option<Property>, String> {
         let prop_name = elem.attr_required("name")?;
         let readable = elem.attr_bool("readable", true);
@@ -1400,11 +1399,19 @@ impl Library {
                 if let (Some(name), Some(value)) = (elem.attr("name"), elem.attr("value")) {
                     match name {
                         "org.gtk.Property.get" => {
-                            gtk_getter = Some(value.to_string());
+                            gtk_getter = value
+                                .split(symbol_prefix)
+                                .last()
+                                .and_then(|p| p.strip_prefix('_'))
+                                .map(|p| p.to_string());
                             Ok(())
                         }
                         "org.gtk.Property.set" => {
-                            gtk_setter = Some(value.to_string());
+                            gtk_setter = value
+                                .split(symbol_prefix)
+                                .last()
+                                .and_then(|p| p.strip_prefix('_'))
+                                .map(|p| p.to_string());
                             Ok(())
                         }
                         _ => parser.ignore_element(),
@@ -1416,8 +1423,8 @@ impl Library {
             _ => Err(parser.unexpected_element(elem)),
         })?;
 
-        let getter = elem.attr("getter").map(ToString::to_string).or(gtk_getter);
-        let setter = elem.attr("setter").map(ToString::to_string).or(gtk_setter);
+        let getter = gtk_getter.or(elem.attr("getter").map(ToString::to_string));
+        let setter = gtk_setter.or(elem.attr("setter").map(ToString::to_string));
         if has_empty_type_tag {
             return Ok(None);
         }
