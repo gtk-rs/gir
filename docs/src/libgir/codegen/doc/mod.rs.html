@@ -1192,6 +1192,9 @@
 <a href="#1190" id="1190">1190</a>
 <a href="#1191" id="1191">1191</a>
 <a href="#1192" id="1192">1192</a>
+<a href="#1193" id="1193">1193</a>
+<a href="#1194" id="1194">1194</a>
+<a href="#1195" id="1195">1195</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     borrow::Cow,
     collections::{BTreeSet, HashSet},
@@ -1238,7 +1241,10 @@
             <span class="kw">fn </span>to_stripper_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TypeStruct {
                 TypeStruct::new(
                     SType::<span class="macro-nonterminal">$enum_var</span>,
-                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"connect_{}"</span>, nameutil::signal_to_snake(<span class="kw-2">&amp;</span><span class="self">self</span>.name)),
+                    <span class="kw-2">&amp;</span><span class="macro">format!</span>(
+                        <span class="string">"connect_{}"</span>,
+                        nameutil::mangle_keywords(nameutil::signal_to_snake(<span class="kw-2">&amp;</span><span class="self">self</span>.name))
+                    ),
                 )
             }
         }
@@ -1246,7 +1252,7 @@
     (<span class="macro-nonterminal">$ty</span>:ident, <span class="macro-nonterminal">$enum_var</span>:ident) =&gt; {
         <span class="kw">impl </span>ToStripperType <span class="kw">for </span><span class="macro-nonterminal">$ty </span>{
             <span class="kw">fn </span>to_stripper_type(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; TypeStruct {
-                TypeStruct::new(SType::<span class="macro-nonterminal">$enum_var</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.name)
+                TypeStruct::new(SType::<span class="macro-nonterminal">$enum_var</span>, <span class="kw-2">&amp;</span>nameutil::mangle_keywords(<span class="kw-2">&amp;</span><span class="self">self</span>.name))
             }
         }
     };
@@ -2054,7 +2060,7 @@
 
     <span class="kw">let </span><span class="kw-2">mut </span>st = fn_.to_stripper_type();
     <span class="kw">if let </span><span class="prelude-val">Some</span>(name_override) = name_override {
-        st.name = name_override;
+        st.name = nameutil::mangle_keywords(name_override).to_string();
     }
     <span class="kw">let </span>ty = TypeStruct { parent, ..st };
     <span class="kw">let </span>self_name: <span class="prelude-ty">Option</span>&lt;String&gt; = fn_
