@@ -109,6 +109,20 @@
 <a href="#107" id="107">107</a>
 <a href="#108" id="108">108</a>
 <a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
+<a href="#112" id="112">112</a>
+<a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
+<a href="#116" id="116">116</a>
+<a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
+<a href="#122" id="122">122</a>
+<a href="#123" id="123">123</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     fmt::{<span class="self">self</span>, Display, Formatter},
     str::FromStr,
@@ -116,9 +130,13 @@
 
 <span class="doccomment">/// Major, minor and patch version
 </span><span class="attr">#[derive(Debug, Default, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-</span><span class="kw">pub struct </span>Version(<span class="kw">pub </span>u16, <span class="kw">pub </span>u16, <span class="kw">pub </span>u16);
+</span><span class="kw">pub struct </span>Version(u16, u16, u16, bool);
 
 <span class="kw">impl </span>Version {
+    <span class="kw">pub fn </span>new(major: u16, minor: u16, patch: u16) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>(major, minor, patch, <span class="bool-val">true</span>)
+    }
+
     <span class="doccomment">/// Convert a version number to a config guard
     ///
     /// When generating a builder pattern, properties could be from a super-type
@@ -127,18 +145,28 @@
     /// is different from the main crate. For those cases you can pass
     /// the crate name as the `prefix` parameter
     </span><span class="kw">pub fn </span>to_cfg(<span class="self">self</span>, prefix: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;) -&gt; String {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(p) = prefix {
-            <span class="macro">format!</span>(<span class="string">"feature = \"{}_{}\""</span>, p, <span class="self">self</span>.to_feature())
+        <span class="kw">if </span><span class="self">self</span>.<span class="number">3 </span>{
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(p) = prefix {
+                <span class="macro">format!</span>(<span class="string">"feature = \"{}_{}\""</span>, p, <span class="self">self</span>.to_feature())
+            } <span class="kw">else </span>{
+                <span class="macro">format!</span>(<span class="string">"feature = \"{}\""</span>, <span class="self">self</span>.to_feature())
+            }
+        } <span class="kw">else if let </span><span class="prelude-val">Some</span>(p) = prefix {
+            <span class="macro">format!</span>(<span class="string">"not(feature = \"{}_{}\")"</span>, p, <span class="self">self</span>.to_feature())
         } <span class="kw">else </span>{
-            <span class="macro">format!</span>(<span class="string">"feature = \"{}\""</span>, <span class="self">self</span>.to_feature())
+            <span class="macro">format!</span>(<span class="string">"not(feature = \"{}\")"</span>, <span class="self">self</span>.to_feature())
         }
+    }
+
+    <span class="kw">pub fn </span>as_opposite(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="self">self</span>.<span class="number">3 </span>= !<span class="self">self</span>.<span class="number">3</span>;
     }
 
     <span class="kw">pub fn </span>to_feature(<span class="self">self</span>) -&gt; String {
         <span class="kw">match </span><span class="self">self </span>{
-            <span class="self">Self</span>(major, <span class="number">0</span>, <span class="number">0</span>) =&gt; <span class="macro">format!</span>(<span class="string">"v{major}"</span>),
-            <span class="self">Self</span>(major, minor, <span class="number">0</span>) =&gt; <span class="macro">format!</span>(<span class="string">"v{major}_{minor}"</span>),
-            <span class="self">Self</span>(major, minor, patch) =&gt; <span class="macro">format!</span>(<span class="string">"v{major}_{minor}_{patch}"</span>),
+            <span class="self">Self</span>(major, <span class="number">0</span>, <span class="number">0</span>, <span class="kw">_</span>) =&gt; <span class="macro">format!</span>(<span class="string">"v{major}"</span>),
+            <span class="self">Self</span>(major, minor, <span class="number">0</span>, <span class="kw">_</span>) =&gt; <span class="macro">format!</span>(<span class="string">"v{major}_{minor}"</span>),
+            <span class="self">Self</span>(major, minor, patch, <span class="kw">_</span>) =&gt; <span class="macro">format!</span>(<span class="string">"v{major}_{minor}_{patch}"</span>),
         }
     }
 
@@ -167,14 +195,14 @@
                 .map(str::parse)
                 .take_while(Result::is_ok)
                 .map(Result::unwrap);
-            <span class="prelude-val">Ok</span>(<span class="self">Self</span>(
+            <span class="prelude-val">Ok</span>(<span class="self">Self</span>::new(
                 parts.next().unwrap_or(<span class="number">0</span>),
                 parts.next().unwrap_or(<span class="number">0</span>),
                 parts.next().unwrap_or(<span class="number">0</span>),
             ))
         } <span class="kw">else </span>{
             <span class="kw">let </span>val = s.parse::&lt;u16&gt;();
-            <span class="prelude-val">Ok</span>(<span class="self">Self</span>(val.unwrap_or(<span class="number">0</span>), <span class="number">0</span>, <span class="number">0</span>))
+            <span class="prelude-val">Ok</span>(<span class="self">Self</span>::new(val.unwrap_or(<span class="number">0</span>), <span class="number">0</span>, <span class="number">0</span>))
         }
     }
 }
@@ -182,9 +210,9 @@
 <span class="kw">impl </span>Display <span class="kw">for </span>Version {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), fmt::Error&gt; {
         <span class="kw">match </span><span class="kw-2">*</span><span class="self">self </span>{
-            <span class="self">Self</span>(major, <span class="number">0</span>, <span class="number">0</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">"{major}"</span>),
-            <span class="self">Self</span>(major, minor, <span class="number">0</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">"{major}.{minor}"</span>),
-            <span class="self">Self</span>(major, minor, patch) =&gt; <span class="macro">write!</span>(f, <span class="string">"{major}.{minor}.{patch}"</span>),
+            <span class="self">Self</span>(major, <span class="number">0</span>, <span class="number">0</span>, <span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">"{major}"</span>),
+            <span class="self">Self</span>(major, minor, <span class="number">0</span>, <span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">"{major}.{minor}"</span>),
+            <span class="self">Self</span>(major, minor, patch, <span class="kw">_</span>) =&gt; <span class="macro">write!</span>(f, <span class="string">"{major}.{minor}.{patch}"</span>),
         }
     }
 }
@@ -197,25 +225,25 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>from_str_works() {
-        <span class="macro">assert_eq!</span>(FromStr::from_str(<span class="string">"1"</span>), <span class="prelude-val">Ok</span>(Version(<span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>)));
-        <span class="macro">assert_eq!</span>(FromStr::from_str(<span class="string">"2.1"</span>), <span class="prelude-val">Ok</span>(Version(<span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>)));
-        <span class="macro">assert_eq!</span>(FromStr::from_str(<span class="string">"3.2.1"</span>), <span class="prelude-val">Ok</span>(Version(<span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>)));
-        <span class="macro">assert_eq!</span>(FromStr::from_str(<span class="string">"3.ff.1"</span>), <span class="prelude-val">Ok</span>(Version(<span class="number">3</span>, <span class="number">0</span>, <span class="number">0</span>)));
+        <span class="macro">assert_eq!</span>(FromStr::from_str(<span class="string">"1"</span>), <span class="prelude-val">Ok</span>(Version::new(<span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>)));
+        <span class="macro">assert_eq!</span>(FromStr::from_str(<span class="string">"2.1"</span>), <span class="prelude-val">Ok</span>(Version::new(<span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>)));
+        <span class="macro">assert_eq!</span>(FromStr::from_str(<span class="string">"3.2.1"</span>), <span class="prelude-val">Ok</span>(Version::new(<span class="number">3</span>, <span class="number">2</span>, <span class="number">1</span>)));
+        <span class="macro">assert_eq!</span>(FromStr::from_str(<span class="string">"3.ff.1"</span>), <span class="prelude-val">Ok</span>(Version::new(<span class="number">3</span>, <span class="number">0</span>, <span class="number">0</span>)));
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>parse_works() {
-        <span class="macro">assert_eq!</span>(<span class="string">"1"</span>.parse(), <span class="prelude-val">Ok</span>(Version(<span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>)));
+        <span class="macro">assert_eq!</span>(<span class="string">"1"</span>.parse(), <span class="prelude-val">Ok</span>(Version::new(<span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>)));
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>ord() {
-        <span class="macro">assert!</span>(Version(<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>) &lt; Version(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>));
-        <span class="macro">assert!</span>(Version(<span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>) &lt; Version(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>));
-        <span class="macro">assert!</span>(Version(<span class="number">1</span>, <span class="number">2</span>, <span class="number">0</span>) &lt; Version(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>));
-        <span class="macro">assert!</span>(Version(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>) == Version(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>));
-        <span class="macro">assert!</span>(Version(<span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>) &lt; Version(<span class="number">2</span>, <span class="number">0</span>, <span class="number">0</span>));
-        <span class="macro">assert!</span>(Version(<span class="number">3</span>, <span class="number">0</span>, <span class="number">0</span>) == Version(<span class="number">3</span>, <span class="number">0</span>, <span class="number">0</span>));
+        <span class="macro">assert!</span>(Version::new(<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>) &lt; Version::new(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>));
+        <span class="macro">assert!</span>(Version::new(<span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>) &lt; Version::new(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>));
+        <span class="macro">assert!</span>(Version::new(<span class="number">1</span>, <span class="number">2</span>, <span class="number">0</span>) &lt; Version::new(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>));
+        <span class="macro">assert!</span>(Version::new(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>) == Version::new(<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>));
+        <span class="macro">assert!</span>(Version::new(<span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>) &lt; Version::new(<span class="number">2</span>, <span class="number">0</span>, <span class="number">0</span>));
+        <span class="macro">assert!</span>(Version::new(<span class="number">3</span>, <span class="number">0</span>, <span class="number">0</span>) == Version::new(<span class="number">3</span>, <span class="number">0</span>, <span class="number">0</span>));
     }
 }
 </code></pre></div></section></main></body></html>

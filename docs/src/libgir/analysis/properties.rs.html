@@ -428,6 +428,32 @@
 <a href="#426" id="426">426</a>
 <a href="#427" id="427">427</a>
 <a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
+<a href="#441" id="441">441</a>
+<a href="#442" id="442">442</a>
+<a href="#443" id="443">443</a>
+<a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
+<a href="#446" id="446">446</a>
+<a href="#447" id="447">447</a>
+<a href="#448" id="448">448</a>
+<a href="#449" id="449">449</a>
+<a href="#450" id="450">450</a>
+<a href="#451" id="451">451</a>
+<a href="#452" id="452">452</a>
+<a href="#453" id="453">453</a>
+<a href="#454" id="454">454</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>log::warn;
 
 <span class="kw">use crate</span>::{
@@ -440,7 +466,7 @@
         signatures::{Signature, Signatures},
         trampolines,
     },
-    config::{<span class="self">self</span>, GObject, PropertyGenerateFlags},
+    config::{<span class="self">self</span>, gobjects::GStatus, GObject, PropertyGenerateFlags},
     env::Env,
     library, nameutil,
     traits::<span class="kw-2">*</span>,
@@ -475,6 +501,7 @@
     imports: <span class="kw-2">&amp;mut </span>Imports,
     signatures: <span class="kw-2">&amp;</span>Signatures,
     deps: <span class="kw-2">&amp;</span>[library::TypeId],
+    functions: <span class="kw-2">&amp;</span>[<span class="kw">crate</span>::analysis::functions::Info],
 ) -&gt; (Vec&lt;Property&gt;, Vec&lt;signals::Info&gt;) {
     <span class="kw">let </span><span class="kw-2">mut </span>properties = Vec::new();
     <span class="kw">let </span><span class="kw-2">mut </span>notify_signals = Vec::new();
@@ -510,6 +537,7 @@
             imports,
             signatures,
             deps,
+            functions,
         );
 
         <span class="kw">if let </span><span class="prelude-val">Some</span>(notify_signal) = notify_signal {
@@ -538,6 +566,7 @@
     imports: <span class="kw-2">&amp;mut </span>Imports,
     signatures: <span class="kw-2">&amp;</span>Signatures,
     deps: <span class="kw-2">&amp;</span>[library::TypeId],
+    functions: <span class="kw-2">&amp;</span>[<span class="kw">crate</span>::analysis::functions::Info],
 ) -&gt; (<span class="prelude-ty">Option</span>&lt;Property&gt;, <span class="prelude-ty">Option</span>&lt;Property&gt;, <span class="prelude-ty">Option</span>&lt;signals::Info&gt;) {
     <span class="kw">let </span>type_name = type_tid.full_name(<span class="kw-2">&amp;</span>env.library);
     <span class="kw">let </span>name = prop.name.clone();
@@ -572,19 +601,6 @@
 
     <span class="kw">let </span><span class="kw-2">mut </span>set_func_name = <span class="macro">format!</span>(<span class="string">"set_{name_for_func}"</span>);
     <span class="kw">let </span><span class="kw-2">mut </span>set_prop_name = <span class="prelude-val">Some</span>(<span class="macro">format!</span>(<span class="string">"set_property_{name_for_func}"</span>));
-
-    <span class="kw">let </span>has_getter = prop.getter.as_ref().is_some_and(|getter| {
-        obj.functions
-            .matched(getter)
-            .iter()
-            .all(|f| f.status.need_generate())
-    });
-    <span class="kw">let </span>has_setter = prop.setter.as_ref().is_some_and(|setter| {
-        obj.functions
-            .matched(setter)
-            .iter()
-            .all(|f| f.status.need_generate())
-    });
 
     <span class="kw">let </span><span class="kw-2">mut </span>readable = prop.readable;
     <span class="kw">let </span><span class="kw-2">mut </span>writable = <span class="kw">if </span>prop.construct_only {
@@ -662,7 +678,20 @@
 
     <span class="kw">let </span>(get_out_ref_mode, set_in_ref_mode, nullable) = get_property_ref_modes(env, prop);
 
-    <span class="kw">let </span>getter = <span class="kw">if </span>readable &amp;&amp; !has_getter {
+    <span class="kw">let </span>getter_func = functions.iter().find(|f| {
+        f.get_property.as_ref() == <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>prop.name) &amp;&amp; <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>f.name) == prop.getter.as_ref()
+    });
+    <span class="kw">let </span>setter_func = functions.iter().find(|f| {
+        f.set_property.as_ref() == <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>prop.name) &amp;&amp; <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>f.name) == prop.setter.as_ref()
+    });
+
+    <span class="kw">let </span>has_getter =
+        getter_func.is_some_and(|g| <span class="macro">matches!</span>(g.status, GStatus::Generate | GStatus::Manual));
+    <span class="kw">let </span>has_setter =
+        setter_func.is_some_and(|s| <span class="macro">matches!</span>(s.status, GStatus::Generate | GStatus::Manual));
+
+    <span class="kw">let </span>getter = <span class="kw">if </span>readable &amp;&amp; (!has_getter || prop.version &lt; getter_func.and_then(|g| g.version))
+    {
         <span class="kw">if let </span><span class="prelude-val">Ok</span>(rust_type) = RustType::builder(env, prop.typ)
             .direction(library::ParameterDirection::Out)
             .try_build()
@@ -671,6 +700,17 @@
         }
         <span class="kw">if </span>type_string.is_ok() {
             imports.add(<span class="string">"glib::prelude::*"</span>);
+        }
+
+        <span class="kw">let </span><span class="kw-2">mut </span>getter_version = prop_version;
+        <span class="kw">if </span>has_getter {
+            <span class="kw">let </span>getter = getter_func.unwrap();
+            get_func_name = getter.new_name.as_ref().unwrap_or(<span class="kw-2">&amp;</span>getter.name).to_string();
+            get_prop_name = <span class="prelude-val">Some</span>(getter.name.clone());
+            getter_version = getter.version.map(|<span class="kw-2">mut </span>g| {
+                g.as_opposite();
+                g
+            });
         }
 
         <span class="prelude-val">Some</span>(Property {
@@ -685,14 +725,15 @@
             set_in_ref_mode,
             set_bound: <span class="prelude-val">None</span>,
             bounds: Bounds::default(),
-            version: prop_version,
+            version: getter_version,
             deprecated_version: prop.deprecated_version,
         })
     } <span class="kw">else </span>{
         <span class="prelude-val">None
     </span>};
 
-    <span class="kw">let </span>setter = <span class="kw">if </span>writable &amp;&amp; !has_setter {
+    <span class="kw">let </span>setter = <span class="kw">if </span>writable &amp;&amp; (!has_setter || prop.version &lt; setter_func.and_then(|s| s.version))
+    {
         <span class="kw">if let </span><span class="prelude-val">Ok</span>(rust_type) = RustType::builder(env, prop.typ)
             .direction(library::ParameterDirection::In)
             .try_build()
@@ -714,6 +755,17 @@
             }
         }
 
+        <span class="kw">let </span><span class="kw-2">mut </span>setter_version = prop_version;
+        <span class="kw">if </span>has_setter {
+            <span class="kw">let </span>setter = setter_func.unwrap();
+            set_func_name = setter.new_name.as_ref().unwrap_or(<span class="kw-2">&amp;</span>setter.name).to_string();
+            set_prop_name = <span class="prelude-val">Some</span>(setter.name.clone());
+            setter_version = setter.version.map(|<span class="kw-2">mut </span>s| {
+                s.as_opposite();
+                s
+            });
+        }
+
         <span class="prelude-val">Some</span>(Property {
             name: name.clone(),
             var_name: nameutil::mangle_keywords(<span class="kw-2">&amp;*</span>name_for_func).into_owned(),
@@ -726,7 +778,7 @@
             set_in_ref_mode,
             set_bound,
             bounds: Bounds::default(),
-            version: prop_version,
+            version: setter_version,
             deprecated_version: prop.deprecated_version,
         })
     } <span class="kw">else </span>{

@@ -429,7 +429,7 @@ version = "3.20"
 "#</span>,
         );
         <span class="kw">let </span>p = Property::parse(<span class="kw-2">&amp;</span>toml, <span class="string">"a"</span>).unwrap();
-        <span class="macro">assert_eq!</span>(p.version, <span class="prelude-val">Some</span>(Version(<span class="number">3</span>, <span class="number">20</span>, <span class="number">0</span>)));
+        <span class="macro">assert_eq!</span>(p.version, <span class="prelude-val">Some</span>(Version::new(<span class="number">3</span>, <span class="number">20</span>, <span class="number">0</span>)));
     }
 
     <span class="attr">#[test]

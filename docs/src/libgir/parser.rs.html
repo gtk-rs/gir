@@ -1572,6 +1572,13 @@
 <a href="#1570" id="1570">1570</a>
 <a href="#1571" id="1571">1571</a>
 <a href="#1572" id="1572">1572</a>
+<a href="#1573" id="1573">1573</a>
+<a href="#1574" id="1574">1574</a>
+<a href="#1575" id="1575">1575</a>
+<a href="#1576" id="1576">1576</a>
+<a href="#1577" id="1577">1577</a>
+<a href="#1578" id="1578">1578</a>
+<a href="#1579" id="1579">1579</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     path::{Path, PathBuf},
     str::FromStr,
@@ -1769,11 +1776,13 @@
             <span class="string">"signal" </span>=&gt; <span class="self">self
                 </span>.read_signal(parser, ns_id, elem)
                 .map(|s| signals.push(s)),
-            <span class="string">"property" </span>=&gt; <span class="self">self</span>.read_property(parser, ns_id, elem).map(|p| {
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(p) = p {
-                    properties.push(p);
-                }
-            }),
+            <span class="string">"property" </span>=&gt; <span class="self">self
+                </span>.read_property(parser, ns_id, elem, <span class="kw-2">&amp;</span>symbol_prefix)
+                .map(|p| {
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(p) = p {
+                        properties.push(p);
+                    }
+                }),
             <span class="string">"field" </span>=&gt; <span class="self">self</span>.read_field(parser, ns_id, elem).map(|f| {
                 fields.push(f);
             }),
@@ -2278,11 +2287,13 @@
             <span class="string">"signal" </span>=&gt; <span class="self">self
                 </span>.read_signal(parser, ns_id, elem)
                 .map(|s| signals.push(s)),
-            <span class="string">"property" </span>=&gt; <span class="self">self</span>.read_property(parser, ns_id, elem).map(|p| {
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(p) = p {
-                    properties.push(p);
-                }
-            }),
+            <span class="string">"property" </span>=&gt; <span class="self">self
+                </span>.read_property(parser, ns_id, elem, <span class="kw-2">&amp;</span>symbol_prefix)
+                .map(|p| {
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(p) = p {
+                        properties.push(p);
+                    }
+                }),
             <span class="string">"doc" </span>=&gt; parser.text().map(|t| doc = <span class="prelude-val">Some</span>(t)),
             <span class="string">"doc-deprecated" </span>=&gt; parser.text().map(|t| doc_deprecated = <span class="prelude-val">Some</span>(t)),
             <span class="string">"virtual-method" </span>=&gt; <span class="self">self
@@ -2653,14 +2664,8 @@
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(parser.unexpected_element(elem)),
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>get_property = elem
-            .attr(<span class="string">"get-property"</span>)
-            .map(ToString::to_string)
-            .or(gtk_get_property);
-        <span class="kw">let </span>set_property = elem
-            .attr(<span class="string">"set-property"</span>)
-            .map(ToString::to_string)
-            .or(gtk_set_property);
+        <span class="kw">let </span>get_property = gtk_get_property.or(elem.attr(<span class="string">"get-property"</span>).map(ToString::to_string));
+        <span class="kw">let </span>set_property = gtk_set_property.or(elem.attr(<span class="string">"set-property"</span>).map(ToString::to_string));
         <span class="comment">// The last argument of a callback is ALWAYS user data, so it has to be marked as such
         // in case it's missing.
         </span><span class="kw">if </span>is_callback &amp;&amp; params.last().map(|x| x.closure.is_none()).unwrap_or(<span class="bool-val">false</span>) {
@@ -2931,6 +2936,7 @@
         parser: <span class="kw-2">&amp;mut </span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
         ns_id: u16,
         elem: <span class="kw-2">&amp;</span>Element,
+        symbol_prefix: <span class="kw-2">&amp;</span>str,
     ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Property&gt;, String&gt; {
         <span class="kw">let </span>prop_name = elem.attr_required(<span class="string">"name"</span>)<span class="question-mark">?</span>;
         <span class="kw">let </span>readable = elem.attr_bool(<span class="string">"readable"</span>, <span class="bool-val">true</span>);
@@ -2974,11 +2980,19 @@
                 <span class="kw">if let </span>(<span class="prelude-val">Some</span>(name), <span class="prelude-val">Some</span>(value)) = (elem.attr(<span class="string">"name"</span>), elem.attr(<span class="string">"value"</span>)) {
                     <span class="kw">match </span>name {
                         <span class="string">"org.gtk.Property.get" </span>=&gt; {
-                            gtk_getter = <span class="prelude-val">Some</span>(value.to_string());
+                            gtk_getter = value
+                                .split(symbol_prefix)
+                                .last()
+                                .and_then(|p| p.strip_prefix(<span class="string">'_'</span>))
+                                .map(|p| p.to_string());
                             <span class="prelude-val">Ok</span>(())
                         }
                         <span class="string">"org.gtk.Property.set" </span>=&gt; {
-                            gtk_setter = <span class="prelude-val">Some</span>(value.to_string());
+                            gtk_setter = value
+                                .split(symbol_prefix)
+                                .last()
+                                .and_then(|p| p.strip_prefix(<span class="string">'_'</span>))
+                                .map(|p| p.to_string());
                             <span class="prelude-val">Ok</span>(())
                         }
                         <span class="kw">_ </span>=&gt; parser.ignore_element(),
@@ -2990,8 +3004,8 @@
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(parser.unexpected_element(elem)),
         })<span class="question-mark">?</span>;
 
-        <span class="kw">let </span>getter = elem.attr(<span class="string">"getter"</span>).map(ToString::to_string).or(gtk_getter);
-        <span class="kw">let </span>setter = elem.attr(<span class="string">"setter"</span>).map(ToString::to_string).or(gtk_setter);
+        <span class="kw">let </span>getter = gtk_getter.or(elem.attr(<span class="string">"getter"</span>).map(ToString::to_string));
+        <span class="kw">let </span>setter = gtk_setter.or(elem.attr(<span class="string">"setter"</span>).map(ToString::to_string));
         <span class="kw">if </span>has_empty_type_tag {
             <span class="kw">return </span><span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>);
         }
