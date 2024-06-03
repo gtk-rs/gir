@@ -595,7 +595,6 @@
 <a href="#593" id="593">593</a>
 <a href="#594" id="594">594</a>
 <a href="#595" id="595">595</a>
-<a href="#596" id="596">596</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     fs,
     io::{Error, ErrorKind, <span class="prelude-ty">Result</span>, Write},
@@ -921,13 +920,12 @@
             <span class="kw">let </span>member_config = config
                 .as_ref()
                 .map_or_else(Vec::new, |c| c.members.matched(<span class="kw-2">&amp;</span>member.name));
-            <span class="kw">let </span>is_alias = member_config.iter().any(|m| m.alias);
             <span class="kw">let </span>version = member_config
                 .iter()
                 .find_map(|m| m.version)
                 .or(member.version);
 
-            <span class="kw">if </span>is_alias {
+            <span class="kw">if </span>member_config.iter().any(|m| m.status.ignored()) {
                 <span class="kw">continue</span>;
             }
 
