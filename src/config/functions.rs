@@ -527,7 +527,7 @@ version = "3.20"
 "#,
         );
         let f = Function::parse(&toml, "a").unwrap();
-        assert_eq!(f.version, Some(Version(3, 20, 0)));
+        assert_eq!(f.version, Some(Version::new(3, 20, 0)));
     }
 
     #[test]
