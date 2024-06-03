@@ -7,8 +7,6 @@ use crate::version::Version;
 #[derive(Clone, Debug)]
 pub struct Member {
     pub ident: Ident,
-    // some enum variants have multiple names
-    pub alias: bool,
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
     pub status: GStatus,
@@ -28,7 +26,6 @@ impl Parse for Member {
 
         toml.check_unwanted(
             &[
-                "alias",
                 "version",
                 "name",
                 "pattern",
@@ -39,11 +36,6 @@ impl Parse for Member {
             ],
             &format!("member {object_name}"),
         );
-
-        let alias = toml
-            .lookup("alias")
-            .and_then(Value::as_bool)
-            .unwrap_or(false);
         let version = toml
             .lookup("version")
             .and_then(Value::as_str)
@@ -81,7 +73,6 @@ impl Parse for Member {
 
         Some(Self {
             ident,
-            alias,
             version,
             deprecated_version,
             status,
@@ -118,12 +109,10 @@ mod tests {
         let toml = toml(
             r#"
 name = "name1"
-alias = true
 "#,
         );
         let f = Member::parse(&toml, "a").unwrap();
         assert_eq!(f.ident, Ident::Name("name1".into()));
-        assert!(f.alias);
     }
 
     #[test]
