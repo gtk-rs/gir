@@ -608,19 +608,25 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
     }
 
     for property in properties {
-        let getter_name = info
-            .properties
-            .iter()
-            .filter(|p| p.is_get)
-            .find(|p| p.name == property.name)
-            .map(|p| p.func_name.clone());
+        let getter_name = if property.getter.is_some() {
+            None // Don't generate a getter for the property, there is a getter
+        } else {
+            info.properties
+                .iter()
+                .filter(|p| p.is_get)
+                .find(|p| p.name == property.name)
+                .map(|p| p.func_name.clone())
+        };
+        let setter_name = if property.setter.is_some() {
+            None // don't generate a setter for the property, there is a setter
+        } else {
+            info.properties
+                .iter()
+                .filter(|p| !p.is_get)
+                .find(|p| p.name == property.name)
+                .map(|p| p.func_name.clone())
+        };
 
-        let setter_name = info
-            .properties
-            .iter()
-            .filter(|p| !p.is_get)
-            .find(|p| p.name == property.name)
-            .map(|p| p.func_name.clone());
         let (ty, object_location) = if has_trait {
             let configured_properties = obj.properties.matched(&property.name);
             if let Some(trait_name) = configured_properties
@@ -1009,26 +1015,15 @@ fn create_property_doc(
     {
         return Ok(());
     }
-    let name_for_func = nameutil::signal_to_snake(&property.name);
-    let getter_name = getter_name.unwrap_or_else(|| name_for_func.clone());
-    let has_getter_method = obj_info.functions.iter().any(|f| {
-        f.func_name == getter_name || f.new_name.as_ref().map_or(false, |n| n == &getter_name)
-    });
-
-    let setter_name = setter_name.unwrap_or_else(|| format!("set_{}", &name_for_func));
-    let has_setter_method = obj_info.functions.iter().any(|f| {
-        f.func_name == setter_name || f.new_name.as_ref().map_or(false, |n| n == &setter_name)
-    });
-
     let mut v = Vec::with_capacity(2);
 
-    if property.readable && !has_getter_method {
+    if let Some(getter_name) = getter_name {
         v.push(TypeStruct {
             parent: parent.clone(),
             ..TypeStruct::new(SType::Fn, &getter_name)
         });
     }
-    if property.writable && !property.construct_only && !has_setter_method {
+    if let Some(setter_name) = setter_name {
         v.push(TypeStruct {
             parent,
             ..TypeStruct::new(SType::Fn, &setter_name)
