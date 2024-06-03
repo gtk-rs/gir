@@ -44,7 +44,10 @@ macro_rules! impl_to_stripper_type {
             fn to_stripper_type(&self) -> TypeStruct {
                 TypeStruct::new(
                     SType::$enum_var,
-                    &format!("connect_{}", nameutil::signal_to_snake(&self.name)),
+                    &format!(
+                        "connect_{}",
+                        nameutil::mangle_keywords(nameutil::signal_to_snake(&self.name))
+                    ),
                 )
             }
         }
@@ -52,7 +55,7 @@ macro_rules! impl_to_stripper_type {
     ($ty:ident, $enum_var:ident) => {
         impl ToStripperType for $ty {
             fn to_stripper_type(&self) -> TypeStruct {
-                TypeStruct::new(SType::$enum_var, &self.name)
+                TypeStruct::new(SType::$enum_var, &nameutil::mangle_keywords(&self.name))
             }
         }
     };
@@ -860,7 +863,7 @@ where
 
     let mut st = fn_.to_stripper_type();
     if let Some(name_override) = name_override {
-        st.name = name_override;
+        st.name = nameutil::mangle_keywords(name_override).to_string();
     }
     let ty = TypeStruct { parent, ..st };
     let self_name: Option<String> = fn_
