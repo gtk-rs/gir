@@ -14,8 +14,7 @@ use crate::{
         ref_mode::RefMode, rust_type::RustType, safety_assertion_mode::SafetyAssertionMode,
     },
     env::Env,
-    library::{self},
-    nameutil,
+    library, nameutil,
     traits::IntoString,
 };
 

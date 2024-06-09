@@ -148,7 +148,7 @@ pub fn extract(functions: &mut [FuncInfo], parent_type: &LibType, obj: &GObject)
                 .ret
                 .parameter
                 .as_ref()
-                .is_some_and(|ret| ret.lib_par.transfer == crate::library::Transfer::None);
+                .is_some_and(|ret| ret.lib_par.transfer_ownership().is_none());
 
             // Assume only enumerations and bitfields can return static strings
             let returns_static_ref = return_transfer_none

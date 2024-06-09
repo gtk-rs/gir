@@ -189,7 +189,7 @@ fn trampoline_returns(env: &Env, analysis: &Trampoline) -> String {
     if analysis.ret.typ() == Default::default() {
         String::new()
     } else {
-        let ffi_type = ffi_type(env, analysis.ret.typ(), &analysis.ret.c_type);
+        let ffi_type = ffi_type(env, analysis.ret.typ(), analysis.ret.c_type());
         format!(" -> {}", ffi_type.into_string())
     }
 }

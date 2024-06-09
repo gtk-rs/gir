@@ -12,7 +12,7 @@ use crate::{
     config,
     consts::TYPE_PARAMETERS_START,
     env::Env,
-    library::{Basic, Class, Concurrency, Function, ParameterDirection, Type, TypeId},
+    library::{Basic, Class, Concurrency, Function, Type, TypeId},
     traits::IntoString,
 };
 
@@ -97,7 +97,7 @@ impl Bounds {
         let mut ret = None;
         let mut need_is_into_check = false;
 
-        if !par.is_instance_parameter && par.direction != ParameterDirection::Out {
+        if !par.is_instance_parameter && !par.direction.is_out() {
             if let Some(bound_type) = Bounds::type_for(env, par.typ) {
                 ret = Some(Bounds::get_to_glib_extra(
                     &bound_type,
@@ -106,7 +106,7 @@ impl Bounds {
                     par.move_,
                 ));
                 if r#async && (par.name == "callback" || par.name.ends_with("_callback")) {
-                    let func_name = func.c_identifier.as_ref().unwrap();
+                    let func_name = &func.c_identifier;
                     let finish_func_name = if let Some(finish_func_name) = &func.finish_func {
                         finish_func_name.to_string()
                     } else {
@@ -132,7 +132,7 @@ impl Bounds {
                             out_parameters.insert(
                                 0,
                                 RustType::builder(env, function.ret.typ())
-                                    .direction(function.ret.direction)
+                                    .direction(function.ret.direction())
                                     .nullable(nullable)
                                     .try_build()
                                     .into_string(),
@@ -333,9 +333,7 @@ fn find_out_parameters(
         .iter()
         .enumerate()
         .filter(|&(index, param)| {
-            Some(index) != index_to_ignore
-                && param.direction == ParameterDirection::Out
-                && param.name != "error"
+            Some(index) != index_to_ignore && param.direction().is_out() && !param.is_error()
         })
         .map(|(_, param)| {
             // FIXME: This should work completely based on the analysis of the finish()
@@ -346,13 +344,13 @@ fn find_out_parameters(
                 .find_map(|f| {
                     f.parameters
                         .iter()
-                        .filter(|p| p.ident.is_match(&param.name))
+                        .filter(|p| p.ident.is_match(param.name()))
                         .find_map(|p| p.nullable)
                 })
                 .unwrap_or(param.is_nullable());
 
             RustType::builder(env, param.typ())
-                .direction(param.direction)
+                .direction(param.direction())
                 .nullable(nullable)
                 .try_build()
                 .into_string()
@@ -372,11 +370,11 @@ fn find_error_type(env: &Env, function: &Function) -> Option<String> {
     let error_param = function
         .parameters
         .iter()
-        .find(|param| param.direction.is_out() && param.is_error)?;
+        .find(|param| param.direction().is_out() && param.is_error())?;
     if let Type::Record(_) = env.type_(error_param.typ()) {
         Some(
             RustType::builder(env, error_param.typ())
-                .direction(error_param.direction)
+                .direction(error_param.direction())
                 .try_build()
                 .into_string(),
         )
