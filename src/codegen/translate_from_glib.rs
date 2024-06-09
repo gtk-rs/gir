@@ -87,24 +87,24 @@ impl TranslateFromGlib for analysis::return_value::Info {
             Some(ref par) => match self.base_tid {
                 Some(tid) => {
                     let rust_type = RustType::builder(env, tid)
-                        .direction(par.lib_par.direction)
+                        .direction(par.lib_par.direction())
                         .try_from_glib(&par.try_from_glib)
                         .try_build();
-                    let from_glib_xxx = from_glib_xxx(par.lib_par.transfer, None);
+                    let from_glib_xxx = from_glib_xxx(par.lib_par.transfer_ownership(), None);
 
-                    let prefix = if *par.lib_par.nullable {
+                    let prefix = if par.lib_par.is_nullable() {
                         format!("Option::<{}>::{}", rust_type.into_string(), from_glib_xxx.0)
                     } else {
                         format!("{}::{}", rust_type.into_string(), from_glib_xxx.0)
                     };
-                    let suffix_function = if *par.lib_par.nullable {
+                    let suffix_function = if par.lib_par.is_nullable() {
                         "map(|o| o.unsafe_cast())"
                     } else {
                         "unsafe_cast()"
                     };
 
                     if let Some(ref msg) = self.nullable_return_is_error {
-                        assert!(*par.lib_par.nullable);
+                        assert!(par.lib_par.is_nullable());
                         (
                             prefix,
                             format!(
@@ -126,7 +126,7 @@ impl TranslateFromGlib for analysis::return_value::Info {
                 None if self.nullable_return_is_error.is_some() => {
                     let res = Mode::from(par).translate_from_glib_as_function(env, array_length);
                     if let Some(ref msg) = self.nullable_return_is_error {
-                        assert!(*par.lib_par.nullable);
+                        assert!(par.lib_par.is_nullable());
                         (
                             format!("Option::<_>::{}", res.0),
                             format!(
@@ -147,20 +147,23 @@ impl TranslateFromGlib for analysis::return_value::Info {
     }
 }
 
-fn from_glib_xxx(transfer: library::Transfer, array_length: Option<&str>) -> (String, String) {
-    use crate::library::Transfer;
+fn from_glib_xxx(
+    transfer: gir_parser::TransferOwnership,
+    array_length: Option<&str>,
+) -> (String, String) {
+    use gir_parser::TransferOwnership;
     let good_print = |name: &str| format!(", {name}.assume_init() as _)");
     match (transfer, array_length) {
-        (Transfer::None, None) => ("from_glib_none(".into(), ")".into()),
-        (Transfer::Full, None) => ("from_glib_full(".into(), ")".into()),
-        (Transfer::Container, None) => ("from_glib_container(".into(), ")".into()),
-        (Transfer::None, Some(array_length_name)) => {
+        (TransferOwnership::None, None) => ("from_glib_none(".into(), ")".into()),
+        (TransferOwnership::Full, None) => ("from_glib_full(".into(), ")".into()),
+        (TransferOwnership::Container, None) => ("from_glib_container(".into(), ")".into()),
+        (TransferOwnership::None, Some(array_length_name)) => {
             ("from_glib_none_num(".into(), good_print(array_length_name))
         }
-        (Transfer::Full, Some(array_length_name)) => {
+        (TransferOwnership::Full, Some(array_length_name)) => {
             ("from_glib_full_num(".into(), good_print(array_length_name))
         }
-        (Transfer::Container, Some(array_length_name)) => (
+        (TransferOwnership::Container, Some(array_length_name)) => (
             "from_glib_container_num(".into(),
             good_print(array_length_name),
         ),

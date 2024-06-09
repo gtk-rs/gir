@@ -365,13 +365,13 @@ pub fn body_chunk(
     builder
         .glib_name(&format!("{}::{}", sys_crate_name, analysis.glib_name))
         .assertion(analysis.assertion)
-        .ret(&analysis.ret)
+        .ret(analysis.ret.clone())
         .transformations(&analysis.parameters.transformations)
         .in_unsafe(analysis.unsafe_)
         .outs_mode(analysis.outs.mode);
 
     if analysis.r#async {
-        if let Some(ref trampoline) = analysis.trampoline {
+        if let Some(trampoline) = &analysis.trampoline {
             builder.async_trampoline(trampoline);
         } else {
             warn!(
@@ -389,7 +389,12 @@ pub fn body_chunk(
     }
 
     for par in &analysis.parameters.c_parameters {
-        if outs_as_return && analysis.outs.iter().any(|out| out.lib_par.name == par.name) {
+        if outs_as_return
+            && analysis
+                .outs
+                .iter()
+                .any(|out| out.lib_par.name() == par.name)
+        {
             builder.out_parameter(env, par);
         } else {
             builder.parameter();
@@ -440,7 +445,7 @@ pub fn body_chunk_futures(
         let type_ = env.type_(par.typ);
         let is_str = matches!(*type_, library::Type::Basic(library::Basic::Utf8));
 
-        if *c_par.nullable {
+        if c_par.nullable {
             writeln!(
                 body,
                 "let {} = {}.map(ToOwned::to_owned);",
@@ -482,7 +487,7 @@ pub fn body_chunk_futures(
         } else {
             let c_par = &analysis.parameters.c_parameters[par.ind_c];
 
-            if *c_par.nullable {
+            if c_par.nullable {
                 writeln!(
                     body,
                     "\t\t{}.as_ref().map(::std::borrow::Borrow::borrow),",

@@ -7,8 +7,8 @@ pub struct Signature(Vec<library::TypeId>, library::TypeId, Option<Version>);
 
 impl Signature {
     pub fn new(func: &library::Function) -> Self {
-        let params = func.parameters.iter().map(|p| p.typ).collect();
-        Self(params, func.ret.typ, func.version)
+        let params = func.parameters.iter().map(|p| p.typ()).collect();
+        Self(params, func.ret.typ(), func.version)
     }
 
     fn from_property(is_get: bool, typ: library::TypeId) -> Self {

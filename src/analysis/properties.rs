@@ -25,7 +25,7 @@ pub struct Property {
     pub is_get: bool,
     pub func_name: String,
     pub func_name_alias: Option<String>,
-    pub nullable: library::Nullable,
+    pub nullable: bool,
     pub get_out_ref_mode: RefMode,
     pub set_in_ref_mode: RefMode,
     pub bounds: Bounds,
@@ -290,7 +290,7 @@ fn analyze_property(
         let set_bound = PropertyBound::get(env, prop.typ);
         if type_string.is_ok() && set_bound.is_some() {
             imports.add("glib::prelude::*");
-            if !*nullable {
+            if !nullable {
                 // TODO: support non-nullable setter if found any
                 warn!(
                     "Non nullable setter for property generated as nullable \"{}.{}\"",
@@ -335,30 +335,16 @@ fn analyze_property(
 
     let notify_signal = if notifiable {
         let mut used_types: Vec<String> = Vec::with_capacity(4);
+        let tid = env
+            .library
+            .find_type(library::INTERNAL_NAMESPACE, "none")
+            .unwrap();
         let trampoline = trampolines::analyze(
             env,
             &library::Signal {
                 name: format!("notify::{name}"),
                 parameters: Vec::new(),
-                ret: library::Parameter {
-                    name: String::new(),
-                    typ: env
-                        .library
-                        .find_type(library::INTERNAL_NAMESPACE, "none")
-                        .unwrap(),
-                    c_type: "none".into(),
-                    instance_parameter: false,
-                    direction: library::ParameterDirection::Return,
-                    transfer: library::Transfer::None,
-                    caller_allocates: false,
-                    nullable: library::Nullable(false),
-                    array_length: None,
-                    is_error: false,
-                    doc: None,
-                    scope: library::ParameterScope::None,
-                    closure: None,
-                    destroy: None,
-                },
+                ret: library::Parameter::none(tid),
                 is_action: false,
                 is_detailed: false, /* well, technically this *is* an instance of a detailed
                                      * signal, but we "pre-detailed" it */
@@ -440,15 +426,12 @@ fn get_func_name(prop_name: &str, is_bool_getter: bool) -> (Vec<String>, String)
     }
 }
 
-pub fn get_property_ref_modes(
-    env: &Env,
-    prop: &library::Property,
-) -> (RefMode, RefMode, library::Nullable) {
+pub fn get_property_ref_modes(env: &Env, prop: &library::Property) -> (RefMode, RefMode, bool) {
     let get_out_ref_mode = RefMode::of(env, prop.typ, library::ParameterDirection::Return);
     let mut set_in_ref_mode = RefMode::of(env, prop.typ, library::ParameterDirection::In);
     if set_in_ref_mode == RefMode::ByRefMut {
         set_in_ref_mode = RefMode::ByRef;
     }
-    let nullable = library::Nullable(set_in_ref_mode.is_ref());
+    let nullable = set_in_ref_mode.is_ref();
     (get_out_ref_mode, set_in_ref_mode, nullable)
 }

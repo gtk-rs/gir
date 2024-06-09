@@ -7,7 +7,7 @@ use crate::{
     },
     config,
     env::Env,
-    library::{self, Nullable, TypeId},
+    library::{self, TypeId},
 };
 
 #[derive(Clone, Debug, Default)]
@@ -32,30 +32,30 @@ pub fn analyze(
         .iter()
         .find_map(|f| f.ret.type_name.as_ref())
         .and_then(|typ| env.library.find_type(0, typ))
-        .unwrap_or_else(|| override_string_type_return(env, func.ret.typ, configured_functions));
+        .unwrap_or_else(|| override_string_type_return(env, func.ret.typ(), configured_functions));
     let mut parameter = if typ == Default::default() {
         None
     } else {
-        let mut nullable = func.ret.nullable;
+        let mut is_nullable = func.ret.is_nullable();
         if !obj.trust_return_value_nullability {
             // Since GIRs are bad at specifying return value nullability, assume
             // any returned pointer is nullable unless overridden by the config.
-            if !*nullable && can_be_nullable_return(env, typ) {
-                *nullable = true;
+            if !is_nullable && can_be_nullable_return(env, typ) {
+                is_nullable = true;
             }
         }
 
         let nullable_override = configured_functions.iter().find_map(|f| f.ret.nullable);
         if let Some(val) = nullable_override {
-            nullable = val;
+            is_nullable = val;
         }
-        Some(library::Parameter {
-            typ,
-            nullable,
-            ..func.ret.clone()
-        })
+        let mut ret = func.ret.clone();
+        ret.set_tid(typ);
+        ret.set_nullable(is_nullable);
+        Some(ret)
     };
 
+    let param_is_nullable = parameter.as_ref().is_some_and(|p| p.is_nullable());
     let mut commented = false;
 
     let bool_return_is_error = configured_functions
@@ -84,7 +84,7 @@ pub fn analyze(
         .iter()
         .find_map(|f| f.ret.nullable_return_is_error.as_ref());
     let nullable_return_error_message = nullable_return_is_error.and_then(|m| {
-        if let Some(library::Parameter { nullable: Nullable(false), ..}) = parameter {
+        if !param_is_nullable{
             error!(
                 "Ignoring nullable_return_is_error configuration for non-none returning function {}",
                 func.name
@@ -105,23 +105,21 @@ pub fn analyze(
     let mut base_tid = None;
 
     if func.kind == library::FunctionKind::Constructor {
-        if let Some(par) = parameter {
+        if let Some(ref mut par) = parameter {
             let nullable_override = configured_functions.iter().find_map(|f| f.ret.nullable);
-            if par.typ != type_tid {
-                base_tid = Some(par.typ);
+            if par.typ() != type_tid {
+                base_tid = Some(par.typ());
             }
-            parameter = Some(library::Parameter {
-                typ: type_tid,
-                nullable: nullable_override.unwrap_or(func.ret.nullable),
-                ..par
-            });
+            par.set_nullable(nullable_override.unwrap_or(func.ret.is_nullable()));
+            par.set_tid(type_tid);
         }
     }
 
-    let parameter = parameter.as_ref().map(|lib_par| {
-        let par = analysis::Parameter::from_return_value(env, lib_par, configured_functions);
+    let parameter = parameter.map(|lib_par| {
+        let par =
+            analysis::Parameter::from_return_value(env, lib_par.clone(), configured_functions);
         if let Ok(rust_type) = RustType::builder(env, typ)
-            .direction(par.lib_par.direction)
+            .direction(par.lib_par.direction())
             .try_from_glib(&par.try_from_glib)
             .try_build()
         {
@@ -129,7 +127,7 @@ pub fn analyze(
         }
 
         commented = RustType::builder(env, typ)
-            .direction(func.ret.direction)
+            .direction(func.ret.direction())
             .try_from_glib(&par.try_from_glib)
             .try_build_param()
             .is_err();

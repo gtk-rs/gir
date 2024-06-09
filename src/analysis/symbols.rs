@@ -179,7 +179,7 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
                             name: func.name.clone(),
                             ..Default::default()
                         };
-                        info.insert(func.c_identifier.as_ref().unwrap(), symbol, None);
+                        info.insert(&func.c_identifier, symbol, None);
                     }
                 }
                 Type::Record(Record {
@@ -208,7 +208,7 @@ pub fn run(library: &Library, namespaces: &namespaces::Info) -> Info {
                             name: func.name.clone(),
                             ..Default::default()
                         };
-                        info.insert(func.c_identifier.as_ref().unwrap(), symbol, None);
+                        info.insert(&func.c_identifier, symbol, None);
                     }
                 }
                 _ => {}

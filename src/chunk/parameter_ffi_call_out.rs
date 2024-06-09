@@ -7,7 +7,7 @@ use crate::{
 pub struct Parameter {
     pub name: String,
     pub typ: library::TypeId,
-    pub transfer: library::Transfer,
+    pub transfer: gir_parser::TransferOwnership,
     pub caller_allocates: bool,
     pub is_error: bool,
     pub is_uninitialized: bool,
@@ -31,11 +31,11 @@ impl Parameter {
 impl From<&analysis::Parameter> for Parameter {
     fn from(orig: &analysis::Parameter) -> Self {
         Self {
-            name: orig.lib_par.name.clone(),
-            typ: orig.lib_par.typ,
-            transfer: orig.lib_par.transfer,
-            caller_allocates: orig.lib_par.caller_allocates,
-            is_error: orig.lib_par.is_error,
+            name: orig.lib_par.name().to_owned(),
+            typ: orig.lib_par.typ(),
+            transfer: orig.lib_par.transfer_ownership(),
+            caller_allocates: orig.lib_par.is_caller_allocates(),
+            is_error: orig.lib_par.is_error(),
             is_uninitialized: false,
             try_from_glib: orig.try_from_glib.clone(),
         }

@@ -34,7 +34,6 @@ pub mod update_version;
 mod version;
 mod visitors;
 mod writer;
-mod xmlparser;
 
 pub use crate::{
     analysis::{

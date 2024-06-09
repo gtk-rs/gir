@@ -90,12 +90,12 @@ fn is_stringify(func: &mut FuncInfo, parent_type: &LibType, obj: &GObject) -> bo
     if func.parameters.c_parameters.len() != 1 {
         return false;
     }
-    if !func.parameters.c_parameters[0].instance_parameter {
+    if !func.parameters.c_parameters[0].is_instance_parameter {
         return false;
     }
 
     if let Some(ret) = func.ret.parameter.as_mut() {
-        if ret.lib_par.typ != TypeId::tid_utf8() {
+        if ret.lib_par.typ() != TypeId::tid_utf8() {
             return false;
         }
 
@@ -110,12 +110,12 @@ fn is_stringify(func: &mut FuncInfo, parent_type: &LibType, obj: &GObject) -> bo
             if !obj.trust_return_value_nullability
                 && !matches!(parent_type, LibType::Enumeration(_) | LibType::Bitfield(_))
             {
-                *ret.lib_par.nullable = false;
+                ret.lib_par.set_nullable(false);
             }
         }
 
         // Cannot generate Display implementation for Option<>
-        !*ret.lib_par.nullable
+        !ret.lib_par.is_nullable()
     } else {
         false
     }
@@ -141,9 +141,11 @@ pub fn extract(functions: &mut [FuncInfo], parent_type: &LibType, obj: &GObject)
 
     for (pos, func) in functions.iter_mut().enumerate() {
         if is_stringify(func, parent_type, obj) {
-            let return_transfer_none = func.ret.parameter.as_ref().map_or(false, |ret| {
-                ret.lib_par.transfer == crate::library::Transfer::None
-            });
+            let return_transfer_none = func
+                .ret
+                .parameter
+                .as_ref()
+                .map_or(false, |ret| ret.lib_par.transfer_ownership().is_none());
 
             // Assume only enumerations and bitfields can return static strings
             let returns_static_ref = return_transfer_none

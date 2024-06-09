@@ -30,10 +30,10 @@ pub fn check_function_real_version(library: &mut Library) {
 }
 
 fn check_versions(param: &Parameter, current_version: &mut Option<Version>, lib: *const Library) {
-    if param.typ.ns_id != MAIN_NAMESPACE {
+    if param.typ().ns_id != MAIN_NAMESPACE {
         return;
     }
-    let ty_version = match unsafe { (*lib).type_(param.typ) } {
+    let ty_version = match unsafe { (*lib).type_(param.typ()) } {
         library::Type::Class(c) => c.version,
         library::Type::Enumeration(c) => c.version,
         library::Type::Bitfield(c) => c.version,

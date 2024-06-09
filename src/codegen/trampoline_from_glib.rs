@@ -61,13 +61,14 @@ impl TrampolineFromGlib for Transformation {
     }
 }
 
-pub fn from_glib_xxx(transfer: library::Transfer, is_borrow: bool) -> (String, String) {
-    use crate::library::Transfer::*;
+pub fn from_glib_xxx(transfer: gir_parser::TransferOwnership, is_borrow: bool) -> (String, String) {
     match transfer {
-        None if is_borrow => ("from_glib_borrow(".into(), ")".into()),
-        None => ("from_glib_none(".into(), ")".into()),
-        Full => ("from_glib_full(".into(), ")".into()),
-        Container => ("from_glib_container(".into(), ")".into()),
+        gir_parser::TransferOwnership::None if is_borrow => {
+            ("from_glib_borrow(".into(), ")".into())
+        }
+        gir_parser::TransferOwnership::None => ("from_glib_none(".into(), ")".into()),
+        gir_parser::TransferOwnership::Full => ("from_glib_full(".into(), ")".into()),
+        gir_parser::TransferOwnership::Container => ("from_glib_container(".into(), ")".into()),
     }
 }
 
