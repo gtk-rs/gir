@@ -13,7 +13,7 @@ impl Library {
         }
 
         let tid_int = self.find_type(0, "*.gint").expect("No basic type *.gint");
-        let glib_ns_id = self
+        let (glib_ns_id, _) = self
             .find_namespace("GLib")
             .expect("Missing `GLib` namespace in add_glib_priority!");
         let tid_priority = self.add_type(
@@ -45,8 +45,8 @@ impl FunctionsMutVisitor for ReplaceToPriority {
             return true;
         }
         for par in &mut func.parameters {
-            if par.typ() == self.tid_int && par.name.ends_with("priority") {
-                par.set_typ(self.tid_priority);
+            if par.typ() == self.tid_int && par.name().ends_with("priority") {
+                par.set_tid(self.tid_priority);
             }
         }
         true

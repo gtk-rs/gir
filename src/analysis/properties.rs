@@ -336,30 +336,16 @@ fn analyze_property(
 
     let notify_signal = if notifiable {
         let mut used_types: Vec<String> = Vec::with_capacity(4);
+        let tid = env
+            .library
+            .find_type(library::INTERNAL_NAMESPACE, "none")
+            .unwrap();
         let trampoline = trampolines::analyze(
             env,
             &library::Signal {
                 name: format!("notify::{name}"),
                 parameters: Vec::new(),
-                ret: library::Parameter {
-                    name: String::new(),
-                    typ: env
-                        .library
-                        .find_type(library::INTERNAL_NAMESPACE, "none")
-                        .unwrap(),
-                    c_type: "none".into(),
-                    is_instance_parameter: false,
-                    direction: library::ParameterDirection::Return,
-                    transfer: library::Transfer::None,
-                    caller_allocates: false,
-                    nullable: false,
-                    array_length: None,
-                    is_error: false,
-                    doc: None,
-                    scope: library::ParameterScope::None,
-                    closure: None,
-                    destroy: None,
-                },
+                ret: library::Parameter::none(tid),
                 is_action: false,
                 is_detailed: false, /* well, technically this *is* an instance of a detailed
                                      * signal, but we "pre-detailed" it */

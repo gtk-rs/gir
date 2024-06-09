@@ -75,24 +75,23 @@ pub fn analyze(
     }
 
     for lib_par in &func.parameters {
-        if lib_par.direction != ParameterDirection::Out {
+        if !lib_par.direction().is_out() {
             continue;
         }
         if can_as_return(env, lib_par) {
             let mut lib_par = lib_par.clone();
-            lib_par.name = nameutil::mangle_keywords(&lib_par.name).into_owned();
-            let configured_parameters = configured_functions.matched_parameters(&lib_par.name);
-            let mut out =
-                analysis::Parameter::from_parameter(env, &lib_par, &configured_parameters);
+            lib_par.set_name(&nameutil::mangle_keywords(lib_par.name()).into_owned());
+            let configured_parameters = configured_functions.matched_parameters(lib_par.name());
+            let mut out = analysis::Parameter::from_parameter(env, lib_par, &configured_parameters);
 
             // FIXME: temporary solution for string_type, nullable override. This should
             // completely work based on the analyzed parameters instead of the
             // library parameters.
             if let Some(c_par) = func_c_params
                 .iter()
-                .find(|c_par| c_par.name == lib_par.name)
+                .find(|c_par| c_par.name == out.lib_par.name())
             {
-                out.lib_par.set_typ(c_par.typ);
+                out.lib_par.set_tid(c_par.typ);
                 out.lib_par.set_nullable(c_par.nullable);
             }
 
@@ -108,11 +107,12 @@ pub fn analyze(
     if info.mode == Mode::Combined
         || info.mode == Mode::Throws(ThrowFunctionReturnStrategy::ReturnResult)
     {
-        let mut ret = analysis::Parameter::from_return_value(env, &func.ret, configured_functions);
+        let mut ret =
+            analysis::Parameter::from_return_value(env, func.ret.clone(), configured_functions);
 
         // TODO: fully switch to use analyzed returns (it add too many Return<Option<>>)
         if let Some(ref par) = func_ret.parameter {
-            ret.lib_par.set_typ(par.lib_par.typ());
+            ret.lib_par.set_tid(par.lib_par.typ());
         }
         if let Some(val) = nullable_override {
             ret.lib_par.set_nullable(val);
@@ -129,13 +129,13 @@ pub fn can_as_return(env: &Env, par: &library::Parameter) -> bool {
         Direct | Scalar | Option | Result { .. } => true,
         Pointer => {
             // Disallow Basic arrays without length
-            if is_carray_with_direct_elements(env, par.typ()) && par.array_length.is_none() {
+            if is_carray_with_direct_elements(env, par.typ()) && par.array_length().is_none() {
                 return false;
             }
 
             RustType::builder(env, par.typ())
                 .direction(ParameterDirection::Out)
-                .scope(par.scope)
+                .scope(par.scope())
                 .try_build_param()
                 .is_ok()
         }

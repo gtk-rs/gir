@@ -12,6 +12,18 @@ impl Version {
         Self(major, minor, patch, true)
     }
 
+    pub fn major(self) -> u16 {
+        self.0
+    }
+
+    pub fn minor(self) -> u16 {
+        self.1
+    }
+
+    pub fn patch(self) -> u16 {
+        self.2
+    }
+
     /// Convert a version number to a config guard
     ///
     /// When generating a builder pattern, properties could be from a super-type

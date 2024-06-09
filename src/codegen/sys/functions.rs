@@ -253,7 +253,7 @@ fn generate_object_funcs(
             .or(version);
 
         version_condition(w, env, None, version, commented, 1)?;
-        let name = func.c_identifier.as_ref().unwrap();
+        let name = &func.c_identifier;
         generate_cfg_configure(w, &configured_functions, commented)?;
         writeln!(w, "    {comment}pub fn {name}{sig};")?;
     }
@@ -275,9 +275,7 @@ pub fn generate_callbacks(
         writeln!(
             w,
             "{}pub type {} = Option<unsafe extern \"C\" fn{}>;",
-            comment,
-            func.c_identifier.as_ref().unwrap(),
-            sig
+            comment, func.c_identifier, sig
         )?;
     }
     if !callbacks.is_empty() {
@@ -309,7 +307,7 @@ fn function_return_value(env: &Env, func: &library::Function) -> (bool, String) 
     if func.ret.typ() == Default::default() {
         return (false, String::new());
     }
-    let ffi_type = ffi_type(env, func.ret.typ(), &func.ret.c_type);
+    let ffi_type = ffi_type(env, func.ret.typ(), func.ret.c_type());
     let commented = ffi_type.is_err();
     (commented, format!(" -> {}", ffi_type.into_string()))
 }
@@ -318,14 +316,14 @@ fn function_parameter(env: &Env, par: &library::Parameter, bare: bool) -> (bool,
     if let library::Type::Basic(library::Basic::VarArgs) = env.library.type_(par.typ()) {
         return (false, "...".into());
     }
-    let ffi_type = ffi_type(env, par.typ(), &par.c_type);
+    let ffi_type = ffi_type(env, par.typ(), par.c_type());
     let commented = ffi_type.is_err();
     let res = if bare {
         ffi_type.into_string()
     } else {
         format!(
             "{}: {}",
-            nameutil::mangle_keywords(&*par.name),
+            nameutil::mangle_keywords(par.name()),
             ffi_type.into_string()
         )
     };

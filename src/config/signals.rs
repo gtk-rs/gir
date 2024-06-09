@@ -11,10 +11,7 @@ use super::{
     parameter_matchable::Functionlike,
     parsable::{Parsable, Parse},
 };
-use crate::{
-    library::{self},
-    version::Version,
-};
+use crate::{library, version::Version};
 
 #[derive(Clone, Copy, Debug)]
 pub enum TransformationType {

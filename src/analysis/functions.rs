@@ -29,10 +29,7 @@ use crate::{
     codegen::Visibility,
     config::{self, gobjects::GStatus},
     env::Env,
-    library::{
-        self, Function, FunctionKind, MAIN_NAMESPACE, ParameterDirection, ParameterScope, Transfer,
-        Type,
-    },
+    library::{self, Function, FunctionKind, MAIN_NAMESPACE, ParameterDirection, Type},
     nameutil,
     traits::*,
     version::Version,
@@ -251,14 +248,14 @@ fn fixup_gpointer_parameter(
     parameters.c_parameters[idx].typ = type_tid;
     parameters.c_parameters[idx].is_instance_parameter = is_instance_parameter;
     parameters.c_parameters[idx].ref_mode = RefMode::ByRef;
-    parameters.c_parameters[idx].transfer = Transfer::None;
+    parameters.c_parameters[idx].transfer = gir_parser::TransferOwnership::None;
     parameters.transformations[idx] = Transformation {
         ind_c: idx,
         ind_rust: Some(idx),
         transformation_type: TransformationType::ToGlibPointer {
             name: parameters.rust_parameters[idx].name.clone(),
             is_instance_parameter,
-            transfer: Transfer::None,
+            transfer: gir_parser::TransferOwnership::None,
             ref_mode: RefMode::ByRef,
             to_glib_extra: Default::default(),
             explicit_target_type: format!("{} {}", pointer_type, ffi_name.as_str()),
@@ -349,10 +346,7 @@ fn analyze_callbacks(
             c_parameters.push((par, pos));
         }
 
-        let func_name = match &func.c_identifier {
-            Some(n) => n,
-            None => &func.name,
-        };
+        let func_name = &func.c_identifier;
         let mut destructors_to_update = Vec::new();
         for pos in 0..parameters.c_parameters.len() {
             // If it is a user data parameter, we ignore it.
@@ -364,7 +358,7 @@ fn analyze_callbacks(
             assert!(
                 !par.is_instance_parameter || pos == 0,
                 "Wrong instance parameter in {}",
-                func.c_identifier.as_ref().unwrap()
+                func.c_identifier
             );
             if let Ok(rust_type) = RustType::builder(env, par.typ)
                 .direction(par.direction)
@@ -514,8 +508,8 @@ fn analyze_callbacks(
     if !destroys.is_empty() || !callbacks.is_empty() {
         for (pos, typ) in to_replace {
             let ty = env.library.type_(typ);
-            params[pos].set_typ(typ);
-            params[pos].c_type = ty.get_glib_name().unwrap().to_owned();
+            params[pos].set_tid(typ);
+            params[pos].set_c_type(ty.get_glib_name().unwrap());
         }
         let mut s = to_remove
             .iter()
@@ -563,7 +557,10 @@ fn analyze_function(
     let type_tid = type_tid.unwrap_or_default();
     let r#async = func.finish_func.is_some()
         || func.parameters.iter().any(|parameter| {
-            parameter.scope == ParameterScope::Async && parameter.c_type == "GAsyncReadyCallback"
+            parameter
+                .scope()
+                .is_some_and(|s| s == gir_parser::FunctionScope::Async)
+                && parameter.c_type() == "GAsyncReadyCallback"
         });
     let has_callback_parameter = !r#async
         && func
@@ -591,7 +588,7 @@ fn analyze_function(
         && func
             .parameters
             .iter()
-            .any(|par| par.c_type == "GDestroyNotify")
+            .any(|par| par.c_type() == "GDestroyNotify")
     {
         // In here, We have a DestroyNotify callback but no other callback is provided.
         // A good example of this situation is this function:
@@ -629,7 +626,7 @@ fn analyze_function(
             let nb_in_params = func
                 .parameters
                 .iter()
-                .filter(|param| library::ParameterDirection::In == param.direction)
+                .filter(|param| param.direction().is_in())
                 .fold(0, |acc, _| acc + 1);
             let is_bool_getter = (func.parameters.len() == nb_in_params)
                 && (func.ret.typ() == library::TypeId::tid_bool()
@@ -747,7 +744,7 @@ fn analyze_function(
                 assert!(
                     !par.is_instance_parameter || pos == 0,
                     "Wrong instance parameter in {}",
-                    func.c_identifier.as_ref().unwrap()
+                    func.c_identifier
                 );
                 if let Ok(rust_type) = RustType::builder(env, par.typ)
                     .direction(par.direction)
@@ -848,7 +845,7 @@ fn analyze_function(
         warn_main!(
             type_tid,
             "Function {} has unsupported outs",
-            func.c_identifier.as_ref().unwrap_or(&func.name)
+            func.c_identifier
         );
         commented = true;
     }
@@ -878,7 +875,9 @@ fn analyze_function(
 
     if status.need_generate() && !commented {
         if (!destroys.is_empty() || !callbacks.is_empty())
-            && callbacks.iter().any(|c| !c.scope.is_call())
+            && callbacks
+                .iter()
+                .any(|c| !c.scope.is_some_and(|s| s.is_call()))
         {
             imports.add("std::boxed::Box as Box_");
         }
@@ -916,7 +915,7 @@ fn analyze_function(
         name,
         func_name: func_name.to_string(),
         new_name,
-        glib_name: func.c_identifier.as_ref().unwrap().clone(),
+        glib_name: func.c_identifier.clone(),
         status,
         kind: func.kind,
         visibility,
@@ -982,7 +981,7 @@ fn analyze_async(
     {
         // Checks for /*Ignored*/ or other error comments
         *commented |= callback_type.contains("/*");
-        let func_name = func.c_identifier.as_ref().unwrap();
+        let func_name = &func.c_identifier;
         let finish_func_name = if let Some(finish_func_name) = &func.finish_func {
             finish_func_name.to_string()
         } else {
@@ -999,20 +998,20 @@ fn analyze_async(
             ) {
                 ffi_ret = Some(analysis::Parameter::from_return_value(
                     env,
-                    &function.ret,
+                    function.ret.clone(),
                     configured_functions,
                 ));
             }
 
             for param in &function.parameters {
                 let mut lib_par = param.clone();
-                if nameutil::needs_mangling(&param.name) {
-                    lib_par.name = nameutil::mangle_keywords(&*param.name).into_owned();
+                if nameutil::needs_mangling(param.name()) {
+                    lib_par.set_name(&nameutil::mangle_keywords(param.name()));
                 }
-                let configured_parameters = configured_functions.matched_parameters(&lib_par.name);
+                let configured_parameters = configured_functions.matched_parameters(lib_par.name());
                 output_params.push(analysis::Parameter::from_parameter(
                     env,
-                    &lib_par,
+                    lib_par,
                     &configured_parameters,
                 ));
             }
@@ -1145,7 +1144,8 @@ fn analyze_callback(
         // If we don't have a "user data" parameter, we can't get the closure so there's
         // nothing we can do...
         if par.c_type != "GDestroyNotify"
-            && (func.parameters.is_empty() || !func.parameters.iter().any(|c| c.closure.is_some()))
+            && (func.parameters.is_empty()
+                || !func.parameters.iter().any(|c| c.closure().is_some()))
         {
             *commented = true;
             warn_main!(
@@ -1166,7 +1166,7 @@ fn analyze_callback(
         );
         if par.c_type != "GDestroyNotify" && !*commented {
             *commented |= func.parameters.iter().any(|p| {
-                if p.closure.is_none() {
+                if p.closure().is_none() {
                     crate::analysis::trampolines::type_error(env, p).is_some()
                 } else {
                     false
@@ -1266,17 +1266,12 @@ fn analyze_callback(
 
 pub fn find_function<'a>(env: &'a Env, c_identifier: &str) -> Option<&'a Function> {
     let find = |functions: &'a [Function]| -> Option<&'a Function> {
-        for function in functions {
-            if let Some(ref func_c_identifier) = function.c_identifier
-                && func_c_identifier == c_identifier
-            {
-                return Some(function);
-            }
-        }
-        None
+        functions
+            .iter()
+            .find(|&function| function.c_identifier == c_identifier)
     };
 
-    if let Some(index) = env.library.find_namespace(&env.config.library_name) {
+    if let Some((index, _)) = env.library.find_namespace(&env.config.library_name) {
         let namespace = env.library.namespace(index);
         if let Some(f) = find(&namespace.functions) {
             return Some(f);
@@ -1312,8 +1307,8 @@ pub fn find_index_to_ignore<'a>(
     parameters
         .into_iter()
         .chain(ret)
-        .find(|param| param.array_length.is_some())
-        .and_then(|param| param.array_length.map(|length| length as usize))
+        .find(|param| param.array_length().is_some())
+        .and_then(|param| param.array_length().map(|length| length as usize))
 }
 
 #[cfg(test)]

@@ -33,7 +33,7 @@ pub struct Trampoline {
     pub inhibit: bool,
     pub concurrency: library::Concurrency,
     pub is_notify: bool,
-    pub scope: library::ParameterScope,
+    pub scope: Option<gir_parser::FunctionScope>,
     /// It's used to group callbacks
     pub user_data_index: usize,
     pub destroy_index: usize,
@@ -110,9 +110,9 @@ pub fn analyze(
             env,
             type_tid,
             "this".to_owned(),
-            c_type,
+            &c_type,
             library::ParameterDirection::In,
-            library::Transfer::None,
+            gir_parser::TransferOwnership::None,
             false,
             crate::analysis::ref_mode::RefMode::ByRef,
             ConversionType::Borrow,
@@ -170,7 +170,7 @@ pub fn analyze(
             // No GString
             used_types.extend(rust_type.into_used_types());
         }
-        if let Some(ffi_type) = used_ffi_type(env, signal.ret.typ(), &signal.ret.c_type) {
+        if let Some(ffi_type) = used_ffi_type(env, signal.ret.typ(), signal.ret.c_type()) {
             used_types.push(ffi_type);
         }
 
@@ -186,10 +186,8 @@ pub fn analyze(
         .next()
         .unwrap_or(obj.concurrency);
 
-    let ret = library::Parameter {
-        nullable: ret_nullable,
-        ..signal.ret.clone()
-    };
+    let mut ret = signal.ret.clone();
+    ret.set_nullable(ret_nullable);
 
     let trampoline = Trampoline {
         name,
@@ -201,7 +199,7 @@ pub fn analyze(
         concurrency,
         is_notify,
         bound_name: String::new(),
-        scope: library::ParameterScope::None,
+        scope: None,
         user_data_index: 0,
         destroy_index: 0,
         nullable: false,
@@ -217,7 +215,7 @@ fn closure_errors(env: &Env, signal: &library::Signal) -> Vec<String> {
             errors.push(format!(
                 "{} {}: {}",
                 error,
-                par.name,
+                par.name(),
                 par.typ().full_name(&env.library)
             ));
         }
@@ -236,11 +234,11 @@ fn closure_errors(env: &Env, signal: &library::Signal) -> Vec<String> {
 
 pub fn type_error(env: &Env, par: &library::Parameter) -> Option<&'static str> {
     use super::rust_type::TypeError::*;
-    if par.direction == library::ParameterDirection::Out {
+    if par.direction().is_out() {
         Some("Out")
-    } else if par.direction == library::ParameterDirection::InOut {
+    } else if par.direction() == library::ParameterDirection::InOut {
         Some("InOut")
-    } else if is_empty_c_type(&par.c_type) {
+    } else if is_empty_c_type(par.c_type()) {
         Some("Empty ctype")
     } else if ConversionType::of(env, par.typ()) == ConversionType::Unknown {
         Some("Unknown conversion")
