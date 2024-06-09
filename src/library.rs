@@ -1,3 +1,4 @@
+use gir_parser::{TransferOwnership, prelude::*};
 use std::{
     cmp::{Ord, Ordering, PartialOrd},
     collections::{BTreeMap, BTreeSet, HashMap, HashSet},
@@ -12,25 +13,6 @@ use crate::{
     nameutil::split_namespace_name, parser::DocFormat, traits::*, version::Version,
 };
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub enum Transfer {
-    None,
-    Container,
-    Full,
-}
-
-impl FromStr for Transfer {
-    type Err = String;
-    fn from_str(name: &str) -> Result<Self, String> {
-        match name {
-            "none" => Ok(Self::None),
-            "container" => Ok(Self::Container),
-            "full" => Ok(Self::Full),
-            _ => Err(format!("Unknown ownership transfer mode '{name}'")),
-        }
-    }
-}
-
 #[derive(Default, Clone, Copy, Debug, Eq, PartialEq)]
 pub enum ParameterDirection {
     None,
@@ -39,6 +21,16 @@ pub enum ParameterDirection {
     Out,
     InOut,
     Return,
+}
+
+impl From<gir_parser::Direction> for ParameterDirection {
+    fn from(value: gir_parser::Direction) -> Self {
+        match value {
+            gir_parser::Direction::In => Self::In,
+            gir_parser::Direction::Out => Self::Out,
+            gir_parser::Direction::InOut => Self::InOut,
+        }
+    }
 }
 
 impl ParameterDirection {
@@ -59,61 +51,6 @@ impl FromStr for ParameterDirection {
             "out" => Ok(Self::Out),
             "inout" => Ok(Self::InOut),
             _ => Err(format!("Unknown parameter direction '{name}'")),
-        }
-    }
-}
-
-/// Annotation describing lifetime requirements / guarantees of callback
-/// parameters, that is callback itself and associated user data.
-#[derive(Default, Clone, Copy, Debug, PartialEq, Eq)]
-pub enum ParameterScope {
-    /// Parameter is not of callback type.
-    #[default]
-    None,
-    /// Used only for the duration of the call.
-    ///
-    /// Can be invoked multiple times.
-    Call,
-    /// Used for the duration of the asynchronous call.
-    ///
-    /// Invoked exactly once when asynchronous call completes.
-    Async,
-    /// Used until notified with associated destroy notify parameter.
-    ///
-    /// Can be invoked multiple times.
-    Notified,
-    /// Forever scope
-    Forever,
-}
-
-impl ParameterScope {
-    pub fn is_forever(self) -> bool {
-        matches!(self, Self::Forever)
-    }
-
-    pub fn is_call(self) -> bool {
-        matches!(self, Self::Call)
-    }
-
-    pub fn is_async(self) -> bool {
-        matches!(self, Self::Async)
-    }
-
-    pub fn is_none(self) -> bool {
-        matches!(self, Self::None)
-    }
-}
-
-impl FromStr for ParameterScope {
-    type Err = String;
-
-    fn from_str(name: &str) -> Result<Self, String> {
-        match name {
-            "call" => Ok(Self::Call),
-            "async" => Ok(Self::Async),
-            "notified" => Ok(Self::Notified),
-            "forever" => Ok(Self::Forever),
-            _ => Err(format!("Unknown parameter scope type: {name}")),
         }
     }
 }
@@ -394,7 +331,6 @@ pub enum ErrorDomain {
 pub struct Enumeration {
     pub name: String,
     pub c_type: String,
-    pub symbol_prefix: Option<String>,
     pub members: Vec<Member>,
     pub functions: Vec<Function>,
     pub version: Option<Version>,
@@ -409,7 +345,6 @@ pub struct Enumeration {
 pub struct Bitfield {
     pub name: String,
     pub c_type: String,
-    pub symbol_prefix: Option<String>,
     pub members: Vec<Member>,
     pub functions: Vec<Function>,
     pub version: Option<Version>,
@@ -495,7 +430,7 @@ pub struct Property {
     pub construct_only: bool,
     pub typ: TypeId,
     pub c_type: Option<String>,
-    pub transfer: Transfer,
+    pub transfer: TransferOwnership,
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
     pub doc: Option<String>,
@@ -505,48 +440,309 @@ pub struct Property {
 }
 
 #[derive(Clone, Debug)]
-pub struct Parameter {
-    pub name: String,
-    pub typ: TypeId,
-    pub c_type: String,
-    pub is_instance_parameter: bool,
-    pub direction: ParameterDirection,
-    pub transfer: Transfer,
-    pub caller_allocates: bool,
-    pub nullable: bool,
-    pub array_length: Option<u32>,
-    pub is_error: bool,
-    pub doc: Option<String>,
-    pub scope: ParameterScope,
-    /// Index of the user data parameter associated with the callback.
-    pub closure: Option<usize>,
-    /// Index of the destroy notification parameter associated with the
-    /// callback.
-    pub destroy: Option<usize>,
+pub enum Parameter {
+    Instance {
+        param: gir_parser::InstanceParameter,
+        tid: TypeId,
+        nullable_override: Option<bool>,
+        name_override: Option<String>,
+        c_type_override: Option<String>,
+    },
+    Return {
+        param: gir_parser::ReturnValue,
+        tid: TypeId,
+        nullable_override: Option<bool>,
+        name_override: Option<String>,
+        c_type_override: Option<String>,
+    },
+    Default {
+        param: gir_parser::Parameter,
+        tid: TypeId,
+        nullable_override: Option<bool>,
+        name_override: Option<String>,
+        c_type_override: Option<String>,
+    },
+    Error(TypeId),
+    VarArgs(TypeId),
+    None(TypeId),
 }
 
 impl Parameter {
-    pub fn typ(&self) -> TypeId {
-        self.typ
+    pub fn set_nullable(&mut self, is_nullable: bool) {
+        match self {
+            Self::Default {
+                nullable_override, ..
+            } => {
+                nullable_override.replace(is_nullable);
+            }
+            Parameter::Instance {
+                nullable_override, ..
+            } => {
+                nullable_override.replace(is_nullable);
+            }
+            Parameter::Return {
+                nullable_override, ..
+            } => {
+                nullable_override.replace(is_nullable);
+            }
+            _ => (),
+        }
+    }
+    pub fn set_c_type(&mut self, c_type: &str) {
+        match self {
+            Self::Default {
+                c_type_override, ..
+            } => {
+                c_type_override.replace(c_type.to_owned());
+            }
+            Parameter::Instance {
+                c_type_override, ..
+            } => {
+                c_type_override.replace(c_type.to_owned());
+            }
+            Parameter::Return {
+                c_type_override, ..
+            } => {
+                c_type_override.replace(c_type.to_owned());
+            }
+            _ => (),
+        }
     }
 
-    pub fn set_typ(&mut self, typ: TypeId) {
-        self.typ = typ;
+    pub fn set_name(&mut self, name: &str) {
+        match self {
+            Self::Default { name_override, .. } => {
+                name_override.replace(name.to_owned());
+            }
+            Parameter::Instance { name_override, .. } => {
+                name_override.replace(name.to_owned());
+            }
+            Parameter::Return { name_override, .. } => {
+                name_override.replace(name.to_owned());
+            }
+            _ => (),
+        }
+    }
+
+    pub fn destroy(&self) -> Option<usize> {
+        match self {
+            Parameter::Return { param, .. } => param.destroy(),
+            Parameter::Default { param, .. } => param.destroy(),
+            _ => None,
+        }
+    }
+
+    pub fn closure(&self) -> Option<usize> {
+        match self {
+            Parameter::Return { param, .. } => param.closure(),
+            Parameter::Default { param, .. } => param.closure(),
+            _ => None,
+        }
+    }
+
+    pub fn c_type(&self) -> &str {
+        match self {
+            Parameter::Instance {
+                param,
+                c_type_override,
+                ..
+            } => c_type_override
+                .as_deref()
+                .or(param.ty().and_then(|t| t.c_type())),
+            Parameter::Return {
+                param,
+                c_type_override,
+                ..
+            } => c_type_override.as_deref().or_else(|| match param.ty() {
+                gir_parser::AnyType::Array(a) => a.c_type(),
+                gir_parser::AnyType::Type(t) => t.c_type(),
+            }),
+            Parameter::Default {
+                param,
+                c_type_override,
+                ..
+            } => c_type_override.as_deref().or_else(|| {
+                param.ty().and_then(|t| match t {
+                    gir_parser::ParameterType::VarArgs => None,
+                    gir_parser::ParameterType::Array(a) => a.c_type(),
+                    gir_parser::ParameterType::Type(t) => t.c_type(),
+                })
+            }),
+            Parameter::Error(_) => Some("GError**"),
+            Parameter::VarArgs(_) => None,
+            Parameter::None(_) => Some("none"),
+        }
+        .unwrap_or("")
+    }
+
+    pub fn scope(&self) -> Option<gir_parser::FunctionScope> {
+        match self {
+            Self::Instance { .. } => None,
+            Self::Return { param, .. } => param.scope(),
+            Self::Default { param, .. } => param.scope(),
+            Self::Error(_) => None,
+            Self::VarArgs(_) => None,
+            Self::None(_) => None,
+        }
+    }
+
+    pub fn array_length(&self) -> Option<u32> {
+        match self {
+            Self::Return { param, .. } => match param.ty() {
+                gir_parser::AnyType::Array(array) => array.length(),
+                _ => None,
+            },
+            Self::Default { param, .. } => {
+                if let Some(ty) = param.ty() {
+                    match ty {
+                        gir_parser::ParameterType::Array(array) => array.length(),
+                        _ => None,
+                    }
+                } else {
+                    None
+                }
+            }
+            _ => None,
+        }
+    }
+
+    pub fn doc(&self) -> Option<&str> {
+        match self {
+            Self::Instance { param, .. } => param.doc().map(|d| d.text()),
+            Self::Return { param, .. } => param.doc().map(|d| d.text()),
+            Self::Default { param, .. } => param.doc().map(|d| d.text()),
+            _ => None,
+        }
+    }
+
+    pub fn none(tid: TypeId) -> Self {
+        Self::None(tid)
+    }
+
+    pub fn error(tid: TypeId) -> Self {
+        Self::Error(tid)
+    }
+
+    pub fn is_instance(&self) -> bool {
+        matches!(self, Self::Instance { .. })
+    }
+
+    pub fn is_return(&self) -> bool {
+        matches!(self, Self::Return { .. })
+    }
+
+    pub fn is_error(&self) -> bool {
+        matches!(self, Self::Error(_))
+    }
+
+    pub fn is_varargs(&self) -> bool {
+        matches!(self, Self::VarArgs(_))
+    }
+
+    pub fn name(&self) -> &str {
+        match self {
+            Self::Instance {
+                param,
+                name_override,
+                ..
+            } => name_override.as_deref().or(Some(param.name())),
+            Self::Default {
+                param,
+                name_override,
+                ..
+            } => name_override.as_deref().or(Some(param.name())),
+            Self::Return { name_override, .. } => name_override.as_deref(),
+            Self::Error(_) => Some("error"),
+            _ => None,
+        }
+        .unwrap_or("")
+    }
+
+    pub fn is_caller_allocates(&self) -> bool {
+        match self {
+            Self::Instance { param, .. } => param.is_caller_allocates(),
+            Self::Default { param, .. } => param.is_caller_allocates(),
+            _ => None,
+        }
+        .unwrap_or(false)
+    }
+
+    pub fn typ(&self) -> TypeId {
+        match self {
+            Self::Instance { tid, .. } => *tid,
+            Self::Return { tid, .. } => *tid,
+            Self::Default { tid, .. } => *tid,
+            Self::Error(tid) => *tid,
+            Self::VarArgs(tid) => *tid,
+            Self::None(tid) => *tid,
+        }
+    }
+
+    pub fn set_tid(&mut self, new_tid: TypeId) {
+        match self {
+            Self::Instance { tid, .. } | Self::Return { tid, .. } | Self::Default { tid, .. } => {
+                *tid = new_tid;
+            }
+            Self::Error(tid) | Self::VarArgs(tid) | Self::None(tid) => {
+                *tid = new_tid;
+            }
+        }
     }
 
     pub fn is_nullable(&self) -> bool {
-        self.nullable
+        match self {
+            Self::Instance {
+                nullable_override, ..
+            } => nullable_override.unwrap_or(false),
+            Self::Default {
+                param,
+                nullable_override,
+                ..
+            } => nullable_override.or(param.is_nullable()).unwrap_or(false),
+            Self::Return {
+                param,
+                nullable_override,
+                ..
+            } => nullable_override.or(param.is_nullable()).unwrap_or(false),
+            Self::Error(_) => true,
+            Self::VarArgs(_) => false,
+            Self::None(_) => false,
+        }
     }
 
-    pub fn set_nullable(&mut self, nullable: bool) {
-        self.nullable = nullable;
+    pub fn direction(&self) -> ParameterDirection {
+        match self {
+            Self::Instance { param, .. } => param
+                .direction()
+                .map(ParameterDirection::from)
+                .unwrap_or_default(),
+            Self::Default { param, .. } => param
+                .direction()
+                .map(ParameterDirection::from)
+                .unwrap_or_default(),
+            Self::Return { .. } => ParameterDirection::Return,
+            Self::Error(_) => ParameterDirection::Out,
+            Self::VarArgs(_) => ParameterDirection::default(),
+            Self::None(_) => ParameterDirection::default(),
+        }
+    }
+
+    pub fn transfer_ownership(&self) -> TransferOwnership {
+        match self {
+            Self::Instance { param, .. } => param.transfer_ownership(),
+            Self::Return { param, .. } => param.transfer_ownership(),
+            Self::Default { param, .. } => param.transfer_ownership(),
+            Self::Error(_) => Some(TransferOwnership::Full),
+            Self::VarArgs(_) | Self::None(_) => None,
+        }
+        .unwrap_or(TransferOwnership::None)
     }
 }
 
 #[derive(Debug)]
 pub struct Function {
     pub name: String,
-    pub c_identifier: Option<String>,
+    pub c_identifier: String,
     pub kind: FunctionKind,
     pub parameters: Vec<Parameter>,
     pub ret: Parameter,
@@ -765,7 +961,7 @@ impl Type {
             Self::Bitfield(bit_field) => Some(&bit_field.c_type),
             Self::Record(rec) => Some(&rec.c_type),
             Self::Union(union) => union.c_type.as_deref(),
-            Self::Function(func) => func.c_identifier.as_deref(),
+            Self::Function(func) => Some(&func.c_identifier),
             Self::Interface(interface) => Some(&interface.c_type),
             Self::Class(class) => Some(&class.c_type),
             _ => None,
@@ -837,8 +1033,8 @@ impl Type {
     }
 
     pub fn function(library: &mut Library, func: Function) -> TypeId {
-        let mut param_tids: Vec<TypeId> = func.parameters.iter().map(|p| p.typ).collect();
-        param_tids.push(func.ret.typ);
+        let mut param_tids: Vec<TypeId> = func.parameters.iter().map(|p| p.typ()).collect();
+        param_tids.push(func.ret.typ());
         let typ = Self::Function(func);
         library.add_type(INTERNAL_NAMESPACE, &format!("fn<#{param_tids:?}>"), typ)
     }
@@ -1061,7 +1257,7 @@ pub const MAIN_NAMESPACE: u16 = 1;
 #[derive(Debug, Default)]
 pub struct Library {
     pub namespaces: Vec<Namespace>,
-    pub index: HashMap<String, u16>,
+    pub index: HashMap<String, (u16, bool)>,
     pub doc_format: DocFormat,
 }
 
@@ -1070,12 +1266,15 @@ impl Library {
         let mut library = Self::default();
         assert_eq!(
             INTERNAL_NAMESPACE,
-            library.add_namespace(INTERNAL_NAMESPACE_NAME)
+            library.add_namespace(INTERNAL_NAMESPACE_NAME, true)
         );
         for &(name, t) in BASIC {
             library.add_type(INTERNAL_NAMESPACE, name, Type::Basic(t));
         }
-        assert_eq!(MAIN_NAMESPACE, library.add_namespace(main_namespace_name));
+        assert_eq!(
+            MAIN_NAMESPACE,
+            library.add_namespace(main_namespace_name, false)
+        );
 
         // For string_type override
         Type::c_array(&mut library, TypeId::tid_utf8(), None, None);
@@ -1189,8 +1388,8 @@ impl Library {
                 .parameters
                 .iter()
                 .filter_map(|p| {
-                    let mut ty = env.library.type_(p.typ);
-                    let mut ns_id = p.typ.ns_id as usize;
+                    let mut ty = env.library.type_(p.typ());
+                    let mut ns_id = p.typ().ns_id as usize;
                     if let Some((t, n)) = ty.get_inner_type(env) {
                         ty = t;
                         ns_id = n as usize;
@@ -1199,7 +1398,7 @@ impl Library {
                         return None;
                     }
                     let full_name = format!("{}.{}", self.namespaces[ns_id].name, ty.get_name());
-                    if env.type_status(&p.typ.full_name(&env.library)).ignored()
+                    if env.type_status(&p.typ().full_name(&env.library)).ignored()
                         && !env.analysis.objects.contains_key(&full_name)
                         && !env.analysis.records.contains_key(&full_name)
                         && !env.config.objects.iter().any(|o| o.1.name == full_name)
@@ -1211,8 +1410,8 @@ impl Library {
                 })
                 .collect::<Vec<_>>();
             {
-                let mut ty = env.library.type_(func.ret.typ);
-                let mut ns_id = func.ret.typ.ns_id as usize;
+                let mut ty = env.library.type_(func.ret.typ());
+                let mut ns_id = func.ret.typ().ns_id as usize;
                 if let Some((t, n)) = ty.get_inner_type(env) {
                     ty = t;
                     ns_id = n as usize;
@@ -1220,7 +1419,7 @@ impl Library {
                 if !ty.is_basic() {
                     let full_name = format!("{}.{}", self.namespaces[ns_id].name, ty.get_name());
                     if env
-                        .type_status(&func.ret.typ.full_name(&env.library))
+                        .type_status(&func.ret.typ().full_name(&env.library))
                         .ignored()
                         && !env.analysis.objects.contains_key(&full_name)
                         && !env.analysis.records.contains_key(&full_name)
@@ -1260,17 +1459,17 @@ impl Library {
         &mut self.namespaces[ns_id as usize]
     }
 
-    pub fn find_namespace(&self, name: &str) -> Option<u16> {
+    pub fn find_namespace(&self, name: &str) -> Option<(u16, bool)> {
         self.index.get(name).copied()
     }
 
-    pub fn add_namespace(&mut self, name: &str) -> u16 {
-        if let Some(&id) = self.index.get(name) {
+    pub fn add_namespace(&mut self, name: &str, parsed: bool) -> u16 {
+        if let Some(&(id, _)) = self.index.get(name) {
             id
         } else {
             let id = self.namespaces.len() as u16;
             self.namespaces.push(Namespace::new(name));
-            self.index.insert(name.into(), id);
+            self.index.insert(name.into(), (id, parsed));
             id
         }
     }
@@ -1298,7 +1497,7 @@ impl Library {
         }
 
         if let Some(ns) = ns {
-            self.find_namespace(ns).and_then(|ns_id| {
+            self.find_namespace(ns).and_then(|(ns_id, _)| {
                 self.namespace(ns_id)
                     .find_type(name)
                     .map(|id| TypeId { ns_id, id })
@@ -1326,9 +1525,9 @@ impl Library {
         let (ns, name) = split_namespace_name(name);
 
         if let Some(ns) = ns {
-            let ns_id = self
+            let (ns_id, _) = self
                 .find_namespace(ns)
-                .unwrap_or_else(|| self.add_namespace(ns));
+                .unwrap_or_else(|| (self.add_namespace(ns, false), false));
             let ns = self.namespace_mut(ns_id);
             let id = ns
                 .find_type(name)

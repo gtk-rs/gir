@@ -1,7 +1,4 @@
-use crate::{
-    analysis::{function_parameters::TransformationType, ref_mode::RefMode},
-    library::Transfer,
-};
+use crate::analysis::{function_parameters::TransformationType, ref_mode::RefMode};
 
 pub trait TranslateToGlib {
     fn translate_to_glib(&self) -> String;
@@ -56,12 +53,12 @@ impl TranslateToGlib for TransformationType {
 }
 
 fn to_glib_xxx(
-    transfer: Transfer,
+    transfer: gir_parser::TransferOwnership,
     ref_mode: RefMode,
     explicit_target_type: &str,
     move_: bool,
 ) -> (String, &'static str) {
-    use self::Transfer::*;
+    use gir_parser::TransferOwnership::*;
     match transfer {
         None => {
             match ref_mode {
