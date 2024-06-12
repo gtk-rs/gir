@@ -438,9 +438,12 @@ pub fn body_chunk_futures(
         let c_par = &analysis.parameters.c_parameters[par.ind_c];
 
         let type_ = env.type_(par.typ);
-        let is_str = matches!(*type_, library::Type::Basic(library::Basic::Utf8));
+        let is_str = matches!(type_, library::Type::Basic(library::Basic::Utf8));
+        let is_slice = matches!(type_, library::Type::CArray(_));
 
-        if *c_par.nullable {
+        if is_slice {
+            writeln!(body, "let {} = {}.to_vec();", par.name, par.name)?;
+        } else if *c_par.nullable {
             writeln!(
                 body,
                 "let {} = {}.map(ToOwned::to_owned);",
