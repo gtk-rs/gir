@@ -1,9 +1,6 @@
-use crate::{
-    analysis::{
-        bounds::{Bound, BoundType},
-        ref_mode::RefMode,
-    },
-    library::Nullable,
+use crate::analysis::{
+    bounds::{Bound, BoundType},
+    ref_mode::RefMode,
 };
 
 impl Bound {
@@ -18,7 +15,7 @@ impl Bound {
     pub(super) fn full_type_parameter_reference(
         &self,
         ref_mode: RefMode,
-        nullable: Nullable,
+        nullable: bool,
         r#async: bool,
     ) -> String {
         let ref_str = ref_mode.for_rust_type();
@@ -48,11 +45,11 @@ impl Bound {
         };
 
         match self.bound_type {
-            BoundType::IsA(_) if *nullable => {
+            BoundType::IsA(_) if nullable => {
                 format!("Option<{ref_str}{trait_bound}>")
             }
             BoundType::IsA(_) => format!("{ref_str}{trait_bound}"),
-            BoundType::AsRef(_) if *nullable => {
+            BoundType::AsRef(_) if nullable => {
                 format!("Option<{trait_bound}>")
             }
             BoundType::NoWrapper | BoundType::AsRef(_) => trait_bound,

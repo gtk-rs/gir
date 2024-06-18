@@ -47,7 +47,7 @@ impl Library {
     }
 
     fn fix_gtype(&mut self) {
-        if let Some(ns_id) = self.find_namespace("GObject") {
+        if let Some((ns_id, _)) = self.find_namespace("GObject") {
             // hide the `GType` type alias in `GObject`
             self.add_type(ns_id, "Type", Type::Basic(Basic::Unsupported));
         }
@@ -57,7 +57,7 @@ impl Library {
         let list: Vec<_> = self
             .index
             .iter()
-            .flat_map(|(name, &id)| {
+            .flat_map(|(name, &(id, _))| {
                 let name = name.clone();
                 self.namespace(id)
                     .unresolved()
@@ -78,17 +78,18 @@ impl Library {
 
         fn update_empty_signal_c_types(signal: &mut Signal, c_types: &DetectedCTypes) {
             for par in &mut signal.parameters {
-                update_empty_c_type(&mut par.c_type, par.typ, c_types);
+                if !is_empty_c_type(par.c_type()) {
+                    return;
+                }
+                if let Some(s) = c_types.get(&par.typ()) {
+                    par.set_c_type(s);
+                }
             }
-            update_empty_c_type(&mut signal.ret.c_type, signal.ret.typ, c_types);
-        }
-
-        fn update_empty_c_type(c_type: &mut String, tid: TypeId, c_types: &DetectedCTypes) {
-            if !is_empty_c_type(c_type) {
+            if !is_empty_c_type(signal.ret.c_type()) {
                 return;
             }
-            if let Some(s) = c_types.get(&tid) {
-                *c_type = s.clone();
+            if let Some(s) = c_types.get(&signal.ret.typ()) {
+                signal.ret.set_c_type(s);
             }
         }
 
@@ -145,11 +146,11 @@ impl Library {
     fn detect_empty_signal_c_types(&self, signal: &Signal, c_types: &mut DetectedCTypes) -> bool {
         let mut detected = false;
         for par in &signal.parameters {
-            if self.detect_empty_c_type(&par.c_type, par.typ, c_types) {
+            if self.detect_empty_c_type(&par.c_type(), par.typ(), c_types) {
                 detected = true;
             }
         }
-        if self.detect_empty_c_type(&signal.ret.c_type, signal.ret.typ, c_types) {
+        if self.detect_empty_c_type(&signal.ret.c_type(), signal.ret.typ(), c_types) {
             detected = true;
         }
         detected
@@ -526,17 +527,12 @@ impl Library {
                             function_candidates.push(domain.to_owned());
                         }
 
-                        if let Some(func) = ns.functions.iter().find(|f| {
-                            function_candidates
-                                .iter()
-                                .any(|c| f.c_identifier.as_ref() == Some(c))
-                        }) {
-                            error_domains.push((
-                                ns_id,
-                                enum_tid,
-                                None,
-                                func.c_identifier.as_ref().unwrap().clone(),
-                            ));
+                        if let Some(func) = ns
+                            .functions
+                            .iter()
+                            .find(|f| function_candidates.iter().any(|c| f.c_identifier == *c))
+                        {
+                            error_domains.push((ns_id, enum_tid, None, func.c_identifier.clone()));
                             continue 'next_enum;
                         }
 
@@ -556,16 +552,15 @@ impl Library {
                                 _ => continue,
                             };
 
-                            if let Some(func) = functions.iter().find(|f| {
-                                function_candidates
-                                    .iter()
-                                    .any(|c| f.c_identifier.as_ref() == Some(c))
-                            }) {
+                            if let Some(func) = functions
+                                .iter()
+                                .find(|f| function_candidates.iter().any(|c| f.c_identifier == *c))
+                            {
                                 error_domains.push((
                                     ns_id,
                                     enum_tid,
                                     Some(domain_tid),
-                                    func.c_identifier.as_ref().unwrap().clone(),
+                                    func.c_identifier.clone(),
                                 ));
                                 continue 'next_enum;
                             }
@@ -585,7 +580,7 @@ impl Library {
                         | Type::Interface(Interface { functions, .. }) => {
                             let pos = functions
                                 .iter()
-                                .position(|f| f.c_identifier.as_ref() == Some(&function_name))
+                                .position(|f| f.c_identifier == function_name)
                                 .unwrap();
                             functions.remove(pos);
                         }
@@ -595,7 +590,7 @@ impl Library {
                     let pos = self.namespaces[ns_id]
                         .functions
                         .iter()
-                        .position(|f| f.c_identifier.as_ref() == Some(&function_name))
+                        .position(|f| f.c_identifier == function_name)
                         .unwrap();
                     self.namespaces[ns_id].functions.remove(pos);
                 }

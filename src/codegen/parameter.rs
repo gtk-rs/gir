@@ -18,7 +18,7 @@ impl ToParameter for CParameter {
         } else {
             self.ref_mode
         };
-        if self.instance_parameter {
+        if self.is_instance_parameter {
             format!("{}self", ref_mode.for_rust_type())
         } else {
             let type_str = match bounds.get_parameter_bound(&self.name) {

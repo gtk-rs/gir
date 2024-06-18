@@ -128,7 +128,7 @@ pub fn generate(
                 args.push_str(&par.name);
             }
 
-            if trampoline.ret.typ != Default::default() {
+            if trampoline.ret.typ() != Default::default() {
                 writeln!(
                     w,
                     "{}self.emit_by_name(\"{}\", &[{}])",

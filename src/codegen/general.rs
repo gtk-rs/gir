@@ -1033,7 +1033,7 @@ pub fn declare_default_from_new(
             && f.status.need_generate()
             && f.name == "new"
             // Cannot generate Default implementation for Option<>
-            && f.ret.parameter.as_ref().map_or(false, |x| !*x.lib_par.nullable)
+            && f.ret.parameter.as_ref().map_or(false, |x| !x.lib_par.is_nullable())
     }) {
         if func.parameters.rust_parameters.is_empty() {
             writeln!(w)?;

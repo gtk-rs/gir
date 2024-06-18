@@ -14,14 +14,14 @@ use super::{
 use crate::{
     analysis::safety_assertion_mode::SafetyAssertionMode,
     codegen::Visibility,
-    library::{Infallible, Mandatory, Nullable},
+    library::{Infallible, Mandatory},
     version::Version,
 };
 
 #[derive(Clone, Debug)]
 pub struct CallbackParameter {
     pub ident: Ident,
-    pub nullable: Option<Nullable>,
+    pub nullable: Option<bool>,
 }
 
 pub type CallbackParameters = Vec<CallbackParameter>;
@@ -37,10 +37,7 @@ impl Parse for CallbackParameter {
         };
         toml.check_unwanted(&["nullable"], &format!("callback parameter {object_name}"));
 
-        let nullable = toml
-            .lookup("nullable")
-            .and_then(Value::as_bool)
-            .map(Nullable);
+        let nullable = toml.lookup("nullable").and_then(Value::as_bool);
 
         Some(Self { ident, nullable })
     }
@@ -59,7 +56,7 @@ pub struct Parameter {
     // false(default) - parameter can be changed in FFI function
     pub constant: bool,
     pub move_: Option<bool>,
-    pub nullable: Option<Nullable>,
+    pub nullable: Option<bool>,
     pub mandatory: Option<Mandatory>,
     pub infallible: Option<Infallible>,
     pub length_of: Option<String>,
@@ -97,10 +94,7 @@ impl Parse for Parameter {
             .and_then(Value::as_bool)
             .unwrap_or(false);
         let move_ = toml.lookup("move").and_then(Value::as_bool);
-        let nullable = toml
-            .lookup("nullable")
-            .and_then(Value::as_bool)
-            .map(Nullable);
+        let nullable = toml.lookup("nullable").and_then(Value::as_bool);
         let mandatory = toml
             .lookup("mandatory")
             .and_then(Value::as_bool)
@@ -155,7 +149,7 @@ pub type Parameters = Vec<Parameter>;
 
 #[derive(Clone, Debug)]
 pub struct Return {
-    pub nullable: Option<Nullable>,
+    pub nullable: Option<bool>,
     pub mandatory: Option<Mandatory>,
     pub infallible: Option<Infallible>,
     pub bool_return_is_error: Option<String>,
@@ -195,7 +189,7 @@ impl Return {
             "return",
         );
 
-        let nullable = v.lookup("nullable").and_then(Value::as_bool).map(Nullable);
+        let nullable = v.lookup("nullable").and_then(Value::as_bool);
         let mandatory = v
             .lookup("mandatory")
             .and_then(Value::as_bool)
@@ -467,7 +461,7 @@ mod tests {
         },
         *,
     };
-    use crate::{library::Nullable, version::Version};
+    use crate::version::Version;
 
     fn functions_toml(input: &str) -> ::toml::Value {
         let mut value: ::toml::value::Table = ::toml::from_str(input).unwrap();
@@ -604,10 +598,10 @@ const = true
         assert_eq!(pars[0].nullable, None);
         assert_eq!(pars[1].ident, Ident::Name("par2".into()));
         assert!(!pars[1].constant);
-        assert_eq!(pars[1].nullable, Some(Nullable(false)));
+        assert_eq!(pars[1].nullable, Some(false));
         assert_eq!(pars[2].ident, Ident::Name("par3".into()));
         assert!(pars[2].constant);
-        assert_eq!(pars[2].nullable, Some(Nullable(true)));
+        assert_eq!(pars[2].nullable, Some(true));
         assert!(matches!(pars[3].ident, Ident::Pattern(_)));
         assert!(pars[3].constant);
         assert_eq!(pars[3].nullable, None);
@@ -623,7 +617,7 @@ nullable = false
 "#,
         );
         let f = Function::parse(&toml, "a").unwrap();
-        assert_eq!(f.ret.nullable, Some(Nullable(false)));
+        assert_eq!(f.ret.nullable, Some(false));
     }
 
     #[test]
@@ -636,7 +630,7 @@ nullable = true
 "#,
         );
         let f = Function::parse(&toml, "a").unwrap();
-        assert_eq!(f.ret.nullable, Some(Nullable(true)));
+        assert_eq!(f.ret.nullable, Some(true));
     }
 
     #[test]

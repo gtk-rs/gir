@@ -14,7 +14,7 @@ pub struct RustParameter {
     pub name: String,
     pub typ: library::TypeId,
     pub direction: library::ParameterDirection,
-    pub nullable: library::Nullable,
+    pub nullable: bool,
     pub ref_mode: RefMode,
     pub try_from_glib: TryFromGlib,
 }
@@ -39,7 +39,7 @@ pub struct Transformation {
     pub transformation: TransformationType,
     pub name: String,
     pub typ: library::TypeId,
-    pub transfer: library::Transfer,
+    pub transfer: gir_parser::TransferOwnership,
     pub ref_mode: RefMode,
     pub conversion_type: ConversionType,
 }
@@ -65,17 +65,17 @@ impl Parameters {
         env: &Env,
         type_tid: library::TypeId,
         name: String,
-        c_type: String,
+        c_type: &str,
         direction: library::ParameterDirection,
-        transfer: library::Transfer,
-        nullable: library::Nullable,
+        transfer: gir_parser::TransferOwnership,
+        nullable: bool,
         ref_mode: RefMode,
         conversion_type: ConversionType,
     ) -> Transformation {
         let c_par = CParameter {
             name: name.clone(),
             typ: type_tid,
-            c_type,
+            c_type: c_type.to_owned(),
         };
         let ind_c = self.c_parameters.len();
         self.c_parameters.push(c_par);
@@ -126,17 +126,17 @@ pub fn analyze(
         env,
         type_tid,
         "this".to_owned(),
-        c_type,
+        &c_type,
         library::ParameterDirection::In,
-        library::Transfer::None,
-        library::Nullable(false),
+        gir_parser::TransferOwnership::None,
+        false,
         RefMode::ByRef,
         ConversionType::Borrow,
     );
     parameters.transformations.push(transform);
 
     for par in signal_parameters {
-        let name = nameutil::mangle_keywords(&*par.name).into_owned();
+        let name = nameutil::mangle_keywords(par.name()).into_owned();
 
         let ref_mode = RefMode::without_unneeded_mut(env, par, false, false);
 
@@ -147,19 +147,19 @@ pub fn analyze(
             .or_else(|| {
                 callback_parameters_config.and_then(|cp| {
                     cp.iter()
-                        .find(|cp| cp.ident.is_match(&par.name))
+                        .find(|cp| cp.ident.is_match(&par.name()))
                         .and_then(|c| c.nullable)
                 })
             });
-        let nullable = nullable_override.unwrap_or(par.nullable);
+        let nullable = nullable_override.unwrap_or(par.is_nullable());
 
         let conversion_type = {
-            match env.library.type_(par.typ) {
+            match env.library.type_(par.typ()) {
                 library::Type::Basic(library::Basic::Utf8)
                 | library::Type::Record(..)
                 | library::Type::Interface(..)
                 | library::Type::Class(..) => ConversionType::Borrow,
-                _ => ConversionType::of(env, par.typ),
+                _ => ConversionType::of(env, par.typ()),
             }
         };
 
@@ -174,11 +174,11 @@ pub fn analyze(
 
         let mut transform = parameters.prepare_transformation(
             env,
-            par.typ,
+            par.typ(),
             name,
-            par.c_type.clone(),
-            par.direction,
-            par.transfer,
+            par.c_type(),
+            par.direction(),
+            par.transfer_ownership(),
             nullable,
             ref_mode,
             conversion_type,

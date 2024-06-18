@@ -170,48 +170,45 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
             .filter(|f| f.kind == library::FunctionKind::Global);
 
         for function in functions {
-            if let Some(ref c_identifier) = function.c_identifier {
-                let f_info = global_functions
-                    .functions
-                    .iter()
-                    .find(move |f| &f.glib_name == c_identifier);
-                let fn_new_name = f_info.and_then(|analysed_f| analysed_f.new_name.clone());
-                let doc_trait_name = f_info.and_then(|f| f.doc_trait_name.as_ref());
-                let doc_struct_name = f_info.and_then(|f| f.doc_struct_name.as_ref());
-                assert!(
-                    !(doc_trait_name.is_some() && doc_struct_name.is_some()),
-                    "Can't use both doc_trait_name and doc_struct_name on the same function"
-                );
+            let f_info = global_functions
+                .functions
+                .iter()
+                .find(move |f| &f.glib_name == &function.c_identifier);
+            let fn_new_name = f_info.and_then(|analysed_f| analysed_f.new_name.clone());
+            let doc_trait_name = f_info.and_then(|f| f.doc_trait_name.as_ref());
+            let doc_struct_name = f_info.and_then(|f| f.doc_struct_name.as_ref());
+            assert!(
+                !(doc_trait_name.is_some() && doc_struct_name.is_some()),
+                "Can't use both doc_trait_name and doc_struct_name on the same function"
+            );
 
-                let parent = if doc_trait_name.is_some() {
-                    doc_trait_name.map(|p| Box::new(TypeStruct::new(SType::Trait, p)))
-                } else if doc_struct_name.is_some() {
-                    doc_struct_name.map(|p| Box::new(TypeStruct::new(SType::Impl, p)))
-                } else {
-                    None
-                };
+            let parent = if doc_trait_name.is_some() {
+                doc_trait_name.map(|p| Box::new(TypeStruct::new(SType::Trait, p)))
+            } else if doc_struct_name.is_some() {
+                doc_struct_name.map(|p| Box::new(TypeStruct::new(SType::Impl, p)))
+            } else {
+                None
+            };
 
-                let doc_ignored_parameters = f_info
-                    .map(|analyzed_f| analyzed_f.doc_ignore_parameters.clone())
-                    .unwrap_or_default();
+            let doc_ignored_parameters = f_info
+                .map(|analyzed_f| analyzed_f.doc_ignore_parameters.clone())
+                .unwrap_or_default();
 
-                let should_be_documented =
-                    f_info.map_or(false, |f| f.should_docs_be_generated(env));
-                if !should_be_documented {
-                    continue;
-                }
-
-                create_fn_doc(
-                    w,
-                    env,
-                    function,
-                    parent,
-                    fn_new_name,
-                    &doc_ignored_parameters,
-                    None,
-                    f_info.map_or(true, |f| f.generate_doc),
-                )?;
+            let should_be_documented = f_info.map_or(false, |f| f.should_docs_be_generated(env));
+            if !should_be_documented {
+                continue;
             }
+
+            create_fn_doc(
+                w,
+                env,
+                function,
+                parent,
+                fn_new_name,
+                &doc_ignored_parameters,
+                None,
+                f_info.map_or(true, |f| f.generate_doc),
+            )?;
         }
     }
 
@@ -420,7 +417,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
                         w,
                         "{}",
                         reformat_doc(
-                            &fix_param_names(doc, &None),
+                            &fix_param_names(doc, None),
                             env,
                             Some((&info.type_id, Some(LocationInObject::Builder)))
                         )
@@ -431,7 +428,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
                         w,
                         "{}",
                         reformat_doc(
-                            &fix_param_names(doc, &None),
+                            &fix_param_names(doc, None),
                             env,
                             Some((&info.type_id, Some(LocationInObject::Builder)))
                         )
@@ -473,7 +470,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
         let configured_functions = obj.functions.matched(&function.name);
         let is_manual = configured_functions.iter().any(|f| f.status.manual());
         let (ty, object_location) = if (has_trait || is_manual)
-            && function.parameters.iter().any(|p| p.instance_parameter)
+            && function.parameters.iter().any(|p| p.is_instance())
             && !info.final_type
         {
             if let Some(struct_name) = configured_functions
@@ -510,30 +507,31 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
         } else {
             (ty.clone(), Some(LocationInObject::Impl))
         };
-        if let Some(c_identifier) = &function.c_identifier {
-            let f_info = info.functions.iter().find(|f| &f.glib_name == c_identifier);
-            let should_be_documented = f_info.map_or(false, |f| f.should_docs_be_generated(env));
+        let f_info = info
+            .functions
+            .iter()
+            .find(|f| &f.glib_name == &function.c_identifier);
+        let should_be_documented = f_info.map_or(false, |f| f.should_docs_be_generated(env));
 
-            if !should_be_documented {
-                continue;
-            }
-
-            // Retrieve the new_name computed during analysis, if any
-            let fn_new_name = f_info.and_then(|analysed_f| analysed_f.new_name.clone());
-            let doc_ignored_parameters = f_info
-                .map(|analyzed_f| analyzed_f.doc_ignore_parameters.clone())
-                .unwrap_or_default();
-            create_fn_doc(
-                w,
-                env,
-                function,
-                Some(Box::new(ty)),
-                fn_new_name,
-                &doc_ignored_parameters,
-                Some((&info.type_id, object_location)),
-                f_info.map_or(true, |f| f.generate_doc),
-            )?;
+        if !should_be_documented {
+            continue;
         }
+
+        // Retrieve the new_name computed during analysis, if any
+        let fn_new_name = f_info.and_then(|analysed_f| analysed_f.new_name.clone());
+        let doc_ignored_parameters = f_info
+            .map(|analyzed_f| analyzed_f.doc_ignore_parameters.clone())
+            .unwrap_or_default();
+        create_fn_doc(
+            w,
+            env,
+            function,
+            Some(Box::new(ty)),
+            fn_new_name,
+            &doc_ignored_parameters,
+            Some((&info.type_id, object_location)),
+            f_info.map_or(true, |f| f.generate_doc),
+        )?;
     }
     for signal in signals {
         let configured_signals = obj.signals.matched(&signal.name);
@@ -582,32 +580,30 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
             )
         };
 
-        if let Some(c_identifier) = &function.c_identifier {
-            let f_info: Option<&analysis::functions::Info> = info
-                .virtual_methods
-                .iter()
-                .find(|f| &f.glib_name == c_identifier);
-            let should_be_documented = f_info.map_or(false, |f| f.should_docs_be_generated(env));
-            if !should_be_documented {
-                continue;
-            }
-
-            // Retrieve the new_name computed during analysis, if any
-            let fn_new_name = f_info.and_then(|analysed_f| analysed_f.new_name.clone());
-            let doc_ignored_parameters = f_info
-                .map(|analyzed_f| analyzed_f.doc_ignore_parameters.clone())
-                .unwrap_or_default();
-            create_fn_doc(
-                w,
-                env,
-                function,
-                Some(Box::new(ty)),
-                fn_new_name,
-                &doc_ignored_parameters,
-                Some((&info.type_id, object_location)),
-                f_info.map_or(true, |f| f.generate_doc),
-            )?;
+        let f_info: Option<&analysis::functions::Info> = info
+            .virtual_methods
+            .iter()
+            .find(|f| &f.glib_name == &function.c_identifier);
+        let should_be_documented = f_info.map_or(false, |f| f.should_docs_be_generated(env));
+        if !should_be_documented {
+            continue;
         }
+
+        // Retrieve the new_name computed during analysis, if any
+        let fn_new_name = f_info.and_then(|analysed_f| analysed_f.new_name.clone());
+        let doc_ignored_parameters = f_info
+            .map(|analyzed_f| analyzed_f.doc_ignore_parameters.clone())
+            .unwrap_or_default();
+        create_fn_doc(
+            w,
+            env,
+            function,
+            Some(Box::new(ty)),
+            fn_new_name,
+            &doc_ignored_parameters,
+            Some((&info.type_id, object_location)),
+            f_info.map_or(true, |f| f.generate_doc),
+        )?;
     }
 
     for property in properties {
@@ -693,25 +689,26 @@ fn create_record_doc(w: &mut dyn Write, env: &Env, info: &analysis::record::Info
                 args: ty.args.clone(),
             }
         };
-        if let Some(c_identifier) = &function.c_identifier {
-            let f_info = info.functions.iter().find(|f| &f.glib_name == c_identifier);
-            let should_be_documented = f_info.map_or(false, |f| f.should_docs_be_generated(env));
-            if !should_be_documented {
-                continue;
-            }
-            let fn_new_name = f_info.and_then(|analysed_f| analysed_f.new_name.clone());
-
-            create_fn_doc(
-                w,
-                env,
-                function,
-                Some(Box::new(function_ty)),
-                fn_new_name,
-                &HashSet::new(),
-                Some((&info.type_id, None)),
-                f_info.map_or(true, |f| f.generate_doc),
-            )?;
+        let f_info = info
+            .functions
+            .iter()
+            .find(|f| &f.glib_name == &function.c_identifier);
+        let should_be_documented = f_info.map_or(false, |f| f.should_docs_be_generated(env));
+        if !should_be_documented {
+            continue;
         }
+        let fn_new_name = f_info.and_then(|analysed_f| analysed_f.new_name.clone());
+
+        create_fn_doc(
+            w,
+            env,
+            function,
+            Some(Box::new(function_ty)),
+            fn_new_name,
+            &HashSet::new(),
+            Some((&info.type_id, None)),
+            f_info.map_or(true, |f| f.generate_doc),
+        )?;
     }
     Ok(())
 }
@@ -832,7 +829,7 @@ fn param_name() -> &'static Regex {
     REGEX.get_or_init(|| Regex::new(r"@(\w+)\b").unwrap())
 }
 
-fn fix_param_names<'a>(doc: &'a str, self_name: &Option<String>) -> Cow<'a, str> {
+fn fix_param_names<'a>(doc: &'a str, self_name: Option<&str>) -> Cow<'a, str> {
     param_name().replace_all(doc, |caps: &Captures<'_>| {
         if let Some(self_name) = self_name {
             if &caps[1] == self_name {
@@ -864,8 +861,8 @@ where
     }
     if fn_.doc().is_none()
         && fn_.doc_deprecated().is_none()
-        && fn_.ret().doc.is_none()
-        && fn_.parameters().iter().all(|p| p.doc.is_none())
+        && fn_.ret().doc().is_none()
+        && fn_.parameters().iter().all(|p| p.doc().is_none())
     {
         return Ok(());
     }
@@ -875,18 +872,18 @@ where
         st.name = nameutil::mangle_keywords(name_override).to_string();
     }
     let ty = TypeStruct { parent, ..st };
-    let self_name: Option<String> = fn_
+    let self_name = fn_
         .parameters()
         .iter()
-        .find(|p| p.instance_parameter)
-        .map(|p| p.name.clone());
+        .find(|p| p.is_instance())
+        .map(|p| p.name());
 
     write_item_doc(w, &ty, |w| {
         if let Some(doc) = fn_.doc() {
             writeln!(
                 w,
                 "{}",
-                reformat_doc(&fix_param_names(doc, &self_name), env, in_type)
+                reformat_doc(&fix_param_names(doc, self_name), env, in_type)
             )?;
         }
         if let Some(ver) = fn_.deprecated_version() {
@@ -898,7 +895,7 @@ where
             writeln!(
                 w,
                 "{}",
-                reformat_doc(&fix_param_names(doc, &self_name), env, in_type)
+                reformat_doc(&fix_param_names(doc, self_name), env, in_type)
             )?;
         }
 
@@ -906,9 +903,9 @@ where
         let mut indices_to_ignore: BTreeSet<_> = fn_
             .parameters()
             .iter()
-            .filter_map(|param| param.array_length)
+            .filter_map(|param| param.array_length())
             .collect();
-        if let Some(indice) = fn_.ret().array_length {
+        if let Some(indice) = fn_.ret().array_length() {
             indices_to_ignore.insert(indice);
         }
 
@@ -920,34 +917,30 @@ where
             .filter_map(|(indice, param)| {
                 (!indices_to_ignore.contains(&(indice as u32))).then_some(param)
             })
-            .filter(|param| !param.instance_parameter)
+            .filter(|param| !param.is_instance())
             .collect();
 
         let in_parameters = no_array_length_params.iter().filter(|param| {
-            let ignore = IGNORED_C_FN_PARAMS.contains(&param.name.as_str())
-                || doc_ignored_parameters.contains(&param.name)
-                || param.direction == ParameterDirection::Out
+            let ignore = IGNORED_C_FN_PARAMS.contains(&param.name())
+                || doc_ignored_parameters.contains(param.name())
+                || param.direction().is_out()
                 // special case error pointer as it's transformed to a Result
-                || (param.name == "error" && param.c_type == "GError**")
+                || param.is_error()
                 // special case `data` with explicit `gpointer` type as it could be something else (unlike `user_data`)
-                || (param.name == "data" && param.c_type == "gpointer");
+                || (param.name() == "data" && param.c_type() == "gpointer");
             !ignore
         });
 
         for parameter in in_parameters {
-            if parameter.name.is_empty() {
+            if parameter.name().is_empty() {
                 continue;
             }
-            if let Some(ref doc) = parameter.doc {
-                writeln!(
-                    w,
-                    "## `{}`",
-                    nameutil::mangle_keywords(parameter.name.as_str())
-                )?;
+            if let Some(ref doc) = parameter.doc() {
+                writeln!(w, "## `{}`", nameutil::mangle_keywords(parameter.name()))?;
                 writeln!(
                     w,
                     "{}",
-                    reformat_doc(&fix_param_names(doc, &self_name), env, in_type)
+                    reformat_doc(&fix_param_names(doc, self_name), env, in_type)
                 )?;
             }
         }
@@ -955,35 +948,31 @@ where
         let out_parameters: Vec<_> = no_array_length_params
             .iter()
             .filter(|param| {
-                param.direction == ParameterDirection::Out
-                    && !doc_ignored_parameters.contains(&param.name)
-                    && !(param.name == "error" && param.c_type == "GError**")
+                param.direction().is_out()
+                    && !doc_ignored_parameters.contains(param.name())
+                    && !param.is_error()
             })
             .collect();
 
-        if fn_.ret().doc.is_some() || !out_parameters.is_empty() {
+        if fn_.ret().doc().is_some() || !out_parameters.is_empty() {
             writeln!(w, "\n# Returns\n")?;
         }
         // document function's return
-        if let Some(ref doc) = fn_.ret().doc {
+        if let Some(ref doc) = fn_.ret().doc() {
             writeln!(
                 w,
                 "{}",
-                reformat_doc(&fix_param_names(doc, &self_name), env, in_type)
+                reformat_doc(&fix_param_names(doc, self_name), env, in_type)
             )?;
         }
         // document OUT parameters as part of the function's Return
         for parameter in out_parameters {
-            if let Some(ref doc) = parameter.doc {
-                writeln!(
-                    w,
-                    "\n## `{}`",
-                    nameutil::mangle_keywords(parameter.name.as_str())
-                )?;
+            if let Some(ref doc) = parameter.doc() {
+                writeln!(w, "\n## `{}`", nameutil::mangle_keywords(parameter.name()))?;
                 writeln!(
                     w,
                     "{}",
-                    reformat_doc(&fix_param_names(doc, &self_name), env, in_type),
+                    reformat_doc(&fix_param_names(doc, self_name), env, in_type),
                 )?;
             }
         }
@@ -1039,7 +1028,7 @@ fn create_property_doc(
                 writeln!(
                     w,
                     "{}",
-                    reformat_doc(&fix_param_names(doc, &None), env, Some(in_type))
+                    reformat_doc(&fix_param_names(doc, None), env, Some(in_type))
                 )?;
             }
             if let Some(ver) = property.deprecated_version {
@@ -1051,7 +1040,7 @@ fn create_property_doc(
                 writeln!(
                     w,
                     "{}",
-                    reformat_doc(&fix_param_names(doc, &None), env, Some(in_type))
+                    reformat_doc(&fix_param_names(doc, None), env, Some(in_type))
                 )?;
             }
             Ok(())
@@ -1136,7 +1125,7 @@ pub fn document_type_properties(
                 "\n\n#### `{}`\n {}\n\n{}",
                 property.name,
                 reformat_doc(
-                    &fix_param_names(doc, &None),
+                    &fix_param_names(doc, None),
                     env,
                     Some((&info.type_id, None))
                 ),
@@ -1176,7 +1165,7 @@ pub fn document_type_signals(
                 "\n\n#### `{}`\n {}\n\n{}",
                 signal.name,
                 reformat_doc(
-                    &fix_param_names(doc, &None),
+                    &fix_param_names(doc, None),
                     env,
                     Some((&info.type_id, None))
                 ),

@@ -9,7 +9,7 @@ use crate::{
     analysis::{self, bounds::Bounds},
     config::{self, parameter_matchable::ParameterMatchable},
     env::Env,
-    library::{self, Nullable, ParameterScope, Transfer, TypeId},
+    library::{self, TypeId},
     nameutil,
     traits::IntoString,
 };
@@ -23,23 +23,25 @@ pub struct Parameter {
 impl Parameter {
     pub fn from_parameter(
         env: &Env,
-        lib_par: &library::Parameter,
+        lib_par: library::Parameter,
         configured_parameters: &[&config::functions::Parameter],
     ) -> Self {
+        let ty = lib_par.typ();
         Parameter {
-            lib_par: lib_par.clone(),
-            try_from_glib: TryFromGlib::from_parameter(env, lib_par.typ, configured_parameters),
+            lib_par,
+            try_from_glib: TryFromGlib::from_parameter(env, ty, configured_parameters),
         }
     }
 
     pub fn from_return_value(
         env: &Env,
-        lib_par: &library::Parameter,
+        lib_par: library::Parameter,
         configured_functions: &[&config::functions::Function],
     ) -> Self {
+        let ty = lib_par.typ();
         Parameter {
-            lib_par: lib_par.clone(),
-            try_from_glib: TryFromGlib::from_return_value(env, lib_par.typ, configured_functions),
+            lib_par,
+            try_from_glib: TryFromGlib::from_return_value(env, ty, configured_functions),
         }
     }
 }
@@ -57,13 +59,13 @@ pub struct CParameter {
     pub name: String,
     pub typ: TypeId,
     pub c_type: String,
-    pub instance_parameter: bool,
+    pub is_instance_parameter: bool,
     pub direction: library::ParameterDirection,
-    pub nullable: library::Nullable,
-    pub transfer: library::Transfer,
+    pub nullable: bool,
+    pub transfer: gir_parser::TransferOwnership,
     pub caller_allocates: bool,
     pub is_error: bool,
-    pub scope: ParameterScope,
+    pub scope: Option<gir_parser::FunctionScope>,
     /// Index of the user data parameter associated with the callback.
     pub user_data_index: Option<usize>,
     /// Index of the destroy notification parameter associated with the
@@ -83,13 +85,13 @@ pub enum TransformationType {
     },
     ToGlibScalar {
         name: String,
-        nullable: library::Nullable,
+        nullable: bool,
         needs_into: bool,
     },
     ToGlibPointer {
         name: String,
-        instance_parameter: bool,
-        transfer: library::Transfer,
+        is_instance_parameter: bool,
+        transfer: gir_parser::TransferOwnership,
         ref_mode: RefMode,
         // filled by functions
         to_glib_extra: String,
@@ -159,7 +161,7 @@ impl Parameters {
     pub fn analyze_return(&mut self, env: &Env, ret: &Option<analysis::Parameter>) {
         let ret_data = ret
             .as_ref()
-            .map(|r| (r.lib_par.array_length, &r.try_from_glib));
+            .map(|r| (r.lib_par.array_length(), &r.try_from_glib));
 
         let (ind_c, try_from_glib) = match ret_data {
             Some((Some(array_length), try_from_glib)) => (array_length as usize, try_from_glib),
@@ -195,43 +197,44 @@ pub fn analyze(
     // Map: length argument position => parameter
     let array_lengths: HashMap<u32, &library::Parameter> = function_parameters
         .iter()
-        .filter_map(|p| p.array_length.map(|pos| (pos, p)))
+        .filter_map(|p| p.array_length().map(|pos| (pos, p)))
         .collect();
 
     let mut to_remove = Vec::new();
     let mut correction_instance = 0;
 
     for par in function_parameters.iter() {
-        if par.scope.is_none() {
+        if par.scope().is_none() {
             continue;
         }
-        if let Some(index) = par.closure {
+        if let Some(index) = par.closure() {
             to_remove.push(index);
         }
-        if let Some(index) = par.destroy {
+        if let Some(index) = par.destroy() {
             to_remove.push(index);
         }
     }
 
     for (pos, par) in function_parameters.iter().enumerate() {
-        let name = if par.instance_parameter {
-            par.name.clone()
+        let is_instance_parameter = par.is_instance();
+        let name = if is_instance_parameter {
+            par.name().to_owned()
         } else {
-            nameutil::mangle_keywords(&*par.name).into_owned()
+            nameutil::mangle_keywords(par.name()).to_string()
         };
-        if par.instance_parameter {
+        if is_instance_parameter {
             correction_instance = 1;
         }
 
         let configured_parameters = configured_functions.matched_parameters(&name);
 
-        let c_type = par.c_type.clone();
-        let typ = override_string_type_parameter(env, par.typ, &configured_parameters);
+        let c_type = par.c_type().clone();
+        let typ = override_string_type_parameter(env, par.typ(), &configured_parameters);
 
         let ind_c = parameters.c_parameters.len();
         let mut ind_rust = Some(parameters.rust_parameters.len());
 
-        let mut add_rust_parameter = match par.direction {
+        let mut add_rust_parameter = match par.direction() {
             library::ParameterDirection::In | library::ParameterDirection::InOut => true,
             library::ParameterDirection::Return => false,
             library::ParameterDirection::Out => !can_as_return(env, par) && !async_func,
@@ -246,9 +249,9 @@ pub fn analyze(
         {
             add_rust_parameter = false;
         }
-        let mut transfer = par.transfer;
+        let mut transfer = par.transfer_ownership();
 
-        let mut caller_allocates = par.caller_allocates;
+        let mut caller_allocates = par.is_caller_allocates();
         let conversion = ConversionType::of(env, typ);
         if let ConversionType::Direct
         | ConversionType::Scalar
@@ -257,7 +260,7 @@ pub fn analyze(
         {
             // For simple types no reason to have these flags
             caller_allocates = false;
-            transfer = library::Transfer::None;
+            transfer = gir_parser::TransferOwnership::None;
         }
         let move_ = configured_parameters
             .iter()
@@ -269,13 +272,13 @@ pub fn analyze(
                 if matches!(env.library.type_(typ), library::Type::CArray(_)) {
                     false
                 } else {
-                    transfer == Transfer::Full && par.direction.is_in()
+                    transfer == gir_parser::TransferOwnership::Full && par.direction().is_in()
                 }
             });
         let mut array_par = configured_parameters.iter().find_map(|cp| {
             cp.length_of
                 .as_ref()
-                .and_then(|n| function_parameters.iter().find(|fp| fp.name == *n))
+                .and_then(|n| function_parameters.iter().find(|fp| fp.name() == *n))
         });
         if array_par.is_none() {
             array_par = array_lengths.get(&(pos as u32)).copied();
@@ -284,13 +287,13 @@ pub fn analyze(
             array_par = detect_length(env, pos, par, function_parameters);
         }
         if let Some(array_par) = array_par {
-            let mut array_name = nameutil::mangle_keywords(&array_par.name);
-            if let Some(bound_type) = Bounds::type_for(env, array_par.typ) {
+            let mut array_name = nameutil::mangle_keywords(array_par.name());
+            if let Some(bound_type) = Bounds::type_for(env, array_par.typ()) {
                 array_name = (array_name.into_owned()
                     + &Bounds::get_to_glib_extra(
                         &bound_type,
-                        *array_par.nullable,
-                        array_par.instance_parameter,
+                        array_par.is_nullable(),
+                        array_par.is_instance(),
                         move_,
                     ))
                     .into();
@@ -301,34 +304,34 @@ pub fn analyze(
             let transformation = Transformation {
                 ind_c,
                 ind_rust: None,
-                transformation_type: get_length_type(env, &array_name, &par.name, typ),
+                transformation_type: get_length_type(env, &array_name, &par.name(), typ),
             };
             parameters.transformations.push(transformation);
         }
 
         let immutable = configured_parameters.iter().any(|p| p.constant);
         let ref_mode =
-            RefMode::without_unneeded_mut(env, par, immutable, in_trait && par.instance_parameter);
+            RefMode::without_unneeded_mut(env, par, immutable, in_trait && is_instance_parameter);
 
         let nullable_override = configured_parameters.iter().find_map(|p| p.nullable);
-        let nullable = nullable_override.unwrap_or(par.nullable);
+        let nullable = nullable_override.unwrap_or(par.is_nullable());
 
         let try_from_glib = TryFromGlib::from_parameter(env, typ, &configured_parameters);
 
         let c_par = CParameter {
             name: name.clone(),
             typ,
-            c_type,
-            instance_parameter: par.instance_parameter,
-            direction: par.direction,
+            c_type: c_type.to_owned(),
+            is_instance_parameter,
+            direction: par.direction(),
             transfer,
             caller_allocates,
             nullable,
             ref_mode,
-            is_error: par.is_error,
-            scope: par.scope,
-            user_data_index: par.closure,
-            destroy_index: par.destroy,
+            is_error: matches!(par, library::Parameter::Error(_)),
+            scope: par.scope(),
+            user_data_index: par.closure(),
+            destroy_index: par.destroy(),
             try_from_glib: try_from_glib.clone(),
             move_,
         };
@@ -350,7 +353,7 @@ pub fn analyze(
 
         let transformation_type = match conversion {
             ConversionType::Direct => {
-                if par.c_type != "GLib.Pid" {
+                if par.c_type() != "GLib.Pid" {
                     TransformationType::ToGlibDirect { name }
                 } else {
                     TransformationType::ToGlibScalar {
@@ -367,48 +370,50 @@ pub fn analyze(
             },
             ConversionType::Option => {
                 let needs_into = match try_from_glib {
-                    TryFromGlib::Option => par.direction == library::ParameterDirection::In,
+                    TryFromGlib::Option => par.direction().is_in(),
                     TryFromGlib::OptionMandatory => false,
                     other => unreachable!("{:?} inconsistent / conversion type", other),
                 };
                 TransformationType::ToGlibScalar {
                     name,
-                    nullable: Nullable(false),
+                    nullable: false,
                     needs_into,
                 }
             }
             ConversionType::Result { .. } => {
                 let needs_into = match try_from_glib {
-                    TryFromGlib::Result { .. } => par.direction == library::ParameterDirection::In,
+                    TryFromGlib::Result { .. } => par.direction().is_in(),
                     TryFromGlib::ResultInfallible { .. } => false,
                     other => unreachable!("{:?} inconsistent / conversion type", other),
                 };
                 TransformationType::ToGlibScalar {
                     name,
-                    nullable: Nullable(false),
+                    nullable: false,
                     needs_into,
                 }
             }
             ConversionType::Pointer => TransformationType::ToGlibPointer {
                 name,
-                instance_parameter: par.instance_parameter,
+                is_instance_parameter,
                 transfer,
                 ref_mode,
                 to_glib_extra: Default::default(),
                 explicit_target_type: Default::default(),
                 pointer_cast: if matches!(env.library.type_(typ), library::Type::CArray(_))
-                    && par.c_type == "gpointer"
+                    && par.c_type() == "gpointer"
                 {
                     format!(" as {}", nameutil::use_glib_if_needed(env, "ffi::gpointer"))
                 } else {
                     Default::default()
                 },
                 in_trait,
-                nullable: *nullable,
+                nullable,
                 move_,
             },
             ConversionType::Borrow => TransformationType::ToGlibBorrow,
-            ConversionType::Unknown => TransformationType::ToGlibUnknown { name },
+            ConversionType::Unknown => TransformationType::ToGlibUnknown {
+                name: name.to_owned(),
+            },
         };
 
         let mut transformation = Transformation {
@@ -468,7 +473,7 @@ fn detect_length<'a>(
     }
 
     parameters.get(pos - 1).and_then(|p| {
-        if has_length(env, p.typ) {
+        if has_length(env, p.typ()) {
             Some(p)
         } else {
             None
@@ -477,16 +482,16 @@ fn detect_length<'a>(
 }
 
 fn is_length(par: &library::Parameter) -> bool {
-    if par.direction != library::ParameterDirection::In {
+    if !par.direction().is_in() {
         return false;
     }
 
-    let len = par.name.len();
-    if len >= 3 && &par.name[len - 3..len] == "len" {
+    let len = par.name().len();
+    if len >= 3 && &par.name()[len - 3..len] == "len" {
         return true;
     }
 
-    par.name.contains("length")
+    par.name().contains("length")
 }
 
 fn has_length(env: &Env, typ: TypeId) -> bool {

@@ -5,7 +5,7 @@ use crate::{
     analysis::{record_type::RecordType, ref_mode::RefMode, try_from_glib::TryFromGlib},
     config::functions::{CallbackParameter, CallbackParameters},
     env::Env,
-    library::{self, Nullable, ParameterDirection, ParameterScope},
+    library::{self, ParameterDirection},
     nameutil::{is_gstring, use_glib_type},
     traits::*,
 };
@@ -185,9 +185,9 @@ pub struct RustTypeBuilder<'env> {
     env: &'env Env,
     type_id: library::TypeId,
     direction: ParameterDirection,
-    nullable: Nullable,
+    nullable: bool,
     ref_mode: RefMode,
-    scope: ParameterScope,
+    scope: Option<gir_parser::FunctionScope>,
     concurrency: library::Concurrency,
     try_from_glib: TryFromGlib,
     callback_parameters_config: CallbackParameters,
@@ -199,9 +199,9 @@ impl<'env> RustTypeBuilder<'env> {
             env,
             type_id,
             direction: ParameterDirection::None,
-            nullable: Nullable(false),
+            nullable: false,
             ref_mode: RefMode::None,
-            scope: ParameterScope::None,
+            scope: None,
             concurrency: library::Concurrency::None,
             try_from_glib: TryFromGlib::default(),
             callback_parameters_config: Vec::new(),
@@ -213,7 +213,7 @@ impl<'env> RustTypeBuilder<'env> {
         self
     }
 
-    pub fn nullable(mut self, nullable: Nullable) -> Self {
+    pub fn nullable(mut self, nullable: bool) -> Self {
         self.nullable = nullable;
         self
     }
@@ -223,7 +223,7 @@ impl<'env> RustTypeBuilder<'env> {
         self
     }
 
-    pub fn scope(mut self, scope: ParameterScope) -> Self {
+    pub fn scope(mut self, scope: Option<gir_parser::FunctionScope>) -> Self {
         self.scope = scope;
         self
     }
@@ -419,7 +419,7 @@ impl<'env> RustTypeBuilder<'env> {
             }
             Function(ref f) => {
                 let concurrency = match self.concurrency {
-                    _ if self.scope.is_call() => "",
+                    _ if self.scope.is_some_and(|s| s.is_call()) => "",
                     library::Concurrency::Send => " + Send",
                     // If an object is Sync, it can be shared between threads, and as
                     // such our callback can be called from arbitrary threads and needs
@@ -442,35 +442,35 @@ impl<'env> RustTypeBuilder<'env> {
                 let mut params = Vec::with_capacity(f.parameters.len());
                 let mut err = false;
                 for p in &f.parameters {
-                    if p.closure.is_some() {
+                    if p.closure().is_some() {
                         continue;
                     }
 
                     let nullable = self
                         .callback_parameters_config
                         .iter()
-                        .find(|cp| cp.ident.is_match(&p.name))
+                        .find(|cp| cp.ident.is_match(&p.name()))
                         .and_then(|c| c.nullable)
-                        .unwrap_or(p.nullable);
-                    let p_res = RustType::builder(self.env, p.typ)
-                        .direction(p.direction)
+                        .unwrap_or(p.is_nullable());
+                    let p_res = RustType::builder(self.env, p.typ())
+                        .direction(p.direction())
                         .nullable(nullable)
                         .try_build();
                     match p_res {
                         Ok(p_rust_type) => {
-                            let is_basic = p.typ.is_basic_type(self.env);
-                            let y = RustType::try_new(self.env, p.typ)
+                            let is_basic = p.typ().is_basic_type(self.env);
+                            let y = RustType::try_new(self.env, p.typ())
                                 .unwrap_or_else(|_| RustType::default());
                             params.push(format!(
                                 "{}{}",
-                                if is_basic || *nullable { "" } else { "&" },
+                                if is_basic || nullable { "" } else { "&" },
                                 if !is_gstring(y.as_str()) {
-                                    if !is_basic && *nullable {
+                                    if !is_basic && nullable {
                                         p_rust_type.into_string().replace("Option<", "Option<&")
                                     } else {
                                         p_rust_type.into_string()
                                     }
-                                } else if *nullable {
+                                } else if nullable {
                                     "Option<&str>".to_owned()
                                 } else {
                                     "&str".to_owned()
@@ -483,20 +483,20 @@ impl<'env> RustTypeBuilder<'env> {
                         }
                     }
                 }
-                let closure_kind = if self.scope.is_call() {
+                let closure_kind = if self.scope.is_some_and(|s| s.is_call()) {
                     "FnMut"
-                } else if self.scope.is_async() {
+                } else if self.scope.is_some_and(|s| s.is_async()) {
                     "FnOnce"
                 } else {
                     "Fn"
                 };
-                let ret_res = RustType::builder(self.env, f.ret.typ)
-                    .direction(f.ret.direction)
-                    .nullable(f.ret.nullable)
+                let ret_res = RustType::builder(self.env, f.ret.typ())
+                    .direction(f.ret.direction())
+                    .nullable(f.ret.is_nullable())
                     .try_build();
                 let ret = match ret_res {
                     Ok(ret_rust_type) => {
-                        let y = RustType::try_new(self.env, f.ret.typ)
+                        let y = RustType::try_new(self.env, f.ret.typ())
                             .unwrap_or_else(|_| RustType::default());
                         format!(
                             "{}({}) -> {}{}",
@@ -504,7 +504,7 @@ impl<'env> RustTypeBuilder<'env> {
                             params.join(", "),
                             if !is_gstring(y.as_str()) {
                                 ret_rust_type.as_str()
-                            } else if *f.ret.nullable {
+                            } else if f.ret.is_nullable() {
                                 "Option<String>"
                             } else {
                                 "String"
@@ -529,8 +529,8 @@ impl<'env> RustTypeBuilder<'env> {
                 if err {
                     return Err(TypeError::Unimplemented(ret));
                 }
-                Ok(if *self.nullable {
-                    if self.scope.is_call() {
+                Ok(if self.nullable {
+                    if self.scope.is_some_and(|s| s.is_call()) {
                         format!("Option<&mut dyn ({ret})>")
                     } else {
                         format!("Option<Box_<dyn {ret} + 'static>>")
@@ -539,7 +539,7 @@ impl<'env> RustTypeBuilder<'env> {
                     format!(
                         "{}{}",
                         ret,
-                        if self.scope.is_call() {
+                        if self.scope.is_some_and(|s| s.is_call()) {
                             ""
                         } else {
                             " + 'static"
@@ -596,7 +596,7 @@ impl<'env> RustTypeBuilder<'env> {
             }
         }
 
-        if *self.nullable && !skip_option {
+        if self.nullable && !skip_option {
             match ConversionType::of(self.env, self.type_id) {
                 ConversionType::Pointer | ConversionType::Scalar => {
                     rust_type = rust_type.map_any(|rust_type| {

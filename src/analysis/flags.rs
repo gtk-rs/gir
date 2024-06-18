@@ -74,7 +74,7 @@ pub fn new(env: &Env, obj: &GObject, imports: &mut Imports) -> Option<Info> {
         let first_param = &mut f.parameters.c_parameters[0];
 
         if first_param.typ == flags_tid {
-            first_param.instance_parameter = true;
+            first_param.is_instance_parameter = true;
 
             let t = f
                 .parameters
