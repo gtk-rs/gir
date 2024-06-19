@@ -265,6 +265,8 @@
 <a href="#265" id="265">265</a>
 <a href="#266" id="266">266</a>
 <a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{collections::BTreeMap, str::FromStr};
 
 <span class="kw">use crate</span>::{
@@ -408,9 +410,11 @@
 
     <span class="kw">for </span>(pos, func) <span class="kw">in </span>functions.iter_mut().enumerate() {
         <span class="kw">if </span>is_stringify(func, parent_type, obj) {
-            <span class="kw">let </span>return_transfer_none = func.ret.parameter.as_ref().map_or(<span class="bool-val">false</span>, |ret| {
-                ret.lib_par.transfer == <span class="kw">crate</span>::library::Transfer::None
-            });
+            <span class="kw">let </span>return_transfer_none = func
+                .ret
+                .parameter
+                .as_ref()
+                .is_some_and(|ret| ret.lib_par.transfer == <span class="kw">crate</span>::library::Transfer::None);
 
             <span class="comment">// Assume only enumerations and bitfields can return static strings
             </span><span class="kw">let </span>returns_static_ref = return_transfer_none
@@ -465,7 +469,7 @@
                 .parameters
                 .c_parameters
                 .first()
-                .map_or(<span class="bool-val">false</span>, |p| p.ref_mode == <span class="kw">super</span>::ref_mode::RefMode::ByRefMut);
+                .is_some_and(|p| p.ref_mode == <span class="kw">super</span>::ref_mode::RefMode::ByRefMut);
 
             specials.traits.insert(
                 type_,

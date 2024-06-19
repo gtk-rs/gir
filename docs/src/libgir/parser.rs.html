@@ -1741,7 +1741,7 @@
         <span class="kw">let </span>get_type = elem.attr_required(<span class="string">"get-type"</span>)<span class="question-mark">?</span>;
         <span class="kw">let </span>version = <span class="self">self</span>.read_version(parser, ns_id, elem)<span class="question-mark">?</span>;
         <span class="kw">let </span>deprecated_version = <span class="self">self</span>.read_deprecated_version(parser, ns_id, elem)<span class="question-mark">?</span>;
-        <span class="kw">let </span>is_fundamental = elem.attr(<span class="string">"fundamental"</span>).map_or(<span class="bool-val">false</span>, |x| x == <span class="string">"1"</span>);
+        <span class="kw">let </span>is_fundamental = elem.attr(<span class="string">"fundamental"</span>).is_some_and(|x| x == <span class="string">"1"</span>);
         <span class="kw">let </span>(ref_fn, unref_fn) = <span class="kw">if </span>is_fundamental {
             (
                 elem.attr(<span class="string">"ref-func"</span>).map(ToOwned::to_owned),
@@ -1751,8 +1751,8 @@
             (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>)
         };
 
-        <span class="kw">let </span>is_abstract = elem.attr(<span class="string">"abstract"</span>).map_or(<span class="bool-val">false</span>, |x| x == <span class="string">"1"</span>);
-        <span class="kw">let </span>final_type = elem.attr(<span class="string">"final"</span>).map_or(<span class="bool-val">false</span>, |x| x == <span class="string">"1"</span>);
+        <span class="kw">let </span>is_abstract = elem.attr(<span class="string">"abstract"</span>).is_some_and(|x| x == <span class="string">"1"</span>);
+        <span class="kw">let </span>final_type = elem.attr(<span class="string">"final"</span>).is_some_and(|x| x == <span class="string">"1"</span>);
 
         <span class="kw">let </span><span class="kw-2">mut </span>fns = Vec::new();
         <span class="kw">let </span><span class="kw-2">mut </span>signals = Vec::new();

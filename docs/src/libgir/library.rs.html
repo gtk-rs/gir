@@ -2536,7 +2536,7 @@
                         .config
                         .objects
                         .get(<span class="kw-2">&amp;</span>full_name)
-                        .map_or(<span class="bool-val">false</span>, |obj| obj.generate_builder)
+                        .is_some_and(|obj| obj.generate_builder)
                         &amp;&amp; properties
                             .iter()
                             .any(|prop| prop.construct_only || prop.construct || prop.writable)

@@ -1445,7 +1445,7 @@
             .trim_end_matches(<span class="string">'_'</span>)
             .rsplit(<span class="string">'_'</span>)
             .next()
-            .map_or(<span class="bool-val">false</span>, |i| i.parse::&lt;special_functions::Type&gt;().is_ok())
+            .is_some_and(|i| i.parse::&lt;special_functions::Type&gt;().is_ok())
     }
 
     <span class="comment">// returns whether the method can be linked in the docs

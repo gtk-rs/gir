@@ -806,7 +806,7 @@
     <span class="kw">let </span>skip_lifetimes = bounds
         .iter()
         <span class="comment">// TODO: False or true?
-        </span>.filter(|bound| bound.alias.map_or(<span class="bool-val">false</span>, |alias| skip.contains(<span class="kw-2">&amp;</span>alias)))
+        </span>.filter(|bound| bound.alias.is_some_and(|alias| skip.contains(<span class="kw-2">&amp;</span>alias)))
         .filter_map(|bound| <span class="kw">match </span>bound.bound_type {
             IsA(lifetime) | AsRef(lifetime) =&gt; lifetime,
             <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,

@@ -1036,7 +1036,7 @@
         |r| c_type.map_or(<span class="bool-val">true</span>, |t| r.type_(<span class="kw-2">&amp;</span>env.library).c_type == t),
         |r| c_type.map_or(<span class="bool-val">true</span>, |t| r.type_(<span class="kw-2">&amp;</span>env.library).c_type == t),
         |r| c_type.map_or(<span class="bool-val">true</span>, |t| r.type_(<span class="kw-2">&amp;</span>env.library).c_type == t),
-        c_type.map_or(<span class="bool-val">false</span>, |t| t.ends_with(<span class="string">"Class"</span>)),
+        c_type.is_some_and(|t| t.ends_with(<span class="string">"Class"</span>)),
         <span class="bool-val">false</span>,
     )
 }

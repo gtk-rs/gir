@@ -82,7 +82,7 @@
         .objects
         .values()
         .filter(|c| {
-            c.status.need_generate() &amp;&amp; c.type_id.map_or(<span class="bool-val">false</span>, |tid| tid.ns_id == namespaces::MAIN)
+            c.status.need_generate() &amp;&amp; c.type_id.is_some_and(|tid| tid.ns_id == namespaces::MAIN)
         })
         .collect();
     <span class="kw">let </span><span class="kw-2">mut </span>has_any = <span class="bool-val">false</span>;

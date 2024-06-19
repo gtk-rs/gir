@@ -2123,7 +2123,7 @@
             &amp;&amp; f.status.need_generate()
             &amp;&amp; f.name == <span class="string">"new"
             </span><span class="comment">// Cannot generate Default implementation for Option&lt;&gt;
-            </span>&amp;&amp; f.ret.parameter.as_ref().map_or(<span class="bool-val">false</span>, |x| !<span class="kw-2">*</span>x.lib_par.nullable)
+            </span>&amp;&amp; f.ret.parameter.as_ref().is_some_and(|x| !<span class="kw-2">*</span>x.lib_par.nullable)
     }) {
         <span class="kw">if </span>func.parameters.rust_parameters.is_empty() {
             <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
