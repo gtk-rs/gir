@@ -19,7 +19,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
         .objects
         .values()
         .filter(|c| {
-            c.status.need_generate() && c.type_id.map_or(false, |tid| tid.ns_id == namespaces::MAIN)
+            c.status.need_generate() && c.type_id.is_some_and(|tid| tid.ns_id == namespaces::MAIN)
         })
         .collect();
     let mut has_any = false;

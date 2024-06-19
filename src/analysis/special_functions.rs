@@ -141,9 +141,11 @@ pub fn extract(functions: &mut [FuncInfo], parent_type: &LibType, obj: &GObject)
 
     for (pos, func) in functions.iter_mut().enumerate() {
         if is_stringify(func, parent_type, obj) {
-            let return_transfer_none = func.ret.parameter.as_ref().map_or(false, |ret| {
-                ret.lib_par.transfer == crate::library::Transfer::None
-            });
+            let return_transfer_none = func
+                .ret
+                .parameter
+                .as_ref()
+                .is_some_and(|ret| ret.lib_par.transfer == crate::library::Transfer::None);
 
             // Assume only enumerations and bitfields can return static strings
             let returns_static_ref = return_transfer_none
@@ -198,7 +200,7 @@ pub fn extract(functions: &mut [FuncInfo], parent_type: &LibType, obj: &GObject)
                 .parameters
                 .c_parameters
                 .first()
-                .map_or(false, |p| p.ref_mode == super::ref_mode::RefMode::ByRefMut);
+                .is_some_and(|p| p.ref_mode == super::ref_mode::RefMode::ByRefMut);
 
             specials.traits.insert(
                 type_,
