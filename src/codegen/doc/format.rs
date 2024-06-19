@@ -415,7 +415,7 @@ fn find_method_or_function_by_ctype(
         |r| c_type.map_or(true, |t| r.type_(&env.library).c_type == t),
         |r| c_type.map_or(true, |t| r.type_(&env.library).c_type == t),
         |r| c_type.map_or(true, |t| r.type_(&env.library).c_type == t),
-        c_type.map_or(false, |t| t.ends_with("Class")),
+        c_type.is_some_and(|t| t.ends_with("Class")),
         false,
     )
 }

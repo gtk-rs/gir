@@ -300,7 +300,7 @@ pub fn bounds(
     let skip_lifetimes = bounds
         .iter()
         // TODO: False or true?
-        .filter(|bound| bound.alias.map_or(false, |alias| skip.contains(&alias)))
+        .filter(|bound| bound.alias.is_some_and(|alias| skip.contains(&alias)))
         .filter_map(|bound| match bound.bound_type {
             IsA(lifetime) | AsRef(lifetime) => lifetime,
             _ => None,

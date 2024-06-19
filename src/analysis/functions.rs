@@ -112,7 +112,7 @@ impl Info {
             .trim_end_matches('_')
             .rsplit('_')
             .next()
-            .map_or(false, |i| i.parse::<special_functions::Type>().is_ok())
+            .is_some_and(|i| i.parse::<special_functions::Type>().is_ok())
     }
 
     // returns whether the method can be linked in the docs

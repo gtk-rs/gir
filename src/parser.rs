@@ -162,7 +162,7 @@ impl Library {
         let get_type = elem.attr_required("get-type")?;
         let version = self.read_version(parser, ns_id, elem)?;
         let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
-        let is_fundamental = elem.attr("fundamental").map_or(false, |x| x == "1");
+        let is_fundamental = elem.attr("fundamental").is_some_and(|x| x == "1");
         let (ref_fn, unref_fn) = if is_fundamental {
             (
                 elem.attr("ref-func").map(ToOwned::to_owned),
@@ -172,8 +172,8 @@ impl Library {
             (None, None)
         };
 
-        let is_abstract = elem.attr("abstract").map_or(false, |x| x == "1");
-        let final_type = elem.attr("final").map_or(false, |x| x == "1");
+        let is_abstract = elem.attr("abstract").is_some_and(|x| x == "1");
+        let final_type = elem.attr("final").is_some_and(|x| x == "1");
 
         let mut fns = Vec::new();
         let mut signals = Vec::new();
