@@ -1408,6 +1408,13 @@
 <a href="#1408" id="1408">1408</a>
 <a href="#1409" id="1409">1409</a>
 <a href="#1410" id="1410">1410</a>
+<a href="#1411" id="1411">1411</a>
+<a href="#1412" id="1412">1412</a>
+<a href="#1413" id="1413">1413</a>
+<a href="#1414" id="1414">1414</a>
+<a href="#1415" id="1415">1415</a>
+<a href="#1416" id="1416">1416</a>
+<a href="#1417" id="1417">1417</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     cmp::{Ord, Ordering, PartialOrd},
     collections::{BTreeMap, BTreeSet, HashMap, HashSet},
@@ -1717,6 +1724,13 @@
     (<span class="string">"GType"</span>, Basic::Type),
     (<span class="string">"gintptr"</span>, Basic::IntPtr),
     (<span class="string">"guintptr"</span>, Basic::UIntPtr),
+    (<span class="string">"time_t"</span>, Basic::TimeT),
+    (<span class="string">"off_t"</span>, Basic::OffT),
+    (<span class="string">"dev_t"</span>, Basic::DevT),
+    (<span class="string">"gid_t"</span>, Basic::GidT),
+    (<span class="string">"pid_t"</span>, Basic::PidT),
+    (<span class="string">"socklen_t"</span>, Basic::SockLenT),
+    (<span class="string">"uid_t"</span>, Basic::UidT),
     <span class="comment">// TODO: this is temporary name, change it when type added to GLib
     </span>(<span class="string">"os_string"</span>, Basic::OsString),
     (<span class="string">"bool"</span>, Basic::Bool),
