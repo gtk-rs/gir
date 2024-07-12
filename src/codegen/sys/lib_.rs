@@ -223,6 +223,10 @@ fn generate_bitfields(w: &mut dyn Write, env: &Env, items: &[&Bitfield]) -> Resu
                 .find_map(|m| m.version)
                 .or(member.version);
 
+            if member_config.iter().any(|m| m.status.ignored()) {
+                continue;
+            }
+
             let val: i64 = member.value.parse().unwrap();
 
             version_condition(w, env, None, version, false, 0)?;
