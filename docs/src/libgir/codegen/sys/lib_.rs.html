@@ -593,10 +593,6 @@
 <a href="#593" id="593">593</a>
 <a href="#594" id="594">594</a>
 <a href="#595" id="595">595</a>
-<a href="#596" id="596">596</a>
-<a href="#597" id="597">597</a>
-<a href="#598" id="598">598</a>
-<a href="#599" id="599">599</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     fs,
     io::{Error, ErrorKind, <span class="prelude-ty">Result</span>, Write},
@@ -821,10 +817,6 @@
                 .iter()
                 .find_map(|m| m.version)
                 .or(member.version);
-
-            <span class="kw">if </span>member_config.iter().any(|m| m.status.ignored()) {
-                <span class="kw">continue</span>;
-            }
 
             <span class="kw">let </span>val: i64 = member.value.parse().unwrap();
 
