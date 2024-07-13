@@ -8,6 +8,7 @@ use log::info;
 use crate::{
     analysis::types::IsIncomplete,
     codegen::general,
+    config::gobjects::GStatus,
     env::Env,
     file_saver::save_to_file,
     library::{self, Bitfield, Enumeration, Namespace, Type, MAIN_NAMESPACE},
@@ -28,6 +29,7 @@ struct CConstant {
     name: String,
     /// Stringified value.
     value: String,
+    status: GStatus,
 }
 
 pub fn generate(env: &Env, crate_name: &str) {
@@ -98,14 +100,10 @@ fn prepare_ctype(env: &Env, ns: &Namespace, t: &Type) -> Option<CType> {
     if is_name_made_up(name) {
         return None;
     }
-    let cfg_condition = env
-        .config
-        .objects
-        .get(&full_name)
-        .and_then(|obj| obj.cfg_condition.clone());
+    let object = env.config.objects.get(&full_name);
     Some(CType {
         name: name.to_owned(),
-        cfg_condition,
+        cfg_condition: object.and_then(|obj| obj.cfg_condition.clone()),
     })
 }
 
@@ -127,6 +125,7 @@ fn prepare_cconsts(env: &Env) -> Vec<CConstant> {
             Some(CConstant {
                 name: constant.c_identifier.clone(),
                 value: value.to_owned(),
+                status: GStatus::Generate, // Assume generate because we skip ignored ones above
             })
         })
         .collect();
@@ -153,6 +152,7 @@ fn prepare_cconsts(env: &Env) -> Vec<CConstant> {
                             .parse::<i32>()
                             .map(|i| (i as u32).to_string())
                             .unwrap_or_else(|_| member.value.clone()),
+                        status: member.status,
                     });
                 }
             }
@@ -163,6 +163,7 @@ fn prepare_cconsts(env: &Env) -> Vec<CConstant> {
                     constants.push(CConstant {
                         name: format!("(gint) {}", member.c_identifier),
                         value: member.value.clone(),
+                        status: member.status,
                     });
                 }
             }
@@ -280,6 +281,9 @@ fn generate_constant_c(
     writeln!(w, "{}", r"int main() {")?;
 
     for cconst in cconsts {
+        if cconst.status.ignored() {
+            continue;
+        }
         writeln!(w, "    PRINT_CONSTANT({name});", name = cconst.name,)?;
     }
 
@@ -530,6 +534,9 @@ const RUST_LAYOUTS: &[(&str, Layout)] = &["#
 const RUST_CONSTANTS: &[(&str, &str)] = &["#
     )?;
     for cconst in cconsts {
+        if cconst.status.ignored() {
+            continue;
+        }
         writeln!(
             w,
             "    (\"{name}\", \"{value}\"),",

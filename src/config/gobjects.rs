@@ -29,7 +29,7 @@ use crate::{
     version::Version,
 };
 
-#[derive(Default, Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Default, Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd)]
 pub enum GStatus {
     Manual,
     Generate,
