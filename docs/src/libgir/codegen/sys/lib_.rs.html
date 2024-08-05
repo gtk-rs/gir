@@ -598,6 +598,11 @@
 <a href="#598" id="598">598</a>
 <a href="#599" id="599">599</a>
 <a href="#600" id="600">600</a>
+<a href="#601" id="601">601</a>
+<a href="#602" id="602">602</a>
+<a href="#603" id="603">603</a>
+<a href="#604" id="604">604</a>
+<a href="#605" id="605">605</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     fs,
     io::{Error, ErrorKind, <span class="prelude-ty">Result</span>, Write},
@@ -1147,6 +1152,11 @@ impl ::std::fmt::Debug for GHookList {
         </span>generate_opaque_type(w, <span class="kw-2">&amp;</span>fields.name)<span class="question-mark">?</span>;
     } <span class="kw">else </span>{
         <span class="macro">writeln!</span>(w, <span class="string">"#[repr(C)]"</span>)<span class="question-mark">?</span>;
+
+        <span class="kw">if </span>fields.truncated.is_some() {
+            <span class="macro">writeln!</span>(w, <span class="string">"#[allow(dead_code)]"</span>)<span class="question-mark">?</span>;
+        }
+
         <span class="macro">writeln!</span>(
             w,
             <span class="string">"pub {kind} {name} {{"</span>,
