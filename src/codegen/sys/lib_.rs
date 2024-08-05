@@ -547,6 +547,11 @@ fn generate_from_fields(
         generate_opaque_type(w, &fields.name)?;
     } else {
         writeln!(w, "#[repr(C)]")?;
+
+        if fields.truncated.is_some() {
+            writeln!(w, "#[allow(dead_code)]")?;
+        }
+
         writeln!(
             w,
             "pub {kind} {name} {{",
