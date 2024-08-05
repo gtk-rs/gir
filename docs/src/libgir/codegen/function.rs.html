@@ -504,6 +504,9 @@
 <a href="#504" id="504">504</a>
 <a href="#505" id="505">505</a>
 <a href="#506" id="506">506</a>
+<a href="#507" id="507">507</a>
+<a href="#508" id="508">508</a>
+<a href="#509" id="509">509</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     fmt,
     io::{<span class="prelude-ty">Result</span>, Write},
@@ -944,9 +947,12 @@
         <span class="kw">let </span>c_par = <span class="kw-2">&amp;</span>analysis.parameters.c_parameters[par.ind_c];
 
         <span class="kw">let </span>type_ = env.type_(par.typ);
-        <span class="kw">let </span>is_str = <span class="macro">matches!</span>(<span class="kw-2">*</span>type_, library::Type::Basic(library::Basic::Utf8));
+        <span class="kw">let </span>is_str = <span class="macro">matches!</span>(type_, library::Type::Basic(library::Basic::Utf8));
+        <span class="kw">let </span>is_slice = <span class="macro">matches!</span>(type_, library::Type::CArray(<span class="kw">_</span>));
 
-        <span class="kw">if </span><span class="kw-2">*</span>c_par.nullable {
+        <span class="kw">if </span>is_slice {
+            <span class="macro">writeln!</span>(body, <span class="string">"let {} = {}.to_vec();"</span>, par.name, par.name)<span class="question-mark">?</span>;
+        } <span class="kw">else if </span><span class="kw-2">*</span>c_par.nullable {
             <span class="macro">writeln!</span>(
                 body,
                 <span class="string">"let {} = {}.map(ToOwned::to_owned);"</span>,
