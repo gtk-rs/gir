@@ -406,6 +406,7 @@ fn generate_opaque_type(w: &mut dyn Write, name: &str) -> Result<()> {
     writeln!(
         w,
         r#"#[repr(C)]
+#[allow(dead_code)]
 pub struct {name} {{
     _data: [u8; 0],
     _marker: core::marker::PhantomData<(*mut u8, core::marker::PhantomPinned)>,
