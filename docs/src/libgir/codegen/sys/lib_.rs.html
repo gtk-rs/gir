@@ -597,6 +597,7 @@
 <a href="#597" id="597">597</a>
 <a href="#598" id="598">598</a>
 <a href="#599" id="599">599</a>
+<a href="#600" id="600">600</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     fs,
     io::{Error, ErrorKind, <span class="prelude-ty">Result</span>, Write},
@@ -1005,6 +1006,7 @@
     <span class="macro">writeln!</span>(
         w,
         <span class="string">r#"#[repr(C)]
+#[allow(dead_code)]
 pub struct {name} {{
     _data: [u8; 0],
     _marker: core::marker::PhantomData&lt;(*mut u8, core::marker::PhantomPinned)&gt;,
