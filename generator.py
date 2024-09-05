@@ -8,7 +8,6 @@ import asyncio
 
 DEFAULT_GIR_FILES_DIRECTORY = Path("./gir-files")
 DEFAULT_GIR_DIRECTORY = Path("./gir/")
-DEFAULT_GIR_PATH = DEFAULT_GIR_DIRECTORY / "target/release/gir"
 
 
 def run_command(command, folder=None):
@@ -30,18 +29,19 @@ async def spawn_process(exe, args):
     return stdout, stderr
 
 
-async def spawn_gir(gir_exe, args):
-    stdout, stderr = await spawn_process(gir_exe, args)
+async def spawn_gir(conf, args):
+    if conf.gir_path:
+        stdout, stderr = await spawn_process(conf.gir_path, args)
+    else:
+        cargo_args = ["run", "--release", "--quiet", "--manifest-path", DEFAULT_GIR_DIRECTORY / "Cargo.toml", "--"]
+        stdout, stderr = await spawn_process("cargo", cargo_args + args)
+
     # Gir doesn't print anything to stdout. If it does, this is likely out of
     # order with stderr, unless the printer/logging flushes in between.
     assert not stdout, "`gir` printed unexpected stdout: {}".format(stdout)
     if stderr:
         return "===> stderr:\n\n" + stderr + "\n"
     return ""
-
-
-def update_workspace():
-    return run_command(["cargo", "build", "--release"], "gir")
 
 
 def ask_yes_no_question(question, conf):
@@ -71,12 +71,6 @@ def update_submodule(submodule_path, conf):
     return False
 
 
-def build_gir():
-    print("=> Building gir...")
-    update_workspace()
-    print("<= Done!")
-
-
 async def regenerate_crate_docs(conf, crate_dir, base_gir_args):
     doc_path = "docs.md"
     # Generate into docs.md instead of the default vendor.md
@@ -99,7 +93,7 @@ async def regenerate_crate_docs(conf, crate_dir, base_gir_args):
         logs += "==> Regenerating documentation for `{}` into `{}`...\n".format(
             crate_dir, doc_path
         )
-        logs += await spawn_gir(conf.gir_path, doc_args)
+        logs += await spawn_gir(conf, doc_args)
 
         logs += "==> Embedding documentation from `{}` into `{}`...\n".format(
             doc_path, crate_dir
@@ -139,7 +133,7 @@ def regen_crates(path, conf):
 
             async def regenerate_crate(path, args):
                 return "==> Regenerating `{}`...\n".format(path) + await spawn_gir(
-                    conf.gir_path, args
+                    conf, args
                 )
 
             processes.append(regenerate_crate(path, args))
@@ -194,7 +188,6 @@ def parse_args():
     )
     parser.add_argument(
         "--gir-path",
-        default=DEFAULT_GIR_PATH,
         type=file_path,
         help="Path of the gir executable to run",
     )
@@ -228,9 +221,8 @@ async def main():
     if not conf.gir_files_paths:
         update_submodule(DEFAULT_GIR_FILES_DIRECTORY, conf)
 
-    if conf.gir_path == DEFAULT_GIR_PATH:
+    if conf.gir_path is None:
         update_submodule(DEFAULT_GIR_DIRECTORY, conf)
-        build_gir()
 
     print("=> Regenerating crates...")
     for path in conf.path:
