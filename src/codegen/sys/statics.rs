@@ -18,9 +18,10 @@ pub fn after_extern_crates(w: &mut dyn Write) -> Result<()> {
     let v = vec![
         "",
         "#[allow(unused_imports)]",
-        "use libc::{c_int, c_char, c_uchar, c_float, c_uint, c_double,",
-        "    c_short, c_ushort, c_long, c_ulong,",
-        "    c_void, size_t, ssize_t, time_t, off_t, intptr_t, uintptr_t, FILE};",
+        "use std::ffi::{c_int, c_char, c_uchar, c_float, c_uint, c_double,",
+        "    c_short, c_ushort, c_long, c_ulong, c_void};",
+        "#[allow(unused_imports)]",
+        "use libc::{size_t, ssize_t, time_t, off_t, intptr_t, uintptr_t, FILE};",
         "#[cfg(unix)]",
         "#[allow(unused_imports)]",
         "use libc::{dev_t, gid_t, pid_t, socklen_t, uid_t};",
