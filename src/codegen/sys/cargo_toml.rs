@@ -99,7 +99,9 @@ fn fill_empty(root: &mut Table, env: &Env, crate_name: &str) {
 fn fill_in(root: &mut Table, env: &Env) {
     {
         let package = upsert_table(root, "package");
-        set_string(package, "build", "build.rs");
+        package
+            .entry("build")
+            .or_insert_with(|| Value::String("build.rs".into()));
         // set_string(package, "version", "0.2.0");
     }
 
