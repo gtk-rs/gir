@@ -283,12 +283,14 @@ v1_52 = ["ffi/v1_52", "v1_50"]
 <p>The lib.rs file will not be replaced when you run gir.
 All the code that gir will generate for us is going to be in src/auto.
 We need to include all <code>auto</code> files in our library.
+Also it needs to include sys create so auto files can use it.
 To do so, let's update the <code>src/lib.rs</code> file as follows:</p>
 <pre><pre class="playground"><code class="language-rust"><span class="boring">#![allow(unused)]
 </span>#![cfg_attr(docsrs, feature(doc_cfg))]
 
 <span class="boring">fn main() {
-</span>pub use auto::*;
+</span>use ffi;
+pub use auto::*;
 mod auto;
 <span class="boring">}</span></code></pre></pre>
 <h2 id="the-girtoml-file"><a class="header" href="#the-girtoml-file">The Gir.toml file</a></h2>
