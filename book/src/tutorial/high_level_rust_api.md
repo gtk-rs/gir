@@ -114,11 +114,13 @@ v1_52 = ["ffi/v1_52", "v1_50"]
 The lib.rs file will not be replaced when you run gir.
 All the code that gir will generate for us is going to be in src/auto.
 We need to include all `auto` files in our library.
+Also it needs to include sys create so auto files can use it.
 To do so, let's update the `src/lib.rs` file as follows:
 
 ```rust
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
+use ffi;
 pub use auto::*;
 mod auto;
 ```
