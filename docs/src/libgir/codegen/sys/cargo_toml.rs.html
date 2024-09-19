@@ -243,6 +243,8 @@
 <a href="#243" id="243">243</a>
 <a href="#244" id="244">244</a>
 <a href="#245" id="245">245</a>
+<a href="#246" id="246">246</a>
+<a href="#247" id="247">247</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{collections::HashMap, fs::File, io::prelude::<span class="kw-2">*</span>};
 
 <span class="kw">use </span>log::info;
@@ -344,7 +346,9 @@
 <span class="kw">fn </span>fill_in(root: <span class="kw-2">&amp;mut </span>Table, env: <span class="kw-2">&amp;</span>Env) {
     {
         <span class="kw">let </span>package = upsert_table(root, <span class="string">"package"</span>);
-        set_string(package, <span class="string">"build"</span>, <span class="string">"build.rs"</span>);
+        package
+            .entry(<span class="string">"build"</span>)
+            .or_insert_with(|| Value::String(<span class="string">"build.rs"</span>.into()));
         <span class="comment">// set_string(package, "version", "0.2.0");
     </span>}
 

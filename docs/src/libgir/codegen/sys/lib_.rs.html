@@ -590,19 +590,6 @@
 <a href="#590" id="590">590</a>
 <a href="#591" id="591">591</a>
 <a href="#592" id="592">592</a>
-<a href="#593" id="593">593</a>
-<a href="#594" id="594">594</a>
-<a href="#595" id="595">595</a>
-<a href="#596" id="596">596</a>
-<a href="#597" id="597">597</a>
-<a href="#598" id="598">598</a>
-<a href="#599" id="599">599</a>
-<a href="#600" id="600">600</a>
-<a href="#601" id="601">601</a>
-<a href="#602" id="602">602</a>
-<a href="#603" id="603">603</a>
-<a href="#604" id="604">604</a>
-<a href="#605" id="605">605</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     fs,
     io::{Error, ErrorKind, <span class="prelude-ty">Result</span>, Write},
@@ -628,18 +615,6 @@
 
     <span class="macro">info!</span>(<span class="string">"Generating file {:?}"</span>, path);
     save_to_file(<span class="kw-2">&amp;</span>path, env.config.make_backup, |w| generate_lib(w, env));
-}
-
-<span class="kw">fn </span>write_link_attr(w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write, shared_libs: <span class="kw-2">&amp;</span>[String]) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
-    <span class="kw">for </span>it <span class="kw">in </span>shared_libs {
-        <span class="macro">writeln!</span>(
-            w,
-            <span class="string">"#[link(name = \"{}\")]"</span>,
-            shared_lib_name_to_link_name(it)
-        )<span class="question-mark">?</span>;
-    }
-
-    <span class="prelude-val">Ok</span>(())
 }
 
 <span class="kw">fn </span>generate_lib(w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write, env: <span class="kw-2">&amp;</span>Env) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -694,7 +669,6 @@
     }
 
     <span class="kw">if </span>!env.namespaces.main().shared_libs.is_empty() {
-        write_link_attr(w, <span class="kw-2">&amp;</span>env.namespaces.main().shared_libs)<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(w, <span class="string">"extern \"C\" {{"</span>)<span class="question-mark">?</span>;
         functions::generate_enums_funcs(w, env, <span class="kw-2">&amp;</span>enums)<span class="question-mark">?</span>;
         functions::generate_bitfields_funcs(w, env, <span class="kw-2">&amp;</span>bitfields)<span class="question-mark">?</span>;
