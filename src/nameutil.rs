@@ -97,7 +97,7 @@ pub fn escape_digit(name: &str) -> String {
     if name.starts_with(char::is_numeric) {
         format!("_{name}")
     } else {
-        name.into()
+        mangle_keywords(name).into()
     }
 }
 
