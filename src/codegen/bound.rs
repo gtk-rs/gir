@@ -1,3 +1,4 @@
+use crate::nameutil::escape_digit;
 use crate::{
     analysis::{
         bounds::{Bound, BoundType},
@@ -5,7 +6,6 @@ use crate::{
     },
     library::Nullable,
 };
-use crate::nameutil::escape_digit;
 
 impl Bound {
     /// Returns the type parameter reference.

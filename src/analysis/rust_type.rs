@@ -1,6 +1,7 @@
 use std::{borrow::Borrow, result};
 
 use super::conversion_type::ConversionType;
+use crate::nameutil::escape_digit;
 use crate::{
     analysis::{record_type::RecordType, ref_mode::RefMode, try_from_glib::TryFromGlib},
     config::functions::{CallbackParameter, CallbackParameters},
@@ -9,7 +10,6 @@ use crate::{
     nameutil::{is_gstring, use_glib_type},
     traits::*,
 };
-use crate::nameutil::escape_digit;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TypeError {

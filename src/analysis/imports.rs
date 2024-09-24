@@ -7,8 +7,8 @@ use std::{
 };
 
 use super::namespaces;
-use crate::{library::Library, nameutil::crate_name, version::Version};
 use crate::nameutil::mangle_crate;
+use crate::{library::Library, nameutil::crate_name, version::Version};
 
 fn is_first_char_up(s: &str) -> bool {
     s.chars().next().unwrap().is_uppercase()

@@ -4,6 +4,7 @@ use std::{
 };
 
 use super::{function, general::allow_deprecated, trait_impls};
+use crate::nameutil::flag_name;
 use crate::{
     analysis::flags::Info,
     codegen::{
@@ -21,7 +22,6 @@ use crate::{
     nameutil::{bitfield_member_name, use_glib_type},
     traits::*,
 };
-use crate::nameutil::flag_name;
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     if !env
@@ -60,7 +60,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
                     .map(|_| "#[allow(deprecated)]\n")
                     .unwrap_or(""),
                 flags_analysis.visibility.export_visibility(),
-                flag_name( &flags.name )
+                flag_name(&flags.name)
             ));
             generate_flags(env, w, flags, config, flags_analysis)?;
         }
@@ -103,7 +103,8 @@ fn generate_flags(
     writeln!(
         w,
         "    {} struct {}: u32 {{",
-        analysis.visibility, flag_name(&flags.name)
+        analysis.visibility,
+        flag_name(&flags.name)
     )?;
     for member in &flags.members {
         let member_config = config.members.matched(&member.name);

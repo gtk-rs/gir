@@ -77,9 +77,8 @@ pub fn module_name(name: &str) -> String {
 pub fn mangle_crate(name: &str) -> String {
     let parts: Vec<_> = name.split("::").collect();
     let name = if let Some(name) = parts.iter().last() {
-
         let new_name = if name.starts_with(char::is_numeric) {
-           format!("_{name}")
+            format!("_{name}")
         } else {
             name.to_string()
         };

@@ -143,7 +143,7 @@ fn generate_enum(
     }
     doc_alias(w, &enum_.c_type, "", 0)?;
 
-    writeln!(w, "{} enum {} {{", analysis.visibility, &enum_name )?;
+    writeln!(w, "{} enum {} {{", analysis.visibility, &enum_name)?;
     for member in &members {
         cfg_deprecated(
             w,
