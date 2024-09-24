@@ -748,7 +748,7 @@ fn create_enum_doc(w: &mut dyn Write, env: &Env, enum_: &Enumeration, tid: TypeI
 
         if generate_doc && member.doc.is_some() {
             let sub_ty = TypeStruct {
-                name: nameutil::enum_member_name(&member.name),
+                name: nameutil::enum_name(&member.name),
                 parent: Some(Box::new(ty.clone())),
                 ty: SType::Variant,
                 args: Vec::new(),

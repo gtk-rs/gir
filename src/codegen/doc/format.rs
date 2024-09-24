@@ -340,7 +340,7 @@ fn find_constant_or_variant(
     }) {
         Some(gen_member_doc_link(
             enum_info.type_id,
-            &nameutil::enum_member_name(&member_info.name),
+            &nameutil::enum_name(&member_info.name),
             env,
             in_type,
         ))

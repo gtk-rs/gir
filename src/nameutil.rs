@@ -102,7 +102,19 @@ pub fn escape_digit(name: &str) -> String {
 }
 
 pub fn enum_member_name(name: &str) -> String {
-    escape_digit(name)
+    if name.starts_with(char::is_alphabetic) {
+        name.to_camel()
+    } else {
+        escape_digit(&name.to_camel())
+    }
+}
+
+pub fn enum_name(name: &str) -> String {
+    if name.starts_with(char::is_alphabetic) {
+        name.to_camel()
+    } else {
+        escape_digit(&name.to_camel())
+    }
 }
 
 pub fn flag_name(name: &str) -> String {

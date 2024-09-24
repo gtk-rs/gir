@@ -5,6 +5,7 @@ use std::{
 };
 
 use super::{function, trait_impls};
+use crate::nameutil::enum_member_name;
 use crate::{
     analysis::enums::Info,
     codegen::{
@@ -19,7 +20,7 @@ use crate::{
     env::Env,
     file_saver,
     library::*,
-    nameutil::{enum_member_name, use_glib_if_needed, use_glib_type},
+    nameutil::{enum_name, use_glib_if_needed, use_glib_type},
     traits::*,
     version::Version,
 };
@@ -62,7 +63,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
                     .map(|_| "#[allow(deprecated)]\n")
                     .unwrap_or(""),
                 enum_analysis.visibility.export_visibility(),
-                enum_member_name(&enum_.name)
+                enum_name(&enum_.name)
             ));
 
             generate_enum(env, w, enum_, config, enum_analysis)?;
@@ -114,7 +115,10 @@ fn generate_enum(
             cfg_condition,
         });
     }
-    let enum_name = enum_member_name(&analysis.name);
+    let _enum_name = enum_name(&enum_.name);
+    let analysis_name = enum_name(&analysis.name);
+
+    println!("-- {_enum_name} - {analysis_name}");
 
     cfg_deprecated(
         w,
@@ -143,7 +147,7 @@ fn generate_enum(
     }
     doc_alias(w, &enum_.c_type, "", 0)?;
 
-    writeln!(w, "{} enum {} {{", analysis.visibility, &enum_name)?;
+    writeln!(w, "{} enum {} {{", analysis.visibility, &_enum_name)?;
     for member in &members {
         cfg_deprecated(
             w,
@@ -196,7 +200,7 @@ fn generate_enum(
         version_condition(w, env, None, enum_.version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         allow_deprecated(w, enum_.deprecated_version, false, 0)?;
-        write!(w, "impl {} {{", &enum_name)?;
+        write!(w, "impl {} {{", &_enum_name)?;
         for func_analysis in functions {
             function::generate(
                 w,
@@ -216,7 +220,7 @@ fn generate_enum(
     trait_impls::generate(
         w,
         env,
-        &enum_name,
+        &_enum_name,
         &analysis.functions,
         &analysis.specials,
         None,
@@ -245,7 +249,7 @@ impl IntoGlib for {name} {{
 
     {maybe_inline}fn into_glib(self) -> {sys_crate_name}::{ffi_name} {{",
         sys_crate_name = sys_crate_name,
-        name = enum_name,
+        name = _enum_name,
         ffi_name = enum_.c_type,
         maybe_inline = maybe_inline
     )?;
@@ -297,7 +301,7 @@ impl IntoGlib for {name} {{
     writeln!(
         w,
         "#[doc(hidden)]
-impl FromGlib<{sys_crate_name}::{ffi_name}> for {enum_name} {{
+impl FromGlib<{sys_crate_name}::{ffi_name}> for {_enum_name} {{
     {maybe_inline}unsafe fn from_glib(value: {sys_crate_name}::{ffi_name}) -> Self {{
         {assert}",
         sys_crate_name = sys_crate_name,
@@ -349,7 +353,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {enum_name} {{
         allow_deprecated(w, any_deprecated_version, false, 0)?;
         writeln!(
             w,
-            "impl {glib_error_domain} for {enum_name} {{
+            "impl {glib_error_domain} for {_enum_name} {{
     #[inline]
     fn domain() -> {glib_quark} {{
         {assert}",
@@ -419,7 +423,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {enum_name} {{
         allow_deprecated(w, enum_.deprecated_version, false, 0)?;
         writeln!(
             w,
-            "impl StaticType for {enum_name} {{
+            "impl StaticType for {_enum_name} {{
                 #[inline]",
         )?;
         doc_alias(w, get_type, "", 1)?;
@@ -440,7 +444,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {enum_name} {{
         allow_deprecated(w, enum_.deprecated_version, false, 0)?;
         writeln!(
             w,
-            "impl {has_param_spec} for {enum_name} {{
+            "impl {has_param_spec} for {_enum_name} {{
                 type ParamSpec = {param_spec_enum};
                 type SetValue = Self;
                 type BuilderFn = fn(&str, Self) -> {param_spec_builder}<Self>;
@@ -460,7 +464,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {enum_name} {{
         allow_deprecated(w, enum_.deprecated_version, false, 0)?;
         writeln!(
             w,
-            "impl {valuetype} for {enum_name} {{
+            "impl {valuetype} for {_enum_name} {{
     type Type = Self;
 }}",
             valuetype = use_glib_type(env, "value::ValueType"),
@@ -472,7 +476,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {enum_name} {{
         allow_deprecated(w, enum_.deprecated_version, false, 0)?;
         writeln!(
             w,
-            "unsafe impl<'a> {from_value_type}<'a> for {enum_name} {{
+            "unsafe impl<'a> {from_value_type}<'a> for {_enum_name} {{
     type Checker = {genericwrongvaluetypechecker}<Self>;
 
     #[inline]
@@ -493,7 +497,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {enum_name} {{
         allow_deprecated(w, enum_.deprecated_version, false, 0)?;
         writeln!(
             w,
-            "impl ToValue for {enum_name} {{
+            "impl ToValue for {_enum_name} {{
     #[inline]
     fn to_value(&self) -> {gvalue} {{
         let mut value = {gvalue}::for_value_type::<Self>();
@@ -519,9 +523,9 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {enum_name} {{
         allow_deprecated(w, enum_.deprecated_version, false, 0)?;
         writeln!(
             w,
-            "impl From<{enum_name}> for {gvalue} {{
+            "impl From<{_enum_name}> for {gvalue} {{
     #[inline]
-    fn from(v: {enum_name}) -> Self {{
+    fn from(v: {_enum_name}) -> Self {{
         {assert}ToValue::to_value(&v)
     }}
 }}",
@@ -535,7 +539,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {enum_name} {{
         w,
         env,
         config,
-        &enum_name,
+        &_enum_name,
         enum_.version,
         enum_.members.iter(),
         |member| {
