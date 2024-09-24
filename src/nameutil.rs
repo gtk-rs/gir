@@ -94,14 +94,6 @@ pub fn mangle_crate(name: &str) -> String {
     name
 }
 
-pub fn mangle_name(name: &str) -> String {
-    if name.starts_with(char::is_alphabetic) {
-        name.to_camel()
-    } else {
-        format!("_{}", name.to_camel())
-    }
-}
-
 pub fn escape_digit(name: &str) -> String {
     if name.starts_with(char::is_numeric) {
         format!("_{name}")
