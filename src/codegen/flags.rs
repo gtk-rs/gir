@@ -21,6 +21,7 @@ use crate::{
     nameutil::{bitfield_member_name, use_glib_type},
     traits::*,
 };
+use crate::nameutil::flag_name;
 
 pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
     if !env
@@ -59,7 +60,7 @@ pub fn generate(env: &Env, root_path: &Path, mod_rs: &mut Vec<String>) {
                     .map(|_| "#[allow(deprecated)]\n")
                     .unwrap_or(""),
                 flags_analysis.visibility.export_visibility(),
-                flags.name
+                flag_name( &flags.name )
             ));
             generate_flags(env, w, flags, config, flags_analysis)?;
         }
@@ -102,7 +103,7 @@ fn generate_flags(
     writeln!(
         w,
         "    {} struct {}: u32 {{",
-        analysis.visibility, flags.name
+        analysis.visibility, flag_name(&flags.name)
     )?;
     for member in &flags.members {
         let member_config = config.members.matched(&member.name);
@@ -150,7 +151,7 @@ fn generate_flags(
         version_condition(w, env, None, flags.version, false, 0)?;
         cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
         allow_deprecated(w, flags.deprecated_version, false, 0)?;
-        write!(w, "impl {} {{", analysis.name)?;
+        write!(w, "impl {} {{", flag_name(&analysis.name))?;
         for func_analysis in functions {
             function::generate(
                 w,
@@ -170,7 +171,7 @@ fn generate_flags(
     trait_impls::generate(
         w,
         env,
-        &analysis.name,
+        &flag_name(&analysis.name),
         &analysis.functions,
         &analysis.specials,
         None,
@@ -184,7 +185,7 @@ fn generate_flags(
         w,
         env,
         config,
-        &flags.name,
+        &flag_name(&flags.name),
         flags.version,
         flags.members.iter(),
         |member| {
@@ -217,7 +218,7 @@ impl IntoGlib for {name} {{
 }}
 ",
         sys_crate_name = sys_crate_name,
-        name = flags.name,
+        name = flag_name(&flags.name),
         ffi_name = flags.c_type
     )?;
 
@@ -241,7 +242,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
 }}
 ",
         sys_crate_name = sys_crate_name,
-        name = flags.name,
+        name = flag_name(&flags.name),
         ffi_name = flags.c_type,
         assert = assert
     )?;
@@ -260,7 +261,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             w,
             "impl StaticType for {name} {{
                 #[inline]",
-            name = flags.name,
+            name = flag_name(&flags.name),
         )?;
         doc_alias(w, get_type, "", 1)?;
         writeln!(
@@ -289,7 +290,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
                     Self::ParamSpec::builder
                 }}
 }}",
-            name = flags.name,
+            name = flag_name(&flags.name),
             has_param_spec = use_glib_type(env, "HasParamSpec"),
             param_spec_flags = use_glib_type(env, "ParamSpecFlags"),
             param_spec_builder = use_glib_type(env, "ParamSpecFlagsBuilder"),
@@ -304,7 +305,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             "impl {valuetype} for {name} {{
     type Type = Self;
 }}",
-            name = flags.name,
+            name = flag_name(&flags.name),
             valuetype = use_glib_type(env, "value::ValueType"),
         )?;
         writeln!(w)?;
@@ -322,7 +323,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         {assert}from_glib({glib}(value.to_glib_none().0))
     }}
 }}",
-            name = flags.name,
+            name = flag_name(&flags.name),
             glib = use_glib_type(env, "gobject_ffi::g_value_get_flags"),
             gvalue = use_glib_type(env, "Value"),
             genericwrongvaluetypechecker = use_glib_type(env, "value::GenericValueTypeChecker"),
@@ -351,7 +352,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         Self::static_type()
     }}
 }}",
-            name = flags.name,
+            name = flag_name(&flags.name),
             glib = use_glib_type(env, "gobject_ffi::g_value_set_flags"),
             gvalue = use_glib_type(env, "Value"),
             gtype = use_glib_type(env, "Type"),
@@ -369,7 +370,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         {assert}ToValue::to_value(&v)
     }}
 }}",
-            name = flags.name,
+            name = flag_name(&flags.name),
             gvalue = use_glib_type(env, "Value"),
             assert = assert,
         )?;

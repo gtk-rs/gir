@@ -5,6 +5,7 @@ use crate::{
     },
     library::Nullable,
 };
+use crate::nameutil::escape_digit;
 
 impl Bound {
     /// Returns the type parameter reference.
@@ -46,6 +47,8 @@ impl Bound {
                 }
             }
         };
+
+        let trait_bound = escape_digit(&trait_bound);
 
         match self.bound_type {
             BoundType::IsA(_) if *nullable => {

@@ -9,6 +9,7 @@ use crate::{
     nameutil::{is_gstring, use_glib_type},
     traits::*,
 };
+use crate::nameutil::escape_digit;
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum TypeError {
@@ -161,7 +162,7 @@ impl IntoString for Result {
     fn into_string(self) -> String {
         use self::TypeError::*;
         match self {
-            Ok(s) => s.into_string(),
+            Ok(s) => escape_digit(&s.into_string()),
             Err(Ignored(s)) => format!("/*Ignored*/{s}"),
             Err(Mismatch(s)) => format!("/*Metadata mismatch*/{s}"),
             Err(Unimplemented(s)) => format!("/*Unimplemented*/{s}"),

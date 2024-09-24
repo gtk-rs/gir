@@ -8,6 +8,7 @@ use std::{
 
 use super::namespaces;
 use crate::{library::Library, nameutil::crate_name, version::Version};
+use crate::nameutil::mangle_crate;
 
 fn is_first_char_up(s: &str) -> bool {
     s.chars().next().unwrap().is_uppercase()
@@ -149,6 +150,7 @@ impl Imports {
     /// For example, if name is `X::Y::Z` then it will be available as `Z`.
     /// Uses defaults.
     pub fn add(&mut self, name: &str) {
+        let name = &mangle_crate(name);
         if !self.common_checks(name) {
             return;
         }

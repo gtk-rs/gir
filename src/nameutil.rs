@@ -74,12 +74,48 @@ pub fn module_name(name: &str) -> String {
     mangle_keywords(name.to_snake()).into_owned()
 }
 
-pub fn enum_member_name(name: &str) -> String {
+pub fn mangle_crate(name: &str) -> String {
+    let parts: Vec<_> = name.split("::").collect();
+    let name = if let Some(name) = parts.iter().last() {
+
+        let new_name = if name.starts_with(char::is_numeric) {
+           format!("_{name}")
+        } else {
+            name.to_string()
+        };
+
+        let reduced_count = parts.len() - 1;
+        let mut parts = parts.into_iter().take(reduced_count).collect::<Vec<_>>();
+        parts.push(&new_name);
+        parts.join("::")
+    } else {
+        name.into()
+    };
+    name
+}
+
+pub fn mangle_name(name: &str) -> String {
     if name.starts_with(char::is_alphabetic) {
         name.to_camel()
     } else {
         format!("_{}", name.to_camel())
     }
+}
+
+pub fn escape_digit(name: &str) -> String {
+    if name.starts_with(char::is_numeric) {
+        format!("_{name}")
+    } else {
+        name.into()
+    }
+}
+
+pub fn enum_member_name(name: &str) -> String {
+    escape_digit(name)
+}
+
+pub fn flag_name(name: &str) -> String {
+    escape_digit(name)
 }
 
 pub fn bitfield_member_name(name: &str) -> String {
