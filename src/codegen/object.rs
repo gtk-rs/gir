@@ -14,12 +14,13 @@ use super::{
 use crate::{
     analysis::{
         self, bounds::BoundType, object::has_builder_properties, record_type::RecordType,
-        ref_mode::RefMode, rust_type::RustType,
+        ref_mode::RefMode, rust_type::RustType, safety_assertion_mode::SafetyAssertionMode,
     },
     env::Env,
     library::{self, Nullable},
     nameutil,
     traits::IntoString,
+    writer::safety_assertion_mode_to_str,
 };
 
 pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
@@ -455,6 +456,11 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
     #[must_use = \"Building the object from the builder is usually expensive and is not expected to have side effects\"]
     pub fn build(self) -> {name} {{",
         name = analysis.name,
+    )?;
+    writeln!(
+        w,
+        "{}",
+        safety_assertion_mode_to_str(SafetyAssertionMode::InMainThread)
     )?;
 
     // The split allows us to not have clippy::let_and_return lint disabled
