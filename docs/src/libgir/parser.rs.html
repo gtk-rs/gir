@@ -1577,6 +1577,9 @@
 <a href="#1577" id="1577">1577</a>
 <a href="#1578" id="1578">1578</a>
 <a href="#1579" id="1579">1579</a>
+<a href="#1580" id="1580">1580</a>
+<a href="#1581" id="1581">1581</a>
+<a href="#1582" id="1582">1582</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     path::{Path, PathBuf},
     str::FromStr,
@@ -1718,7 +1721,9 @@
                 <span class="string">"function" </span>=&gt; <span class="self">self</span>.read_global_function(parser, ns_id, elem),
                 <span class="string">"constant" </span>=&gt; <span class="self">self</span>.read_constant(parser, ns_id, elem),
                 <span class="string">"alias" </span>=&gt; <span class="self">self</span>.read_alias(parser, ns_id, elem),
-                <span class="string">"boxed" </span>| <span class="string">"function-macro" </span>| <span class="string">"docsection" </span>=&gt; parser.ignore_element(),
+                <span class="string">"boxed" </span>| <span class="string">"function-macro" </span>| <span class="string">"docsection" </span>| <span class="string">"function-inline" </span>=&gt; {
+                    parser.ignore_element()
+                }
                 <span class="kw">_ </span>=&gt; {
                     <span class="macro">warn!</span>(<span class="string">"&lt;{} name={:?}&gt;"</span>, elem.name(), elem.attr(<span class="string">"name"</span>));
                     parser.ignore_element()
@@ -1965,6 +1970,7 @@
             <span class="string">"doc-deprecated" </span>=&gt; parser.text().map(|t| doc_deprecated = <span class="prelude-val">Some</span>(t)),
             <span class="string">"source-position" </span>=&gt; parser.ignore_element(),
             <span class="string">"attribute" </span>=&gt; parser.ignore_element(),
+            <span class="string">"method-inline" </span>=&gt; parser.ignore_element(),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(parser.unexpected_element(elem)),
         })<span class="question-mark">?</span>;
 
