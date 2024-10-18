@@ -139,7 +139,9 @@ impl Library {
                 "function" => self.read_global_function(parser, ns_id, elem),
                 "constant" => self.read_constant(parser, ns_id, elem),
                 "alias" => self.read_alias(parser, ns_id, elem),
-                "boxed" | "function-macro" | "docsection" => parser.ignore_element(),
+                "boxed" | "function-macro" | "docsection" | "function-inline" => {
+                    parser.ignore_element()
+                }
                 _ => {
                     warn!("<{} name={:?}>", elem.name(), elem.attr("name"));
                     parser.ignore_element()
@@ -386,6 +388,7 @@ impl Library {
             "doc-deprecated" => parser.text().map(|t| doc_deprecated = Some(t)),
             "source-position" => parser.ignore_element(),
             "attribute" => parser.ignore_element(),
+            "method-inline" => parser.ignore_element(),
             _ => Err(parser.unexpected_element(elem)),
         })?;
 
