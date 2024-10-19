@@ -570,6 +570,12 @@
 <a href="#570" id="570">570</a>
 <a href="#571" id="571">571</a>
 <a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     collections::{BTreeMap, HashSet},
     io::{<span class="prelude-ty">Result</span>, Write},
@@ -586,12 +592,13 @@
 <span class="kw">use crate</span>::{
     analysis::{
         <span class="self">self</span>, bounds::BoundType, object::has_builder_properties, record_type::RecordType,
-        ref_mode::RefMode, rust_type::RustType,
+        ref_mode::RefMode, rust_type::RustType, safety_assertion_mode::SafetyAssertionMode,
     },
     env::Env,
     library::{<span class="self">self</span>, Nullable},
     nameutil,
     traits::IntoString,
+    writer::safety_assertion_mode_to_str,
 };
 
 <span class="kw">pub fn </span>generate(w: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>Write, env: <span class="kw-2">&amp;</span>Env, analysis: <span class="kw-2">&amp;</span>analysis::object::Info) -&gt; <span class="prelude-ty">Result</span>&lt;()&gt; {
@@ -1027,6 +1034,11 @@
     #[must_use = \"Building the object from the builder is usually expensive and is not expected to have side effects\"]
     pub fn build(self) -&gt; {name} {{"</span>,
         name = analysis.name,
+    )<span class="question-mark">?</span>;
+    <span class="macro">writeln!</span>(
+        w,
+        <span class="string">"{}"</span>,
+        safety_assertion_mode_to_str(SafetyAssertionMode::InMainThread)
     )<span class="question-mark">?</span>;
 
     <span class="comment">// The split allows us to not have clippy::let_and_return lint disabled
