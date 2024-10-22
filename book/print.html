@@ -148,7 +148,7 @@
                         <a href="print.html" title="Print this book" aria-label="Print this book">
                             <i id="print-button" class="fa fa-print"></i>
                         </a>
-                        <a href="https://github.com/gtk-rs/gir/tree/master/book" title="Git repository" aria-label="Git repository">
+                        <a href="https://github.com/gtk-rs/gir/tree/main/book" title="Git repository" aria-label="Git repository">
                             <i id="git-repository-button" class="fa fa-github"></i>
                         </a>
 
@@ -220,7 +220,7 @@ The script detects <code>Gir.toml</code> configurations in the current directory
 Alternatively <code>--embed-docs</code> can be passed to prepare source-code for a documentation built by moving all documentation into it.
 For a complete overview of available options, pass <code>--help</code>.</p>
 <h2 id="gir-format-reference"><a class="header" href="#gir-format-reference">GIR format reference</a></h2>
-<p>It can always be useful to look at the <a href="https://gi.readthedocs.io/en/latest/annotations/giannotations.html">reference</a> or <a href="https://gitlab.gnome.org/GNOME/gobject-introspection/blob/master/docs/gir-1.2.rnc">schema</a>.</p>
+<p>It can always be useful to look at the <a href="https://gi.readthedocs.io/en/latest/annotations/giannotations.html">reference</a> or <a href="https://gitlab.gnome.org/GNOME/gobject-introspection/blob/main/docs/gir-1.2.rnc">schema</a>.</p>
 <h2 id="contact-us"><a class="header" href="#contact-us">Contact us</a></h2>
 <p>If you use <a href="https://github.com/gtk-rs/gir">gir</a> on another library and it fails and you can't figure out why, don't hesitate to <a href="https://gtk-rs.org/contact">contact us</a>!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="tutorial"><a class="header" href="#tutorial">Tutorial</a></h1>
@@ -257,7 +257,7 @@ cd ..
 <p>Of course we also need to download and install <a href="https://github.com/gtk-rs/gir">gir</a>.</p>
 <pre><code class="language-sh">git submodule add https://github.com/gtk-rs/gir
 git config -f .gitmodules submodule.gir.update none
-git submodule set-branch --branch master -- ./gir
+git submodule set-branch --branch main -- ./gir
 cd gir
 cargo install --path .
 cd ..
@@ -265,7 +265,7 @@ cd ..
 <p>By adding it as a submodule, we are able to fetch future updates of the tool and we always exactly know which gir version we used to generate our bindings.
 We also change the setting so that the submodule is not automatically checked out, otherwise anyone using your library from git will have the useless submodule checked out.
 Run <code>git submodule update --checkout</code> if you want to update the submodule.
-Then we set the branch of the submodule to master.</p>
+Then we set the branch of the submodule to main.</p>
 <p>If there are any updates to gir in the future, we can install them by opening our project folder <code>gir-tutorial</code> and running</p>
 <pre><code class="language-sh">git submodule update --remote
 cd gir
@@ -315,7 +315,7 @@ In most cases it will be enough to follow the next two steps of the tutorial to 
 <p>If your library depends on GTK libraries, the recommended way to get the <code>.gir</code> files for them is to add the <a href="https://github.com/gtk-rs/gir-files">gir-files repo</a> as a submodule as well.
 It's the recommended way, because some of the <code>.gir</code> files included in the libraries are invalid (missing or invalid annotations for example).
 These errors are already fixed in the gir files from the repo.
-Otherwise you could use the above-mentioned methods to find the files and run the <a href="https://github.com/gtk-rs/gir-files/blob/master/fix.sh">script</a> to fix the <code>.gir</code> files available in the gir-files repository (and only them!).
+Otherwise you could use the above-mentioned methods to find the files and run the <a href="https://github.com/gtk-rs/gir-files/blob/main/fix.sh">script</a> to fix the <code>.gir</code> files available in the gir-files repository (and only them!).
 You can run it like this (at the same level of the <code>.gir</code> files you want to patch):</p>
 <pre><code class="language-sh">sh fix.sh
 </code></pre>
@@ -327,10 +327,10 @@ They can often be found in the repo containing the source of your dependencies o
 <h2 id="example"><a class="header" href="#example">Example</a></h2>
 <p>We want to generate the wrapper for pango.
 It is related to GTK, so in order to get its .gir files, we use the recommended way.
-While being in the project folder <code>git-tutorial</code>, we add the <a href="https://github.com/gtk-rs/gir-files">gir-files repo</a> as a submodule and set the branch of the submodule to master.</p>
+While being in the project folder <code>git-tutorial</code>, we add the <a href="https://github.com/gtk-rs/gir-files">gir-files repo</a> as a submodule and set the branch of the submodule to main.</p>
 <pre><code class="language-sh">git submodule add https://github.com/gtk-rs/gir-files
 git config -f .gitmodules submodule.gir-files.update none
-git submodule set-branch --branch master -- ./gir-files
+git submodule set-branch --branch main -- ./gir-files
 </code></pre>
 <p>We also change the setting so that the submodule is not automatically checked out, otherwise anyone using your library from git will have the useless submodule checked out.
 Run <code>git submodule update --checkout</code> if you want to update the submodule.
@@ -1033,7 +1033,7 @@ Just take care about the dependencies and the crate's name generated in the <cod
 <p>You now have the sys part of your binding!</p>
 <div style="break-before: page; page-break-before: always;"></div><h1 id="api-options"><a class="header" href="#api-options">API Options</a></h1>
 <p>This mode requires you to write another TOML file.
-<a href="https://github.com/gtk-rs/gtk/blob/master/Gir.toml">gtk/Gir.toml</a> is a good example.</p>
+<a href="https://github.com/gtk-rs/gtk/blob/main/Gir.toml">gtk/Gir.toml</a> is a good example.</p>
 <pre><code class="language-toml">[options]
 girs_directories = ["gir-files"]
 library = "Gtk"

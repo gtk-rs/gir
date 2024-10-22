@@ -147,10 +147,10 @@
                         <a href="../print.html" title="Print this book" aria-label="Print this book">
                             <i id="print-button" class="fa fa-print"></i>
                         </a>
-                        <a href="https://github.com/gtk-rs/gir/tree/master/book" title="Git repository" aria-label="Git repository">
+                        <a href="https://github.com/gtk-rs/gir/tree/main/book" title="Git repository" aria-label="Git repository">
                             <i id="git-repository-button" class="fa fa-github"></i>
                         </a>
-                        <a href="https://github.com/gtk-rs/gir/edit/master/book/src/tutorial/preparation.md" title="Suggest an edit" aria-label="Suggest an edit">
+                        <a href="https://github.com/gtk-rs/gir/edit/main/book/src/tutorial/preparation.md" title="Suggest an edit" aria-label="Suggest an edit">
                             <i id="git-edit-button" class="fa fa-edit"></i>
                         </a>
 
@@ -204,7 +204,7 @@ cd ..
 <p>Of course we also need to download and install <a href="https://github.com/gtk-rs/gir">gir</a>.</p>
 <pre><code class="language-sh">git submodule add https://github.com/gtk-rs/gir
 git config -f .gitmodules submodule.gir.update none
-git submodule set-branch --branch master -- ./gir
+git submodule set-branch --branch main -- ./gir
 cd gir
 cargo install --path .
 cd ..
@@ -212,7 +212,7 @@ cd ..
 <p>By adding it as a submodule, we are able to fetch future updates of the tool and we always exactly know which gir version we used to generate our bindings.
 We also change the setting so that the submodule is not automatically checked out, otherwise anyone using your library from git will have the useless submodule checked out.
 Run <code>git submodule update --checkout</code> if you want to update the submodule.
-Then we set the branch of the submodule to master.</p>
+Then we set the branch of the submodule to main.</p>
 <p>If there are any updates to gir in the future, we can install them by opening our project folder <code>gir-tutorial</code> and running</p>
 <pre><code class="language-sh">git submodule update --remote
 cd gir

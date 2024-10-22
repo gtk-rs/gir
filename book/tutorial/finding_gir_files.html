@@ -147,10 +147,10 @@
                         <a href="../print.html" title="Print this book" aria-label="Print this book">
                             <i id="print-button" class="fa fa-print"></i>
                         </a>
-                        <a href="https://github.com/gtk-rs/gir/tree/master/book" title="Git repository" aria-label="Git repository">
+                        <a href="https://github.com/gtk-rs/gir/tree/main/book" title="Git repository" aria-label="Git repository">
                             <i id="git-repository-button" class="fa fa-github"></i>
                         </a>
-                        <a href="https://github.com/gtk-rs/gir/edit/master/book/src/tutorial/finding_gir_files.md" title="Suggest an edit" aria-label="Suggest an edit">
+                        <a href="https://github.com/gtk-rs/gir/edit/main/book/src/tutorial/finding_gir_files.md" title="Suggest an edit" aria-label="Suggest an edit">
                             <i id="git-edit-button" class="fa fa-edit"></i>
                         </a>
 
@@ -198,7 +198,7 @@ In most cases it will be enough to follow the next two steps of the tutorial to 
 <p>If your library depends on GTK libraries, the recommended way to get the <code>.gir</code> files for them is to add the <a href="https://github.com/gtk-rs/gir-files">gir-files repo</a> as a submodule as well.
 It's the recommended way, because some of the <code>.gir</code> files included in the libraries are invalid (missing or invalid annotations for example).
 These errors are already fixed in the gir files from the repo.
-Otherwise you could use the above-mentioned methods to find the files and run the <a href="https://github.com/gtk-rs/gir-files/blob/master/fix.sh">script</a> to fix the <code>.gir</code> files available in the gir-files repository (and only them!).
+Otherwise you could use the above-mentioned methods to find the files and run the <a href="https://github.com/gtk-rs/gir-files/blob/main/fix.sh">script</a> to fix the <code>.gir</code> files available in the gir-files repository (and only them!).
 You can run it like this (at the same level of the <code>.gir</code> files you want to patch):</p>
 <pre><code class="language-sh">sh fix.sh
 </code></pre>
@@ -210,10 +210,10 @@ They can often be found in the repo containing the source of your dependencies o
 <h2 id="example"><a class="header" href="#example">Example</a></h2>
 <p>We want to generate the wrapper for pango.
 It is related to GTK, so in order to get its .gir files, we use the recommended way.
-While being in the project folder <code>git-tutorial</code>, we add the <a href="https://github.com/gtk-rs/gir-files">gir-files repo</a> as a submodule and set the branch of the submodule to master.</p>
+While being in the project folder <code>git-tutorial</code>, we add the <a href="https://github.com/gtk-rs/gir-files">gir-files repo</a> as a submodule and set the branch of the submodule to main.</p>
 <pre><code class="language-sh">git submodule add https://github.com/gtk-rs/gir-files
 git config -f .gitmodules submodule.gir-files.update none
-git submodule set-branch --branch master -- ./gir-files
+git submodule set-branch --branch main -- ./gir-files
 </code></pre>
 <p>We also change the setting so that the submodule is not automatically checked out, otherwise anyone using your library from git will have the useless submodule checked out.
 Run <code>git submodule update --checkout</code> if you want to update the submodule.
