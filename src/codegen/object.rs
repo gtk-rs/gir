@@ -457,11 +457,14 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
     pub fn build(self) -> {name} {{",
         name = analysis.name,
     )?;
-    writeln!(
-        w,
-        "{}",
-        safety_assertion_mode_to_str(SafetyAssertionMode::InMainThread)
-    )?;
+
+    if env.config.generate_safety_asserts {
+        writeln!(
+            w,
+            "{}",
+            safety_assertion_mode_to_str(SafetyAssertionMode::InMainThread)
+        )?;
+    }
 
     // The split allows us to not have clippy::let_and_return lint disabled
     if let Some(code) = analysis.builder_postprocess.as_ref() {
