@@ -1,7 +1,7 @@
 # API Options
 
 This mode requires you to write another TOML file.
-[gtk/Gir.toml](https://github.com/gtk-rs/gtk/blob/master/Gir.toml) is a good example.
+[gtk/Gir.toml](https://github.com/gtk-rs/gtk/blob/main/Gir.toml) is a good example.
 
 ```toml
 [options]

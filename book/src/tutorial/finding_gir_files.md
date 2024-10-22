@@ -19,7 +19,7 @@ In most cases it will be enough to follow the next two steps of the tutorial to 
 If your library depends on GTK libraries, the recommended way to get the `.gir` files for them is to add the [gir-files repo](https://github.com/gtk-rs/gir-files) as a submodule as well.
 It's the recommended way, because some of the `.gir` files included in the libraries are invalid (missing or invalid annotations for example).
 These errors are already fixed in the gir files from the repo.
-Otherwise you could use the above-mentioned methods to find the files and run the [script](https://github.com/gtk-rs/gir-files/blob/master/fix.sh) to fix the `.gir` files available in the gir-files repository (and only them!).
+Otherwise you could use the above-mentioned methods to find the files and run the [script](https://github.com/gtk-rs/gir-files/blob/main/fix.sh) to fix the `.gir` files available in the gir-files repository (and only them!).
 You can run it like this (at the same level of the `.gir` files you want to patch):
 
 ```sh
@@ -36,12 +36,12 @@ They can often be found in the repo containing the source of your dependencies o
 ## Example
 We want to generate the wrapper for pango.
 It is related to GTK, so in order to get its .gir files, we use the recommended way.
-While being in the project folder `git-tutorial`, we add the [gir-files repo](https://github.com/gtk-rs/gir-files) as a submodule and set the branch of the submodule to master.
+While being in the project folder `git-tutorial`, we add the [gir-files repo](https://github.com/gtk-rs/gir-files) as a submodule and set the branch of the submodule to main.
 
 ```sh
 git submodule add https://github.com/gtk-rs/gir-files
 git config -f .gitmodules submodule.gir-files.update none
-git submodule set-branch --branch master -- ./gir-files
+git submodule set-branch --branch main -- ./gir-files
 ```
 We also change the setting so that the submodule is not automatically checked out, otherwise anyone using your library from git will have the useless submodule checked out.
 Run `git submodule update --checkout` if you want to update the submodule.
