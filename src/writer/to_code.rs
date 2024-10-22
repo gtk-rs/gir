@@ -1,6 +1,6 @@
 use std::fmt::Write;
 
-use super::{primitives::*, safety_assertion_mode_to_str};
+use super::primitives::*;
 use crate::{
     chunk::{Chunk, Param, TupleMode},
     codegen::{translate_from_glib::TranslateFromGlib, translate_to_glib::TranslateToGlib},
@@ -137,7 +137,7 @@ impl ToCode for Chunk {
                 lines.push(s);
                 lines
             }
-            AssertInit(x) => vec![safety_assertion_mode_to_str(x).to_owned()],
+            AssertInit(x) => vec![x.to_string()],
             Connect {
                 ref signal,
                 ref trampoline,

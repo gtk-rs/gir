@@ -20,7 +20,6 @@ use crate::{
     library::{self, Nullable},
     nameutil,
     traits::IntoString,
-    writer::safety_assertion_mode_to_str,
 };
 
 pub fn generate(w: &mut dyn Write, env: &Env, analysis: &analysis::object::Info) -> Result<()> {
@@ -459,11 +458,7 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
     )?;
 
     if env.config.generate_safety_asserts {
-        writeln!(
-            w,
-            "{}",
-            safety_assertion_mode_to_str(SafetyAssertionMode::InMainThread)
-        )?;
+        writeln!(w, "{}", SafetyAssertionMode::InMainThread)?;
     }
 
     // The split allows us to not have clippy::let_and_return lint disabled
