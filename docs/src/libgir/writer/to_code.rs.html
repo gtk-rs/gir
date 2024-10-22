@@ -224,7 +224,7 @@
 <a href="#224" id="224">224</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::fmt::Write;
 
-<span class="kw">use super</span>::{primitives::<span class="kw-2">*</span>, safety_assertion_mode_to_str};
+<span class="kw">use </span><span class="kw">super</span>::primitives::<span class="kw-2">*</span>;
 <span class="kw">use crate</span>::{
     chunk::{Chunk, Param, TupleMode},
     codegen::{translate_from_glib::TranslateFromGlib, translate_to_glib::TranslateToGlib},
@@ -361,7 +361,7 @@
                 lines.push(s);
                 lines
             }
-            AssertInit(x) =&gt; <span class="macro">vec!</span>[safety_assertion_mode_to_str(x).to_owned()],
+            AssertInit(x) =&gt; <span class="macro">vec!</span>[x.to_string()],
             Connect {
                 <span class="kw-2">ref </span>signal,
                 <span class="kw-2">ref </span>trampoline,

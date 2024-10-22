@@ -503,10 +503,6 @@
 <a href="#503" id="503">503</a>
 <a href="#504" id="504">504</a>
 <a href="#505" id="505">505</a>
-<a href="#506" id="506">506</a>
-<a href="#507" id="507">507</a>
-<a href="#508" id="508">508</a>
-<a href="#509" id="509">509</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     fmt,
     io::{<span class="prelude-ty">Result</span>, Write},
@@ -532,7 +528,7 @@
     library::{<span class="self">self</span>, TypeId},
     nameutil::use_glib_type,
     version::Version,
-    writer::{primitives::tabs, safety_assertion_mode_to_str, ToCode},
+    writer::{primitives::tabs, ToCode},
 };
 
 <span class="comment">// We follow the rules of the `return_self_not_must_use` clippy lint:
@@ -930,11 +926,7 @@
     <span class="macro">writeln!</span>(body)<span class="question-mark">?</span>;
 
     <span class="kw">if </span>!async_future.assertion.is_none() {
-        <span class="macro">writeln!</span>(
-            body,
-            <span class="string">"{}"</span>,
-            safety_assertion_mode_to_str(async_future.assertion)
-        )<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(body, <span class="string">"{}"</span>, async_future.assertion)<span class="question-mark">?</span>;
     }
     <span class="kw">let </span>skip = usize::from(async_future.is_method);
 
