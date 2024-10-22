@@ -65,7 +65,7 @@ def update_submodule(submodule_path, conf):
     ):
         print("=> Updating submodule...")
         run_command(["git", "reset", "--hard", "HEAD"], submodule_path)
-        run_command(["git", "pull", "-f", "origin", "master"], submodule_path)
+        run_command(["git", "pull", "-f", "origin", "main"], submodule_path)
         print("<= Done!")
         return True
     return False

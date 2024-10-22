@@ -40,7 +40,7 @@ Alternatively `--embed-docs` can be passed to prepare source-code for a document
 For a complete overview of available options, pass `--help`.
 
 ## GIR format reference
-It can always be useful to look at the [reference](https://gi.readthedocs.io/en/latest/annotations/giannotations.html) or [schema](https://gitlab.gnome.org/GNOME/gobject-introspection/blob/master/docs/gir-1.2.rnc).
+It can always be useful to look at the [reference](https://gi.readthedocs.io/en/latest/annotations/giannotations.html) or [schema](https://gitlab.gnome.org/GNOME/gobject-introspection/blob/main/docs/gir-1.2.rnc).
 
 ## Contact us
 If you use [gir] on another library and it fails and you can't figure out why, don't hesitate to [contact us](https://gtk-rs.org/contact)!
