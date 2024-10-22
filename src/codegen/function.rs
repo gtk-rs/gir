@@ -23,7 +23,7 @@ use crate::{
     library::{self, TypeId},
     nameutil::use_glib_type,
     version::Version,
-    writer::{primitives::tabs, safety_assertion_mode_to_str, ToCode},
+    writer::{primitives::tabs, ToCode},
 };
 
 // We follow the rules of the `return_self_not_must_use` clippy lint:
@@ -421,11 +421,7 @@ pub fn body_chunk_futures(
     writeln!(body)?;
 
     if !async_future.assertion.is_none() {
-        writeln!(
-            body,
-            "{}",
-            safety_assertion_mode_to_str(async_future.assertion)
-        )?;
+        writeln!(body, "{}", async_future.assertion)?;
     }
     let skip = usize::from(async_future.is_method);
 
