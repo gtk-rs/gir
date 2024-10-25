@@ -574,6 +574,7 @@
 <a href="#574" id="574">574</a>
 <a href="#575" id="575">575</a>
 <a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     collections::{BTreeMap, HashSet},
     io::{<span class="prelude-ty">Result</span>, Write},
@@ -1033,16 +1034,17 @@
         name = analysis.name,
     )<span class="question-mark">?</span>;
 
-    <span class="kw">if </span>env.config.generate_safety_asserts {
-        <span class="macro">writeln!</span>(w, <span class="string">"{}"</span>, SafetyAssertionMode::InMainThread)<span class="question-mark">?</span>;
-    }
-
     <span class="comment">// The split allows us to not have clippy::let_and_return lint disabled
     </span><span class="kw">if let </span><span class="prelude-val">Some</span>(code) = analysis.builder_postprocess.as_ref() {
-        <span class="macro">writeln!</span>(w, <span class="string">"    let ret = self.builder.build();"</span>)<span class="question-mark">?</span>;
+        <span class="comment">// We don't generate an assertion macro for the case where you have a build post-process
+        // as it is only used to initialize gtk in gtk::ApplicationBuilder which is too early to assert anything
+        </span><span class="macro">writeln!</span>(w, <span class="string">"    let ret = self.builder.build();"</span>)<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(w, <span class="string">"        {{\n            {code}\n        }}"</span>)<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(w, <span class="string">"    ret\n    }}"</span>)<span class="question-mark">?</span>;
     } <span class="kw">else </span>{
+        <span class="kw">if </span>env.config.generate_safety_asserts {
+            <span class="macro">writeln!</span>(w, <span class="string">"{}"</span>, SafetyAssertionMode::InMainThread)<span class="question-mark">?</span>;
+        }
         <span class="macro">writeln!</span>(w, <span class="string">"    self.builder.build() }}"</span>)<span class="question-mark">?</span>;
     }
     <span class="macro">writeln!</span>(w, <span class="string">"}}"</span>)
