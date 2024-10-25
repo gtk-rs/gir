@@ -457,16 +457,17 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
         name = analysis.name,
     )?;
 
-    if env.config.generate_safety_asserts {
-        writeln!(w, "{}", SafetyAssertionMode::InMainThread)?;
-    }
-
     // The split allows us to not have clippy::let_and_return lint disabled
     if let Some(code) = analysis.builder_postprocess.as_ref() {
+        // We don't generate an assertion macro for the case where you have a build post-process
+        // as it is only used to initialize gtk in gtk::ApplicationBuilder which is too early to assert anything
         writeln!(w, "    let ret = self.builder.build();")?;
         writeln!(w, "        {{\n            {code}\n        }}")?;
         writeln!(w, "    ret\n    }}")?;
     } else {
+        if env.config.generate_safety_asserts {
+            writeln!(w, "{}", SafetyAssertionMode::InMainThread)?;
+        }
         writeln!(w, "    self.builder.build() }}")?;
     }
     writeln!(w, "}}")
