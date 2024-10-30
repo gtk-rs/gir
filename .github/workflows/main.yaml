@@ -6,7 +6,7 @@ on:
       - "*"
   push:
     branches:
-      - "master"
+      - "main"
 
 jobs:
   hygiene:
@@ -132,7 +132,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: gtk-rs/gir-files
-          ref: master
+          ref: main
           path: tests/gir-files
       - name: "Build (release)"
         uses: actions-rs/cargo@v1
@@ -148,7 +148,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: gtk-rs/gtk4-rs
-          ref: master
+          ref: main
           path: gtk4-rs
         if: matrix.os == 'ubuntu-latest'
       - name: "Symlink `gir` in gtk4-rs"
@@ -162,7 +162,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: gtk-rs/gtk-rs-core
-          ref: master
+          ref: main
           path: gtk-rs-core
         if: matrix.os == 'ubuntu-latest'
       - name: "Symlink `gir` in gtk-rs-core"

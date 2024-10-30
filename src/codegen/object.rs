@@ -14,7 +14,7 @@ use super::{
 use crate::{
     analysis::{
         self, bounds::BoundType, object::has_builder_properties, record_type::RecordType,
-        ref_mode::RefMode, rust_type::RustType,
+        ref_mode::RefMode, rust_type::RustType, safety_assertion_mode::SafetyAssertionMode,
     },
     env::Env,
     library::{self, Nullable},
@@ -459,10 +459,15 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
 
     // The split allows us to not have clippy::let_and_return lint disabled
     if let Some(code) = analysis.builder_postprocess.as_ref() {
+        // We don't generate an assertion macro for the case where you have a build post-process
+        // as it is only used to initialize gtk in gtk::ApplicationBuilder which is too early to assert anything
         writeln!(w, "    let ret = self.builder.build();")?;
         writeln!(w, "        {{\n            {code}\n        }}")?;
         writeln!(w, "    ret\n    }}")?;
     } else {
+        if env.config.generate_safety_asserts {
+            writeln!(w, "{}", SafetyAssertionMode::InMainThread)?;
+        }
         writeln!(w, "    self.builder.build() }}")?;
     }
     writeln!(w, "}}")

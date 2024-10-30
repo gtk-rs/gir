@@ -11,6 +11,17 @@ pub enum SafetyAssertionMode {
     InMainThread,
 }
 
+impl std::fmt::Display for SafetyAssertionMode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            SafetyAssertionMode::None => f.write_str(""),
+            SafetyAssertionMode::NotInitialized => f.write_str("assert_not_initialized!();"),
+            SafetyAssertionMode::Skip => f.write_str("skip_assert_initialized!();"),
+            SafetyAssertionMode::InMainThread => f.write_str("assert_initialized_main_thread!();"),
+        }
+    }
+}
+
 impl FromStr for SafetyAssertionMode {
     type Err = String;
     fn from_str(name: &str) -> Result<SafetyAssertionMode, String> {
