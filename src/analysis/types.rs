@@ -77,7 +77,7 @@ impl IsIncomplete for Field {
     }
 }
 
-impl<'a> IsIncomplete for &'a [Field] {
+impl IsIncomplete for &[Field] {
     fn is_incomplete(&self, lib: &Library) -> bool {
         if self.is_empty() {
             return true;
