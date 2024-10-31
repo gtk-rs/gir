@@ -1356,7 +1356,7 @@ impl Library {
         self.namespace_mut(ns_id).versions.insert(version);
     }
 
-    pub fn types<'a>(&'a self) -> Box<dyn Iterator<Item = (TypeId, &Type)> + 'a> {
+    pub fn types<'a>(&'a self) -> Box<dyn Iterator<Item = (TypeId, &'a Type)> + 'a> {
         Box::new(self.namespaces.iter().enumerate().flat_map(|(ns_id, ns)| {
             ns.types.iter().enumerate().filter_map(move |(id, type_)| {
                 let tid = TypeId {
@@ -1372,7 +1372,7 @@ impl Library {
     pub fn namespace_types<'a>(
         &'a self,
         ns_id: u16,
-    ) -> Box<dyn Iterator<Item = (TypeId, &Type)> + 'a> {
+    ) -> Box<dyn Iterator<Item = (TypeId, &'a Type)> + 'a> {
         let ns = self.namespace(ns_id);
         Box::new(ns.index.values().map(move |&id| {
             (
