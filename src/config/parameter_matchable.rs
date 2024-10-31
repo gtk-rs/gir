@@ -14,7 +14,7 @@ pub trait ParameterMatchable {
     fn matched_parameters(&self, parameter_name: &str) -> Vec<&Self::Parameter>;
 }
 
-impl<'a, U: AsRef<Ident>, T: Functionlike<Parameter = U>> ParameterMatchable for [&'a T] {
+impl<U: AsRef<Ident>, T: Functionlike<Parameter = U>> ParameterMatchable for [&T] {
     type Parameter = U;
 
     fn matched_parameters(&self, parameter_name: &str) -> Vec<&Self::Parameter> {
