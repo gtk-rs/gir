@@ -329,7 +329,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; IsIncomplete <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>[Field] {
+<span class="kw">impl </span>IsIncomplete <span class="kw">for </span><span class="kw-2">&amp;</span>[Field] {
     <span class="kw">fn </span>is_incomplete(<span class="kw-2">&amp;</span><span class="self">self</span>, lib: <span class="kw-2">&amp;</span>Library) -&gt; bool {
         <span class="kw">if </span><span class="self">self</span>.is_empty() {
             <span class="kw">return </span><span class="bool-val">true</span>;

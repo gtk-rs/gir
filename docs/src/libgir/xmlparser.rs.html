@@ -608,7 +608,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; XmlParser&lt;<span class="lifetime">'a</span>&gt; {
+<span class="kw">impl </span>XmlParser&lt;<span class="lifetime">'_</span>&gt; {
     <span class="kw">pub fn </span>from_path(path: <span class="kw-2">&amp;</span>Path) -&gt; <span class="prelude-ty">Result</span>&lt;XmlParser&lt;<span class="lifetime">'_</span>&gt;, String&gt; {
         <span class="kw">match </span>File::open(path) {
             <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"Can't open file \"{}\": {}"</span>, path.display(), e)),

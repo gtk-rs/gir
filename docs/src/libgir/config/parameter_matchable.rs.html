@@ -42,7 +42,7 @@
     <span class="kw">fn </span>matched_parameters(<span class="kw-2">&amp;</span><span class="self">self</span>, parameter_name: <span class="kw-2">&amp;</span>str) -&gt; Vec&lt;<span class="kw-2">&amp;</span><span class="self">Self</span>::Parameter&gt;;
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, U: AsRef&lt;Ident&gt;, T: Functionlike&lt;Parameter = U&gt;&gt; ParameterMatchable <span class="kw">for </span>[<span class="kw-2">&amp;</span><span class="lifetime">'a </span>T] {
+<span class="kw">impl</span>&lt;U: AsRef&lt;Ident&gt;, T: Functionlike&lt;Parameter = U&gt;&gt; ParameterMatchable <span class="kw">for </span>[<span class="kw-2">&amp;</span>T] {
     <span class="kw">type </span>Parameter = U;
 
     <span class="kw">fn </span>matched_parameters(<span class="kw-2">&amp;</span><span class="self">self</span>, parameter_name: <span class="kw-2">&amp;</span>str) -&gt; Vec&lt;<span class="kw-2">&amp;</span><span class="self">Self</span>::Parameter&gt; {

@@ -836,12 +836,12 @@
         .iter()
         .find(|param| param.direction.is_out() &amp;&amp; param.is_error)<span class="question-mark">?</span>;
     <span class="kw">if let </span>Type::Record(<span class="kw">_</span>) = env.type_(error_param.typ) {
-        <span class="kw">return </span><span class="prelude-val">Some</span>(
+        <span class="prelude-val">Some</span>(
             RustType::builder(env, error_param.typ)
                 .direction(error_param.direction)
                 .try_build()
                 .into_string(),
-        );
+        )
     } <span class="kw">else </span>{
         <span class="prelude-val">None
     </span>}
