@@ -275,6 +275,14 @@ impl<'env> RustTypeBuilder<'env> {
                     Long => ok_and_use("libc::c_long"),   // depends of target system
                     ULong => ok_and_use("libc::c_ulong"), // depends of target system
 
+                    TimeT => ok_and_use("libc::time_t"), // depends of target system
+                    OffT => ok_and_use("libc::off_t"),   // depends of target system
+                    DevT => ok_and_use("libc::dev_t"),   // depends of target system
+                    GidT => ok_and_use("libc::gid_t"),   // depends of target system
+                    PidT => ok_and_use("libc::pid_t"),   // depends of target system
+                    SockLenT => ok_and_use("libc::socklen_t"), // depends of target system
+                    UidT => ok_and_use("libc::uid_t"),   // depends of target system
+
                     Size => ok("usize"),  // depends of target system
                     SSize => ok("isize"), // depends of target system
 
