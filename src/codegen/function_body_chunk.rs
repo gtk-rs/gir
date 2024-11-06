@@ -285,7 +285,7 @@ impl Builder {
                             )
                         } else if calls.iter().all(|c| c.scope.is_call()) {
                             format!(
-                                "&({})",
+                                "&mut ({})",
                                 calls
                                     .iter()
                                     .map(|c| format!("{}_data", c.name))
@@ -312,11 +312,15 @@ impl Builder {
                         is_mut: false,
                         value: Box::new(Chunk::Custom(format!(
                             "{}{}_data",
-                            if calls[0].scope.is_call() { "&" } else { "" },
+                            if calls[0].scope.is_call() {
+                                "&mut "
+                            } else {
+                                ""
+                            },
                             calls[0].name
                         ))),
                         type_: Some(Box::new(Chunk::Custom(if calls[0].scope.is_call() {
-                            format!("&{}", calls[0].bound_name)
+                            format!("&mut {}", calls[0].bound_name)
                         } else {
                             format!("Box_<{}>", calls[0].bound_name)
                         }))),
@@ -390,7 +394,7 @@ impl Builder {
             if full_type.is_none() {
                 if trampoline.scope.is_call() {
                     chunks.push(Chunk::Custom(format!(
-                        "let {0}_data: {1} = {0};",
+                        "let mut {0}_data: {1} = {0};",
                         trampoline.name, trampoline.bound_name
                     )));
                 } else {
@@ -401,7 +405,7 @@ impl Builder {
                 }
             } else if trampoline.scope.is_call() {
                 chunks.push(Chunk::Custom(format!(
-                    "let {0}_data: &{1} = &{0};",
+                    "let mut {0}_data: &mut {1} = &mut {0};",
                     trampoline.name, trampoline.bound_name
                 )));
             } else {
@@ -1005,7 +1009,7 @@ impl Builder {
                 Chunk::FfiCallParameter {
                     transformation_type: TransformationType::ToGlibDirect {
                         name: if all_call {
-                            format!("super_callback{pos} as *const _ as *mut _")
+                            format!("super_callback{pos} as *mut _ as *mut _")
                         } else {
                             format!("Box_::into_raw(super_callback{pos}) as *mut _")
                         },
