@@ -1386,6 +1386,10 @@
 <a href="#1386" id="1386">1386</a>
 <a href="#1387" id="1387">1387</a>
 <a href="#1388" id="1388">1388</a>
+<a href="#1389" id="1389">1389</a>
+<a href="#1390" id="1390">1390</a>
+<a href="#1391" id="1391">1391</a>
+<a href="#1392" id="1392">1392</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::collections::{hash_map::Entry, BTreeMap, HashMap};
 
 <span class="kw">use crate</span>::{
@@ -1673,7 +1677,7 @@
                             )
                         } <span class="kw">else if </span>calls.iter().all(|c| c.scope.is_call()) {
                             <span class="macro">format!</span>(
-                                <span class="string">"&amp;({})"</span>,
+                                <span class="string">"&amp;mut ({})"</span>,
                                 calls
                                     .iter()
                                     .map(|c| <span class="macro">format!</span>(<span class="string">"{}_data"</span>, c.name))
@@ -1700,11 +1704,15 @@
                         is_mut: <span class="bool-val">false</span>,
                         value: Box::new(Chunk::Custom(<span class="macro">format!</span>(
                             <span class="string">"{}{}_data"</span>,
-                            <span class="kw">if </span>calls[<span class="number">0</span>].scope.is_call() { <span class="string">"&amp;" </span>} <span class="kw">else </span>{ <span class="string">"" </span>},
+                            <span class="kw">if </span>calls[<span class="number">0</span>].scope.is_call() {
+                                <span class="string">"&amp;mut "
+                            </span>} <span class="kw">else </span>{
+                                <span class="string">""
+                            </span>},
                             calls[<span class="number">0</span>].name
                         ))),
                         type_: <span class="prelude-val">Some</span>(Box::new(Chunk::Custom(<span class="kw">if </span>calls[<span class="number">0</span>].scope.is_call() {
-                            <span class="macro">format!</span>(<span class="string">"&amp;{}"</span>, calls[<span class="number">0</span>].bound_name)
+                            <span class="macro">format!</span>(<span class="string">"&amp;mut {}"</span>, calls[<span class="number">0</span>].bound_name)
                         } <span class="kw">else </span>{
                             <span class="macro">format!</span>(<span class="string">"Box_&lt;{}&gt;"</span>, calls[<span class="number">0</span>].bound_name)
                         }))),
@@ -1778,7 +1786,7 @@
             <span class="kw">if </span>full_type.is_none() {
                 <span class="kw">if </span>trampoline.scope.is_call() {
                     chunks.push(Chunk::Custom(<span class="macro">format!</span>(
-                        <span class="string">"let {0}_data: {1} = {0};"</span>,
+                        <span class="string">"let mut {0}_data: {1} = {0};"</span>,
                         trampoline.name, trampoline.bound_name
                     )));
                 } <span class="kw">else </span>{
@@ -1789,7 +1797,7 @@
                 }
             } <span class="kw">else if </span>trampoline.scope.is_call() {
                 chunks.push(Chunk::Custom(<span class="macro">format!</span>(
-                    <span class="string">"let {0}_data: &amp;{1} = &amp;{0};"</span>,
+                    <span class="string">"let mut {0}_data: &amp;mut {1} = &amp;mut {0};"</span>,
                     trampoline.name, trampoline.bound_name
                 )));
             } <span class="kw">else </span>{
@@ -2393,7 +2401,7 @@
                 Chunk::FfiCallParameter {
                     transformation_type: TransformationType::ToGlibDirect {
                         name: <span class="kw">if </span>all_call {
-                            <span class="macro">format!</span>(<span class="string">"super_callback{pos} as *const _ as *mut _"</span>)
+                            <span class="macro">format!</span>(<span class="string">"super_callback{pos} as *mut _ as *mut _"</span>)
                         } <span class="kw">else </span>{
                             <span class="macro">format!</span>(<span class="string">"Box_::into_raw(super_callback{pos}) as *mut _"</span>)
                         },
