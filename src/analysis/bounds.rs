@@ -374,12 +374,12 @@ fn find_error_type(env: &Env, function: &Function) -> Option<String> {
         .iter()
         .find(|param| param.direction.is_out() && param.is_error)?;
     if let Type::Record(_) = env.type_(error_param.typ) {
-        return Some(
+        Some(
             RustType::builder(env, error_param.typ)
                 .direction(error_param.direction)
                 .try_build()
                 .into_string(),
-        );
+        )
     } else {
         None
     }
