@@ -201,8 +201,14 @@ impl PartialEq for {type_name} {{
     fn eq(&self, other: &Self) -> bool {{
         {call}
     }}
-}}
+}}"
+    )?;
+    version_condition(w, env, None, version, false, 0)?;
+    cfg_condition_no_doc(w, cfg_condition, false, 0)?;
 
+    writeln!(
+        w,
+        "\
 impl Eq for {type_name} {{}}"
     )
 }
@@ -231,9 +237,16 @@ impl PartialEq for {type_name} {{
     fn eq(&self, other: &Self) -> bool {{
         {call} == 0
     }}
-}}
+}}"
+    )?;
 
-impl Eq for {type_name} {{}}"
+    version_condition(w, env, None, version, false, 0)?;
+    cfg_condition_no_doc(w, cfg_condition, false, 0)?;
+
+    writeln!(
+        w,
+        "\
+    impl Eq for {type_name} {{}}"
     )
 }
 
@@ -261,8 +274,14 @@ impl PartialOrd for {type_name} {{
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {{
         Some(self.cmp(other))
     }}
-}}
+}}"
+    )?;
+    version_condition(w, env, None, version, false, 0)?;
+    cfg_condition_no_doc(w, cfg_condition, false, 0)?;
 
+    writeln!(
+        w,
+        "\
 impl Ord for {type_name} {{
     #[inline]
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {{
