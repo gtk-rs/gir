@@ -271,6 +271,25 @@
 <a href="#271" id="271">271</a>
 <a href="#272" id="272">272</a>
 <a href="#273" id="273">273</a>
+<a href="#274" id="274">274</a>
+<a href="#275" id="275">275</a>
+<a href="#276" id="276">276</a>
+<a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::io::{<span class="prelude-ty">Result</span>, Write};
 
 <span class="kw">use crate</span>::{
@@ -474,8 +493,14 @@ impl PartialEq for {type_name} {{
     fn eq(&amp;self, other: &amp;Self) -&gt; bool {{
         {call}
     }}
-}}
+}}"
+    </span>)<span class="question-mark">?</span>;
+    version_condition(w, env, <span class="prelude-val">None</span>, version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
+    cfg_condition_no_doc(w, cfg_condition, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
 
+    <span class="macro">writeln!</span>(
+        w,
+        <span class="string">"\
 impl Eq for {type_name} {{}}"
     </span>)
 }
@@ -504,9 +529,16 @@ impl PartialEq for {type_name} {{
     fn eq(&amp;self, other: &amp;Self) -&gt; bool {{
         {call} == 0
     }}
-}}
+}}"
+    </span>)<span class="question-mark">?</span>;
 
-impl Eq for {type_name} {{}}"
+    version_condition(w, env, <span class="prelude-val">None</span>, version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
+    cfg_condition_no_doc(w, cfg_condition, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
+
+    <span class="macro">writeln!</span>(
+        w,
+        <span class="string">"\
+    impl Eq for {type_name} {{}}"
     </span>)
 }
 
@@ -534,8 +566,14 @@ impl PartialOrd for {type_name} {{
     fn partial_cmp(&amp;self, other: &amp;Self) -&gt; Option&lt;std::cmp::Ordering&gt; {{
         Some(self.cmp(other))
     }}
-}}
+}}"
+    </span>)<span class="question-mark">?</span>;
+    version_condition(w, env, <span class="prelude-val">None</span>, version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
+    cfg_condition_no_doc(w, cfg_condition, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
 
+    <span class="macro">writeln!</span>(
+        w,
+        <span class="string">"\
 impl Ord for {type_name} {{
     #[inline]
     fn cmp(&amp;self, other: &amp;Self) -&gt; std::cmp::Ordering {{
