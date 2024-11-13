@@ -188,7 +188,7 @@ impl Builder {
                                     "Box_<({})>",
                                     calls
                                         .iter()
-                                        .map(|c| format!("&{}", c.bound_name))
+                                        .map(|c| c.bound_name.to_string())
                                         .collect::<Vec<_>>()
                                         .join(", ")
                                 );
@@ -516,7 +516,7 @@ impl Builder {
                         )));
                     } else {
                         body.push(Chunk::Custom(format!(
-                            "let callback = callback{}",
+                            "let callback = &callback{};",
                             if let Some(pos) = pos {
                                 format!(".{pos}")
                             } else {
