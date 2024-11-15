@@ -183,19 +183,6 @@ impl Builder {
                                             .join(", ")
                                     ),
                                 ))
-                            } else if !calls
-                                .iter()
-                                .any(|c| c.scope.is_async() || c.scope.is_call())
-                            {
-                                let s = format!(
-                                    "&({})",
-                                    calls
-                                        .iter()
-                                        .map(|c| c.bound_name.to_string())
-                                        .collect::<Vec<_>>()
-                                        .join(", ")
-                                );
-                                Some((s.clone(), s))
                             } else {
                                 let s = format!(
                                     "Box_<({})>",
@@ -495,7 +482,13 @@ impl Builder {
                         },
                         func
                     ))),
-                    type_: Some(Box::new(Chunk::Custom(full_type.1.clone()))),
+                    type_: Some(Box::new(Chunk::Custom(
+                        if !trampoline.scope.is_async() && !trampoline.scope.is_call() {
+                            format!("&{}", full_type.1)
+                        } else {
+                            full_type.1.clone()
+                        },
+                    ))),
                 });
                 if trampoline.scope.is_async() {
                     body.push(Chunk::Custom(format!(
