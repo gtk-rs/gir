@@ -484,7 +484,15 @@ impl Builder {
                     ))),
                     type_: Some(Box::new(Chunk::Custom(
                         if !trampoline.scope.is_async() && !trampoline.scope.is_call() {
-                            format!("&{}", full_type.1)
+                            format!(
+                                "&{}",
+                                full_type
+                                    .1
+                                    .strip_prefix("Box_<")
+                                    .unwrap()
+                                    .strip_suffix(">")
+                                    .unwrap()
+                            )
                         } else {
                             full_type.1.clone()
                         },
