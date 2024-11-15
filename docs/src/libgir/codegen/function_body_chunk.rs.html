@@ -1397,6 +1397,7 @@
 <a href="#1397" id="1397">1397</a>
 <a href="#1398" id="1398">1398</a>
 <a href="#1399" id="1399">1399</a>
+<a href="#1400" id="1400">1400</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::collections::{hash_map::Entry, BTreeMap, HashMap};
 
 <span class="kw">use crate</span>::{
@@ -1582,19 +1583,6 @@
                                             .join(<span class="string">", "</span>)
                                     ),
                                 ))
-                            } <span class="kw">else if </span>!calls
-                                .iter()
-                                .any(|c| c.scope.is_async() || c.scope.is_call())
-                            {
-                                <span class="kw">let </span>s = <span class="macro">format!</span>(
-                                    <span class="string">"&amp;({})"</span>,
-                                    calls
-                                        .iter()
-                                        .map(|c| c.bound_name.to_string())
-                                        .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
-                                        .join(<span class="string">", "</span>)
-                                );
-                                <span class="prelude-val">Some</span>((s.clone(), s))
                             } <span class="kw">else </span>{
                                 <span class="kw">let </span>s = <span class="macro">format!</span>(
                                     <span class="string">"Box_&lt;({})&gt;"</span>,
@@ -1894,7 +1882,21 @@
                         </span>},
                         func
                     ))),
-                    type_: <span class="prelude-val">Some</span>(Box::new(Chunk::Custom(full_type.<span class="number">1</span>.clone()))),
+                    type_: <span class="prelude-val">Some</span>(Box::new(Chunk::Custom(
+                        <span class="kw">if </span>!trampoline.scope.is_async() &amp;&amp; !trampoline.scope.is_call() {
+                            <span class="macro">format!</span>(
+                                <span class="string">"&amp;{}"</span>,
+                                full_type
+                                    .<span class="number">1
+                                    </span>.strip_prefix(<span class="string">"Box_&lt;"</span>)
+                                    .unwrap()
+                                    .strip_suffix(<span class="string">"&gt;"</span>)
+                                    .unwrap()
+                            )
+                        } <span class="kw">else </span>{
+                            full_type.<span class="number">1</span>.clone()
+                        },
+                    ))),
                 });
                 <span class="kw">if </span>trampoline.scope.is_async() {
                     body.push(Chunk::Custom(<span class="macro">format!</span>(
