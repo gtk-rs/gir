@@ -290,6 +290,9 @@
 <a href="#290" id="290">290</a>
 <a href="#291" id="291">291</a>
 <a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::io::{<span class="prelude-ty">Result</span>, Write};
 
 <span class="kw">use crate</span>::{
@@ -498,10 +501,11 @@ impl PartialEq for {type_name} {{
     version_condition(w, env, <span class="prelude-val">None</span>, version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
     cfg_condition_no_doc(w, cfg_condition, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
 
+    <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(
         w,
         <span class="string">"\
-impl Eq for {type_name} {{}}"
+    impl Eq for {type_name} {{}}"
     </span>)
 }
 
@@ -535,6 +539,7 @@ impl PartialEq for {type_name} {{
     version_condition(w, env, <span class="prelude-val">None</span>, version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
     cfg_condition_no_doc(w, cfg_condition, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
 
+    <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(
         w,
         <span class="string">"\
@@ -571,6 +576,7 @@ impl PartialOrd for {type_name} {{
     version_condition(w, env, <span class="prelude-val">None</span>, version, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
     cfg_condition_no_doc(w, cfg_condition, <span class="bool-val">false</span>, <span class="number">0</span>)<span class="question-mark">?</span>;
 
+    <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
     <span class="macro">writeln!</span>(
         w,
         <span class="string">"\
