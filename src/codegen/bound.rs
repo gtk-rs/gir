@@ -32,9 +32,9 @@ impl Bound {
 
                 // Combining a ref mode and lifetime requires parentheses for disambiguation
                 match self.bound_type {
-                    BoundType::IsA(lifetime) => {
+                    BoundType::IsA => {
                         // TODO: This is fragile
-                        let has_lifetime = r#async || lifetime.is_some();
+                        let has_lifetime = r#async || self.lt.is_some();
 
                         if !ref_str.is_empty() && has_lifetime {
                             format!("({trait_bound})")
@@ -48,14 +48,14 @@ impl Bound {
         };
 
         match self.bound_type {
-            BoundType::IsA(_) if *nullable => {
+            BoundType::IsA if *nullable => {
                 format!("Option<{ref_str}{trait_bound}>")
             }
-            BoundType::IsA(_) => format!("{ref_str}{trait_bound}"),
-            BoundType::AsRef(_) if *nullable => {
+            BoundType::IsA => format!("{ref_str}{trait_bound}"),
+            BoundType::AsRef if *nullable => {
                 format!("Option<{trait_bound}>")
             }
-            BoundType::NoWrapper | BoundType::AsRef(_) => trait_bound,
+            BoundType::NoWrapper | BoundType::AsRef => trait_bound,
         }
     }
 
@@ -71,21 +71,21 @@ impl Bound {
     pub(super) fn trait_bound(&self, r#async: bool) -> String {
         match self.bound_type {
             BoundType::NoWrapper => self.type_str.clone(),
-            BoundType::IsA(lifetime) => {
+            BoundType::IsA => {
                 if r#async {
-                    assert!(lifetime.is_none(), "Async overwrites lifetime");
+                    assert!(self.lt.is_none(), "Async overwrites lifetime");
                 }
                 let is_a = format!("IsA<{}>", self.type_str);
 
                 let lifetime = r#async
                     .then(|| " + Clone + 'static".to_string())
-                    .or_else(|| lifetime.map(|l| format!(" + '{l}")))
+                    .or_else(|| self.lt.map(|l| format!(" + '{l}")))
                     .unwrap_or_default();
 
                 format!("{is_a}{lifetime}")
             }
-            BoundType::AsRef(Some(_ /* lifetime */)) => panic!("AsRef cannot have a lifetime"),
-            BoundType::AsRef(None) => format!("AsRef<{}>", self.type_str),
+            BoundType::AsRef if self.lt.is_some() => panic!("AsRef cannot have a lifetime"),
+            BoundType::AsRef => format!("AsRef<{}>", self.type_str),
         }
     }
 }

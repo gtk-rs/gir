@@ -1,12 +1,7 @@
 use log::error;
 
 use crate::{
-    analysis::{
-        bounds::{Bound, Bounds},
-        imports::Imports,
-        ref_mode::RefMode,
-        rust_type::RustType,
-    },
+    analysis::{bounds::Bounds, imports::Imports, ref_mode::RefMode, rust_type::RustType},
     config,
     consts::TYPE_PARAMETERS_START,
     env::Env,
@@ -120,19 +115,7 @@ fn analyze_property(
 
         let mut bounds_str = String::new();
         let dir = ParameterDirection::In;
-        let set_params = if let Some(bound) = Bounds::type_for(env, typ) {
-            let r_type = RustType::builder(env, typ)
-                .ref_mode(RefMode::ByRefFake)
-                .try_build()
-                .into_string();
-
-            let _bound = Bound {
-                bound_type: bound,
-                parameter_name: TYPE_PARAMETERS_START.to_string(),
-                alias: Some(TYPE_PARAMETERS_START.to_owned()),
-                type_str: r_type,
-                callback_modified: false,
-            };
+        let set_params = if Bounds::type_for(env, typ).is_some() {
             // TODO: bounds_str push?!?!
             bounds_str.push_str("TODO");
             format!("{prop_name}: {TYPE_PARAMETERS_START}")

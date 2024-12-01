@@ -12,30 +12,41 @@ use crate::{
     config,
     consts::TYPE_PARAMETERS_START,
     env::Env,
-    library::{Basic, Class, Concurrency, Function, ParameterDirection, Type, TypeId},
+    library::{Basic, Class, Concurrency, Function, Nullable, ParameterDirection, Type, TypeId},
     traits::*,
 };
 
-#[derive(Clone, Eq, Debug, PartialEq)]
+#[derive(Clone, Copy, Eq, Debug, PartialEq)]
 pub enum BoundType {
     NoWrapper,
-    // lifetime
-    IsA(Option<char>),
-    // lifetime <- shouldn't be used but just in case...
-    AsRef(Option<char>),
+    IsA,
+    AsRef,
 }
 
 impl BoundType {
     pub fn need_isa(&self) -> bool {
-        matches!(*self, Self::IsA(_))
+        matches!(*self, Self::IsA)
     }
 
-    // TODO: This is just a heuristic for now, based on what we do in codegen!
-    // Theoretically the surrounding function should determine whether it needs to
-    // reuse an alias (ie. to use in `call_func::<P, Q, R>`) or not.
-    // In the latter case an `impl` is generated instead of a type name/alias.
-    pub fn has_alias(&self) -> bool {
-        matches!(*self, Self::NoWrapper)
+    pub fn get_to_glib_extra(
+        &self,
+        nullable: bool,
+        instance_parameter: bool,
+        move_: bool,
+    ) -> String {
+        use BoundType::*;
+        match *self {
+            AsRef if move_ && nullable => ".map(|p| p.as_ref().clone().upcast())",
+            AsRef if nullable => ".as_ref().map(|p| p.as_ref())",
+            AsRef if move_ => ".upcast()",
+            AsRef => ".as_ref()",
+            IsA if move_ && nullable => ".map(|p| p.upcast())",
+            IsA if nullable && !instance_parameter => ".map(|p| p.as_ref())",
+            IsA if move_ => ".upcast()",
+            IsA => ".as_ref()",
+            _ => "",
+        }
+        .to_string()
     }
 }
 
@@ -43,7 +54,7 @@ impl BoundType {
 pub struct Bound {
     pub bound_type: BoundType,
     pub parameter_name: String,
-    /// Bound does not have an alias when `param: impl type_str` is used
+    pub lt: Option<char>,
     pub alias: Option<char>,
     pub type_str: String,
     pub callback_modified: bool,
@@ -110,8 +121,7 @@ impl Bounds {
 
         if !par.instance_parameter && par.direction != ParameterDirection::Out {
             if let Some(bound_type) = Bounds::type_for(env, par.typ) {
-                ret = Some(Bounds::get_to_glib_extra(
-                    &bound_type,
+                ret = Some(bound_type.get_to_glib_extra(
                     *par.nullable,
                     par.instance_parameter,
                     par.move_,
@@ -204,57 +214,90 @@ impl Bounds {
             }
         } else if par.instance_parameter {
             if let Some(bound_type) = Bounds::type_for(env, par.typ) {
-                ret = Some(Bounds::get_to_glib_extra(
-                    &bound_type,
-                    *par.nullable,
-                    true,
-                    par.move_,
-                ));
+                ret = Some(bound_type.get_to_glib_extra(*par.nullable, true, par.move_));
             }
         }
 
         (ret, callback_info)
     }
 
+    pub fn add_for_property_setter(
+        &mut self,
+        env: &Env,
+        type_id: TypeId,
+        name: &str,
+        ref_mode: RefMode,
+        nullable: Nullable,
+    ) -> bool {
+        let type_str = RustType::builder(env, type_id)
+            .nullable(nullable)
+            .direction(ParameterDirection::In)
+            .ref_mode(ref_mode)
+            .try_build()
+            .into_string();
+
+        let Some(bound_type) = Bounds::type_for(env, type_id) else {
+            return false;
+        };
+
+        let alias = match bound_type {
+            BoundType::NoWrapper | BoundType::IsA => {
+                Some(self.unused.pop_front().expect("No free type aliases!"))
+            }
+            _ => None,
+        };
+
+        self.push(Bound {
+            bound_type,
+            parameter_name: name.to_string(),
+            lt: None,
+            alias,
+            type_str,
+            callback_modified: false,
+        });
+
+        true
+    }
+
     pub fn type_for(env: &Env, type_id: TypeId) -> Option<BoundType> {
         use self::BoundType::*;
         match env.library.type_(type_id) {
-            Type::Basic(Basic::Filename | Basic::OsString) => Some(AsRef(None)),
+            Type::Basic(Basic::Filename | Basic::OsString) => Some(AsRef),
             Type::Class(Class {
                 is_fundamental: true,
                 ..
-            }) => Some(AsRef(None)),
+            }) => Some(AsRef),
             Type::Class(Class {
                 final_type: true, ..
             }) => None,
             Type::Class(Class {
                 final_type: false, ..
-            }) => Some(IsA(None)),
-            Type::Interface(..) => Some(IsA(None)),
+            }) => Some(IsA),
+            Type::Interface(..) => Some(IsA),
             Type::List(_) | Type::SList(_) | Type::CArray(_) => None,
             Type::Function(_) => Some(NoWrapper),
             _ => None,
         }
     }
 
-    pub fn get_to_glib_extra(
-        bound_type: &BoundType,
-        nullable: bool,
+    pub fn get_to_glib_extra_for(
+        env: &Env,
+        type_id: TypeId,
+        ref_mode: RefMode,
+        nullable: Nullable,
         instance_parameter: bool,
-        move_: bool,
-    ) -> String {
-        use self::BoundType::*;
-        match bound_type {
-            AsRef(_) if move_ && nullable => ".map(|p| p.as_ref().clone().upcast())".to_owned(),
-            AsRef(_) if nullable => ".as_ref().map(|p| p.as_ref())".to_owned(),
-            AsRef(_) if move_ => ".upcast()".to_owned(),
-            AsRef(_) => ".as_ref()".to_owned(),
-            IsA(_) if move_ && nullable => ".map(|p| p.upcast())".to_owned(),
-            IsA(_) if nullable && !instance_parameter => ".map(|p| p.as_ref())".to_owned(),
-            IsA(_) if move_ => ".upcast()".to_owned(),
-            IsA(_) => ".as_ref()".to_owned(),
-            _ => String::new(),
+    ) -> Option<String> {
+        let res = Self::type_for(env, type_id)?.get_to_glib_extra(
+            *nullable,
+            instance_parameter,
+            ref_mode.is_none(),
+        );
+
+        if res.is_empty() {
+            return None;
         }
+
+        Some(res)
     }
 
     pub fn add_parameter(
@@ -270,16 +313,48 @@ impl Bounds {
         if self.used.iter().any(|n| n.parameter_name == name) {
             return;
         }
-        let alias = bound_type
-            .has_alias()
-            .then(|| self.unused.pop_front().expect("No free type aliases!"));
+        let alias = match bound_type {
+            BoundType::NoWrapper => {
+                // TODO: This is just a heuristic for now, based on what we do in codegen!
+                // Theoretically the surrounding function should determine whether it needs to
+                // reuse an alias (ie. to use in `call_func::<P, Q, R>`) or not.
+                // In the latter case an `impl` is generated instead of a type name/alias.
+                Some(self.unused.pop_front().expect("No free type aliases!"))
+            }
+            _ => None,
+        };
         self.used.push(Bound {
             bound_type,
             parameter_name: name.to_owned(),
+            lt: None,
             alias,
             type_str: type_str.to_owned(),
             callback_modified: false,
         });
+    }
+
+    pub fn push(&mut self, bound: Bound) {
+        if let Some(lt) = bound.lt {
+            if !self.lifetimes.contains(&lt) {
+                self.lifetimes.push(lt);
+                self.lifetimes.sort();
+            }
+        }
+
+        if let Some(alias) = bound.alias {
+            if self
+                .used
+                .iter()
+                .any(|b| b.alias.map_or(false, |a| a == alias))
+            {
+                panic!("Pushing a bound with an alias already in use");
+            }
+
+            self.unused.retain(|u| *u != alias);
+        }
+
+        self.used.push(bound);
+        self.used.sort_by_key(|u| u.alias);
     }
 
     pub fn get_parameter_bound(&self, name: &str) -> Option<&Bound> {
@@ -292,8 +367,8 @@ impl Bounds {
         for used in &self.used {
             match used.bound_type {
                 NoWrapper => (),
-                IsA(_) => imports.add("glib::prelude::*"),
-                AsRef(_) => imports.add_used_type(&used.type_str),
+                IsA => imports.add("glib::prelude::*"),
+                AsRef => imports.add_used_type(&used.type_str),
             }
         }
     }
@@ -308,28 +383,6 @@ impl Bounds {
 
     pub fn iter_lifetimes(&self) -> Iter<'_, char> {
         self.lifetimes.iter()
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct PropertyBound {
-    pub alias: char,
-    pub type_str: String,
-}
-
-impl PropertyBound {
-    pub fn get(env: &Env, type_id: TypeId) -> Option<Self> {
-        let type_ = env.type_(type_id);
-        if type_.is_final_type() {
-            return None;
-        }
-        Some(Self {
-            alias: TYPE_PARAMETERS_START,
-            type_str: RustType::builder(env, type_id)
-                .ref_mode(RefMode::ByRefFake)
-                .try_build()
-                .into_string(),
-        })
     }
 }
 
@@ -399,24 +452,24 @@ mod tests {
     #[test]
     fn get_new_all() {
         let mut bounds: Bounds = Default::default();
-        let typ = BoundType::IsA(None);
-        bounds.add_parameter("a", "", typ.clone(), false);
+        let typ = BoundType::IsA;
+        bounds.add_parameter("a", "", typ, false);
         assert_eq!(bounds.iter().len(), 1);
         // Don't add second time
-        bounds.add_parameter("a", "", typ.clone(), false);
+        bounds.add_parameter("a", "", typ, false);
         assert_eq!(bounds.iter().len(), 1);
-        bounds.add_parameter("b", "", typ.clone(), false);
-        bounds.add_parameter("c", "", typ.clone(), false);
-        bounds.add_parameter("d", "", typ.clone(), false);
-        bounds.add_parameter("e", "", typ.clone(), false);
-        bounds.add_parameter("f", "", typ.clone(), false);
-        bounds.add_parameter("g", "", typ.clone(), false);
-        bounds.add_parameter("h", "", typ.clone(), false);
+        bounds.add_parameter("b", "", typ, false);
+        bounds.add_parameter("c", "", typ, false);
+        bounds.add_parameter("d", "", typ, false);
+        bounds.add_parameter("e", "", typ, false);
+        bounds.add_parameter("f", "", typ, false);
+        bounds.add_parameter("g", "", typ, false);
+        bounds.add_parameter("h", "", typ, false);
         assert_eq!(bounds.iter().len(), 8);
-        bounds.add_parameter("h", "", typ.clone(), false);
+        bounds.add_parameter("h", "", typ, false);
         assert_eq!(bounds.iter().len(), 8);
-        bounds.add_parameter("i", "", typ.clone(), false);
-        bounds.add_parameter("j", "", typ.clone(), false);
+        bounds.add_parameter("i", "", typ, false);
+        bounds.add_parameter("j", "", typ, false);
         bounds.add_parameter("k", "", typ, false);
     }
 
@@ -427,7 +480,7 @@ mod tests {
         let typ = BoundType::NoWrapper;
         for c in 'a'..='l' {
             // Should panic on `l` because all type parameters are exhausted
-            bounds.add_parameter(c.to_string().as_str(), "", typ.clone(), false);
+            bounds.add_parameter(c.to_string().as_str(), "", typ, false);
         }
     }
 
@@ -435,8 +488,8 @@ mod tests {
     fn get_parameter_bound() {
         let mut bounds: Bounds = Default::default();
         let typ = BoundType::NoWrapper;
-        bounds.add_parameter("a", "", typ.clone(), false);
-        bounds.add_parameter("b", "", typ.clone(), false);
+        bounds.add_parameter("a", "", typ, false);
+        bounds.add_parameter("b", "", typ, false);
         let bound = bounds.get_parameter_bound("a").unwrap();
         // `NoWrapper `bounds are expected to have an alias:
         assert_eq!(bound.alias, Some('P'));
@@ -450,17 +503,17 @@ mod tests {
     #[test]
     fn impl_bound() {
         let mut bounds: Bounds = Default::default();
-        let typ = BoundType::IsA(None);
-        bounds.add_parameter("a", "", typ.clone(), false);
-        bounds.add_parameter("b", "", typ.clone(), false);
+        let typ = BoundType::IsA;
+        bounds.add_parameter("a", "", typ, false);
+        bounds.add_parameter("b", "", typ, false);
         let bound = bounds.get_parameter_bound("a").unwrap();
         // `IsA` is simplified to an inline `foo: impl IsA<Bar>` and
         // lacks an alias/type-parameter:
         assert_eq!(bound.alias, None);
         assert_eq!(bound.bound_type, typ);
 
-        let typ = BoundType::AsRef(None);
-        bounds.add_parameter("c", "", typ.clone(), false);
+        let typ = BoundType::AsRef;
+        bounds.add_parameter("c", "", typ, false);
         let bound = bounds.get_parameter_bound("c").unwrap();
         // Same `impl AsRef<Foo>` simplification as `IsA`:
         assert_eq!(bound.alias, None);

@@ -302,7 +302,7 @@ pub fn bounds(
         // TODO: False or true?
         .filter(|bound| bound.alias.is_some_and(|alias| skip.contains(&alias)))
         .filter_map(|bound| match bound.bound_type {
-            IsA(lifetime) | AsRef(lifetime) => lifetime,
+            IsA | AsRef => bound.lt,
             _ => None,
         })
         .collect::<Vec<_>>();
@@ -438,10 +438,17 @@ pub fn body_chunk_futures(
         if is_slice {
             writeln!(body, "let {} = {}.to_vec();", par.name, par.name)?;
         } else if *c_par.nullable {
+            let to_glib_extra = analysis
+                .bounds
+                .get_parameter_bound(&c_par.name)
+                .map_or_else(String::new, |b| {
+                    b.bound_type
+                        .get_to_glib_extra(*c_par.nullable, c_par.instance_parameter, true)
+                });
             writeln!(
                 body,
-                "let {} = {}.map(ToOwned::to_owned);",
-                par.name, par.name
+                "let {} = {}{}.map(ToOwned::to_owned);",
+                par.name, par.name, to_glib_extra,
             )?;
         } else if is_str {
             writeln!(body, "let {} = String::from({});", par.name, par.name)?;

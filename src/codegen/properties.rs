@@ -84,9 +84,12 @@ fn declaration(env: &Env, prop: &Property) -> String {
     let set_param = if prop.is_get {
         bound = String::new();
         String::new()
-    } else if let Some(ref set_bound) = prop.set_bound {
-        bound = format!("<{}: IsA<{}>>", set_bound.alias, set_bound.type_str);
-        format!(", {}: Option<&{}>", prop.var_name, set_bound.alias)
+    } else if let Some(set_bound) = prop.set_bound() {
+        let alias = set_bound
+            .alias
+            .expect("Property only supports IsA bound type with an alias");
+        bound = format!("<{}: IsA<{}>>", alias, set_bound.type_str);
+        format!(", {}: Option<&{}>", prop.var_name, alias)
     } else {
         bound = String::new();
         let dir = library::ParameterDirection::In;
@@ -117,10 +120,11 @@ fn declaration(env: &Env, prop: &Property) -> String {
 }
 
 fn body(env: &Env, prop: &Property, in_trait: bool) -> Chunk {
-    property_body::Builder::new(env)
+    property_body::Builder::new(env, prop.set_bound())
         .name(&prop.name)
         .in_trait(in_trait)
         .var_name(&prop.var_name)
+        .nullable(*prop.nullable)
         .for_get(prop.is_get)
         .type_(&RustType::try_new(env, prop.typ).into_string())
         .generate()

@@ -84,7 +84,7 @@ pub enum TransformationType {
     ToGlibScalar {
         name: String,
         nullable: library::Nullable,
-        needs_into: bool,
+        to_glib_extra: String,
     },
     ToGlibPointer {
         name: String,
@@ -127,8 +127,12 @@ impl TransformationType {
     }
 
     pub fn set_to_glib_extra(&mut self, to_glib_extra_: &str) {
-        if let Self::ToGlibPointer { to_glib_extra, .. } = self {
-            *to_glib_extra = to_glib_extra_.to_owned();
+        match self {
+            Self::ToGlibScalar { to_glib_extra, .. }
+            | Self::ToGlibPointer { to_glib_extra, .. } => {
+                *to_glib_extra = to_glib_extra_.to_owned();
+            }
+            _ => (),
         }
     }
 }
@@ -287,8 +291,7 @@ pub fn analyze(
             let mut array_name = nameutil::mangle_keywords(&array_par.name);
             if let Some(bound_type) = Bounds::type_for(env, array_par.typ) {
                 array_name = (array_name.into_owned()
-                    + &Bounds::get_to_glib_extra(
-                        &bound_type,
+                    + &bound_type.get_to_glib_extra(
                         *array_par.nullable,
                         array_par.instance_parameter,
                         move_,
@@ -356,37 +359,31 @@ pub fn analyze(
                     TransformationType::ToGlibScalar {
                         name,
                         nullable,
-                        needs_into: false,
+                        to_glib_extra: String::new(),
                     }
                 }
             }
             ConversionType::Scalar => TransformationType::ToGlibScalar {
                 name,
                 nullable,
-                needs_into: false,
+                to_glib_extra: String::new(),
             },
             ConversionType::Option => {
-                let needs_into = match try_from_glib {
-                    TryFromGlib::Option => par.direction == library::ParameterDirection::In,
-                    TryFromGlib::OptionMandatory => false,
-                    other => unreachable!("{:?} inconsistent / conversion type", other),
-                };
+                let needs_into = par.direction == library::ParameterDirection::In
+                    && matches!(try_from_glib, TryFromGlib::Option);
                 TransformationType::ToGlibScalar {
                     name,
                     nullable: Nullable(false),
-                    needs_into,
+                    to_glib_extra: if needs_into { ".into()" } else { "" }.to_string(),
                 }
             }
             ConversionType::Result { .. } => {
-                let needs_into = match try_from_glib {
-                    TryFromGlib::Result { .. } => par.direction == library::ParameterDirection::In,
-                    TryFromGlib::ResultInfallible { .. } => false,
-                    other => unreachable!("{:?} inconsistent / conversion type", other),
-                };
+                let needs_into = par.direction == library::ParameterDirection::In
+                    && matches!(try_from_glib, TryFromGlib::Result { .. });
                 TransformationType::ToGlibScalar {
                     name,
                     nullable: Nullable(false),
-                    needs_into,
+                    to_glib_extra: if needs_into { ".into()" } else { "" }.to_string(),
                 }
             }
             ConversionType::Pointer => TransformationType::ToGlibPointer {

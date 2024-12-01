@@ -392,7 +392,7 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                         bound.full_type_parameter_reference(RefMode::ByRef, Nullable(false), false)
                     });
                     let conversion = param_bound.and_then(|bound| match bound.bound_type {
-                        BoundType::AsRef(_) => Some(".as_ref().clone()"),
+                        BoundType::AsRef => Some(".as_ref().clone()"),
                         _ => None,
                     });
                     (alias, bounds, conversion.unwrap_or(".clone().upcast()"))

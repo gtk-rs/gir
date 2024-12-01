@@ -1,4 +1,4 @@
-use crate::{chunk::Chunk, env::Env, nameutil::use_gtk_type};
+use crate::{analysis::bounds::Bound, chunk::Chunk, env::Env, nameutil::use_gtk_type};
 
 #[derive(Debug, Default)]
 pub struct Builder<'a> {
@@ -6,15 +6,18 @@ pub struct Builder<'a> {
     in_trait: bool,
     var_name: String,
     for_get: bool,
+    nullable: bool,
     is_child_property: bool,
     type_: String,
+    set_bound: Option<&'a Bound>,
     env: Option<&'a Env>,
 }
 
 impl<'a> Builder<'a> {
-    pub fn new(env: &'a Env) -> Self {
+    pub fn new(env: &'a Env, set_bound: Option<&'a Bound>) -> Self {
         Self {
             env: Some(env),
+            set_bound,
             ..Default::default()
         }
     }
@@ -44,6 +47,11 @@ impl<'a> Builder<'a> {
 
     pub fn for_get(mut self, value: bool) -> Self {
         self.for_get = value;
+        self
+    }
+
+    pub fn nullable(mut self, nullable: bool) -> Self {
+        self.nullable = nullable;
         self
     }
 
@@ -111,9 +119,13 @@ impl<'a> Builder<'a> {
                 "self"
             };
 
+            let to_glib_extra = self.set_bound.as_ref().map_or_else(String::new, |b| {
+                b.bound_type.get_to_glib_extra(self.nullable, false, false)
+            });
+
             vec![Chunk::Custom(format!(
-                "ObjectExt::set_property({},\"{}\", {})",
-                self_, self.name, self.var_name
+                "ObjectExt::set_property({self_},\"{}\", {}{to_glib_extra})",
+                self.name, self.var_name,
             ))]
         }
     }

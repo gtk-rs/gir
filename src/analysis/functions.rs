@@ -355,6 +355,7 @@ fn analyze_callbacks(
             None => &func.name,
         };
         let mut destructors_to_update = Vec::new();
+        let mut ind_c = 0;
         for pos in 0..parameters.c_parameters.len() {
             // If it is a user data parameter, we ignore it.
             if cross_user_data_check.values().any(|p| *p == pos) || user_data_indexes.contains(&pos)
@@ -376,24 +377,32 @@ fn analyze_callbacks(
                 used_types.extend(rust_type.into_used_types());
             }
             let rust_type = env.library.type_(par.typ);
-            let callback_info = if !*par.nullable || !rust_type.is_function() {
-                let (to_glib_extra, callback_info) = bounds.add_for_parameter(
-                    env,
-                    func,
-                    par,
-                    false,
-                    concurrency,
-                    configured_functions,
-                );
-                if let Some(to_glib_extra) = to_glib_extra {
-                    if par.c_type != "GDestroyNotify" {
-                        to_glib_extras.insert(pos, to_glib_extra);
-                    }
-                }
-                callback_info
+            let (to_glib_extra, callback_info) = if !*par.nullable || !rust_type.is_function() {
+                bounds.add_for_parameter(env, func, par, false, concurrency, configured_functions)
             } else {
-                None
+                (
+                    Bounds::get_to_glib_extra_for(
+                        env,
+                        par.typ,
+                        if par.move_ {
+                            RefMode::None
+                        } else {
+                            par.ref_mode
+                        },
+                        par.nullable,
+                        par.instance_parameter,
+                    ),
+                    None,
+                )
             };
+
+            if let Some(to_glib_extra) = to_glib_extra {
+                if par.c_type != "GDestroyNotify" {
+                    to_glib_extras.insert(ind_c, to_glib_extra);
+                }
+            }
+
+            ind_c += 1;
 
             if rust_type.is_function() {
                 if par.c_type != "GDestroyNotify" {
@@ -536,6 +545,14 @@ fn analyze_callbacks(
             false,
             in_trait,
         );
+
+        for transformation in &mut parameters.transformations {
+            if let Some(to_glib_extra) = to_glib_extras.get(&transformation.ind_c) {
+                transformation
+                    .transformation_type
+                    .set_to_glib_extra(to_glib_extra);
+            }
+        }
     } else {
         warn_main!(
             type_tid,

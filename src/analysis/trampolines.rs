@@ -81,19 +81,9 @@ pub fn analyze(
     if in_trait || fundamental_type {
         let type_name = RustType::builder(env, type_tid).try_build();
         if fundamental_type {
-            bounds.add_parameter(
-                "this",
-                &type_name.into_string(),
-                BoundType::AsRef(None),
-                false,
-            );
+            bounds.add_parameter("this", &type_name.into_string(), BoundType::AsRef, false);
         } else {
-            bounds.add_parameter(
-                "this",
-                &type_name.into_string(),
-                BoundType::IsA(None),
-                false,
-            );
+            bounds.add_parameter("this", &type_name.into_string(), BoundType::IsA, false);
         }
     }
 
