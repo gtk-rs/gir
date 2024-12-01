@@ -370,7 +370,8 @@ fn analyze_callbacks(
             if let Ok(rust_type) = RustType::builder(env, par.typ)
                 .direction(par.direction)
                 .try_from_glib(&par.try_from_glib)
-                .try_build()
+                .for_callback(true)
+                .try_build_param()
             {
                 used_types.extend(rust_type.into_used_types());
             }
@@ -752,7 +753,7 @@ fn analyze_function(
                 if let Ok(rust_type) = RustType::builder(env, par.typ)
                     .direction(par.direction)
                     .try_from_glib(&par.try_from_glib)
-                    .try_build()
+                    .try_build_param()
                 {
                     if !rust_type.as_str().ends_with("GString") || par.c_type == "gchar***" {
                         used_types.extend(rust_type.into_used_types());
@@ -787,6 +788,7 @@ fn analyze_function(
                     && *env.library.type_(par.typ) == Type::Basic(library::Basic::Pointer))
                     && RustType::builder(env, par.typ)
                         .direction(par.direction)
+                        .ref_mode(par.ref_mode)
                         .scope(par.scope)
                         .try_from_glib(&par.try_from_glib)
                         .try_build_param()
@@ -862,7 +864,7 @@ fn analyze_function(
             for out in &trampoline.output_params {
                 if let Ok(rust_type) = RustType::builder(env, out.lib_par.typ)
                     .direction(ParameterDirection::Out)
-                    .try_build()
+                    .try_build_param()
                 {
                     used_types.extend(rust_type.into_used_types());
                 }
@@ -870,7 +872,7 @@ fn analyze_function(
             if let Some(ref out) = trampoline.ffi_ret {
                 if let Ok(rust_type) = RustType::builder(env, out.lib_par.typ)
                     .direction(ParameterDirection::Return)
-                    .try_build()
+                    .try_build_param()
                 {
                     used_types.extend(rust_type.into_used_types());
                 }
@@ -1178,14 +1180,15 @@ fn analyze_callback(
                 .direction(p.direction)
                 .nullable(p.nullable)
                 .try_from_glib(&p.try_from_glib)
-                .try_build()
+                .for_callback(true)
+                .try_build_param()
             {
                 imports_to_add.extend(rust_type.into_used_types());
             }
         }
         if let Ok(rust_type) = RustType::builder(env, func.ret.typ)
             .direction(ParameterDirection::Return)
-            .try_build()
+            .try_build_param()
         {
             if !rust_type.as_str().ends_with("GString")
                 && !rust_type.as_str().ends_with("GAsyncResult")

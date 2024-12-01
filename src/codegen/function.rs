@@ -407,8 +407,6 @@ pub fn body_chunk_futures(
 ) -> StdResult<String, fmt::Error> {
     use std::fmt::Write;
 
-    use crate::analysis::ref_mode::RefMode;
-
     let async_future = analysis.async_future.as_ref().unwrap();
 
     let mut body = String::new();
@@ -447,7 +445,7 @@ pub fn body_chunk_futures(
             )?;
         } else if is_str {
             writeln!(body, "let {} = String::from({});", par.name, par.name)?;
-        } else if c_par.ref_mode != RefMode::None {
+        } else if !c_par.ref_mode.is_none() {
             writeln!(body, "let {} = {}.clone();", par.name, par.name)?;
         }
     }
@@ -487,7 +485,7 @@ pub fn body_chunk_futures(
                     "\t\t{}.as_ref().map(::std::borrow::Borrow::borrow),",
                     par.name
                 )?;
-            } else if c_par.ref_mode != RefMode::None {
+            } else if !c_par.ref_mode.is_none() {
                 writeln!(body, "\t\t&{},", par.name)?;
             } else {
                 writeln!(body, "\t\t{},", par.name)?;

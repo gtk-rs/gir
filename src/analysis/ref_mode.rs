@@ -1,4 +1,7 @@
-use std::str::FromStr;
+use std::{
+    fmt::{self, Write},
+    str::FromStr,
+};
 
 use super::{c_type::is_mut_ptr, record_type::RecordType};
 use crate::{config::gobjects::GObject, env, library};
@@ -99,6 +102,7 @@ impl RefMode {
             Self::ByRefMut if !is_mut_ptr(&par.c_type) => Self::ByRef,
             Self::ByRefMut if immutable => Self::ByRefImmut,
             Self::ByRef if self_in_trait && !is_mut_ptr(&par.c_type) => Self::ByRefConst,
+            Self::None if par.direction.is_out() && !*par.nullable => Self::ByRefMut,
             ref_mode => ref_mode,
         }
     }
@@ -106,11 +110,32 @@ impl RefMode {
     pub fn is_ref(self) -> bool {
         match self {
             Self::None => false,
-            Self::ByRef => true,
-            Self::ByRefMut => true,
-            Self::ByRefImmut => true,
-            Self::ByRefConst => true,
-            Self::ByRefFake => true,
+            Self::ByRef
+            | Self::ByRefMut
+            | Self::ByRefImmut
+            | Self::ByRefConst
+            | Self::ByRefFake => true,
+        }
+    }
+
+    pub fn is_immutable(self) -> bool {
+        match self {
+            Self::None | Self::ByRefMut => false,
+            Self::ByRef | Self::ByRefImmut | Self::ByRefConst | Self::ByRefFake => true,
+        }
+    }
+
+    pub fn is_none(self) -> bool {
+        matches!(self, Self::None)
+    }
+}
+
+impl fmt::Display for RefMode {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            RefMode::None | RefMode::ByRefFake => f.write_str(""),
+            RefMode::ByRef | RefMode::ByRefImmut | RefMode::ByRefConst => f.write_char('&'),
+            RefMode::ByRefMut => f.write_str("&mut "),
         }
     }
 }

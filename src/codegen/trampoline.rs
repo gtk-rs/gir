@@ -104,7 +104,7 @@ fn func_parameters(
     for (pos, par) in analysis.parameters.rust_parameters.iter().enumerate() {
         if pos == 0 {
             if let Some(replace_self_bound) = &replace_self_bound {
-                param_str.push_str(par.ref_mode.for_rust_type());
+                param_str.push_str(&par.ref_mode.to_string());
                 param_str.push_str(replace_self_bound.as_ref());
                 continue;
             }
@@ -115,8 +115,7 @@ fn func_parameters(
             }
         }
 
-        let s = func_parameter(env, par, &analysis.bounds);
-        param_str.push_str(&s);
+        param_str.push_str(&func_parameter(env, par, &analysis.bounds));
     }
 
     param_str
@@ -139,6 +138,7 @@ fn func_parameter(env: &Env, par: &RustParameter, bounds: &Bounds) -> String {
             .direction(par.direction)
             .nullable(par.nullable)
             .ref_mode(ref_mode)
+            .for_callback(true)
             .try_build_param()
             .into_string(),
     }

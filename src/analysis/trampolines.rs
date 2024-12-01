@@ -4,8 +4,7 @@ use super::{
     bounds::{BoundType, Bounds},
     conversion_type::ConversionType,
     ffi_type::used_ffi_type,
-    ref_mode::RefMode,
-    rust_type::RustType,
+    rust_type::{RustType, TypeError},
     trampoline_parameters::{self, Parameters},
 };
 use crate::{
@@ -80,9 +79,7 @@ pub fn analyze(
     let mut bounds: Bounds = Default::default();
 
     if in_trait || fundamental_type {
-        let type_name = RustType::builder(env, type_tid)
-            .ref_mode(RefMode::ByRefFake)
-            .try_build();
+        let type_name = RustType::builder(env, type_tid).try_build();
         if fundamental_type {
             bounds.add_parameter(
                 "this",
@@ -124,32 +121,12 @@ pub fn analyze(
         trampoline_parameters::analyze(env, &signal.parameters, type_tid, configured_signals, None)
     };
 
-    if in_trait || fundamental_type {
-        let type_name = RustType::builder(env, type_tid)
-            .ref_mode(RefMode::ByRefFake)
-            .try_build();
-        if fundamental_type {
-            bounds.add_parameter(
-                "this",
-                &type_name.into_string(),
-                BoundType::AsRef(None),
-                false,
-            );
-        } else {
-            bounds.add_parameter(
-                "this",
-                &type_name.into_string(),
-                BoundType::IsA(None),
-                false,
-            );
-        }
-    }
-
     for par in &parameters.rust_parameters {
         if let Ok(rust_type) = RustType::builder(env, par.typ)
             .direction(par.direction)
             .try_from_glib(&par.try_from_glib)
-            .try_build()
+            .for_callback(true)
+            .try_build_param()
         {
             used_types.extend(rust_type.into_used_types());
         }
@@ -165,7 +142,8 @@ pub fn analyze(
     if signal.ret.typ != Default::default() {
         if let Ok(rust_type) = RustType::builder(env, signal.ret.typ)
             .direction(library::ParameterDirection::Out)
-            .try_build()
+            .for_callback(true)
+            .try_build_param()
         {
             // No GString
             used_types.extend(rust_type.into_used_types());
@@ -235,7 +213,6 @@ fn closure_errors(env: &Env, signal: &library::Signal) -> Vec<String> {
 }
 
 pub fn type_error(env: &Env, par: &library::Parameter) -> Option<&'static str> {
-    use super::rust_type::TypeError::*;
     if par.direction == library::ParameterDirection::Out {
         Some("Out")
     } else if par.direction == library::ParameterDirection::InOut {
@@ -245,11 +222,11 @@ pub fn type_error(env: &Env, par: &library::Parameter) -> Option<&'static str> {
     } else if ConversionType::of(env, par.typ) == ConversionType::Unknown {
         Some("Unknown conversion")
     } else {
-        match RustType::try_new(env, par.typ) {
-            Err(Ignored(_)) => Some("Ignored"),
-            Err(Mismatch(_)) => Some("Mismatch"),
-            Err(Unimplemented(_)) => Some("Unimplemented"),
-            Ok(_) => None,
-        }
+        RustType::builder(env, par.typ)
+            .direction(par.direction)
+            .try_build_param()
+            .as_ref()
+            .map_err(TypeError::message)
+            .err()
     }
 }

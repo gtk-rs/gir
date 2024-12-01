@@ -121,7 +121,7 @@ fn analyze_property(
         }
     }
 
-    let (get_out_ref_mode, set_in_ref_mode, nullable) = get_property_ref_modes(env, prop);
+    let (get_out_ref_mode, set_in_ref_mode, _) = get_property_ref_modes(env, prop);
 
     let mut bounds = Bounds::default();
     if let Some(bound) = Bounds::type_for(env, prop.typ) {
@@ -136,7 +136,7 @@ fn analyze_property(
         is_get: false,
         func_name: String::new(),
         func_name_alias: None,
-        nullable,
+        nullable: library::Nullable(false), // no Options for builder setters here
         get_out_ref_mode,
         set_in_ref_mode,
         set_bound: None,

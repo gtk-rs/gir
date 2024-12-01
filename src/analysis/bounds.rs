@@ -13,7 +13,7 @@ use crate::{
     consts::TYPE_PARAMETERS_START,
     env::Env,
     library::{Basic, Class, Concurrency, Function, ParameterDirection, Type, TypeId},
-    traits::IntoString,
+    traits::*,
 };
 
 #[derive(Clone, Eq, Debug, PartialEq)]
@@ -86,13 +86,24 @@ impl Bounds {
         concurrency: Concurrency,
         configured_functions: &[&config::functions::Function],
     ) -> (Option<String>, Option<CallbackInfo>) {
-        let type_name = RustType::builder(env, par.typ)
-            .ref_mode(RefMode::ByRefFake)
-            .try_build();
-        if type_name.is_err() {
+        let nullable = configured_functions
+            .matched_parameters(&par.name)
+            .iter()
+            .find_map(|p| p.nullable)
+            .unwrap_or(par.nullable);
+        let Ok(rust_type) = RustType::builder(env, par.typ)
+            .direction(par.direction)
+            .nullable(nullable)
+            .ref_mode(if par.move_ {
+                RefMode::None
+            } else {
+                par.ref_mode
+            })
+            .try_build()
+        else {
             return (None, None);
-        }
-        let mut type_string = type_name.into_string();
+        };
+        let mut type_string = rust_type.into_string();
         let mut callback_info = None;
         let mut ret = None;
         let mut need_is_into_check = false;
@@ -134,7 +145,7 @@ impl Bounds {
                                 RustType::builder(env, function.ret.typ)
                                     .direction(function.ret.direction)
                                     .nullable(nullable)
-                                    .try_build()
+                                    .try_build_param()
                                     .into_string(),
                             );
                         }
@@ -342,19 +353,15 @@ fn find_out_parameters(
             // function but that a) happens afterwards and b) is not accessible
             // from here either.
             let nullable = configured_functions
+                .matched_parameters(&param.name)
                 .iter()
-                .find_map(|f| {
-                    f.parameters
-                        .iter()
-                        .filter(|p| p.ident.is_match(&param.name))
-                        .find_map(|p| p.nullable)
-                })
+                .find_map(|p| p.nullable)
                 .unwrap_or(param.nullable);
 
             RustType::builder(env, param.typ)
                 .direction(param.direction)
                 .nullable(nullable)
-                .try_build()
+                .try_build_param()
                 .into_string()
         })
         .collect()

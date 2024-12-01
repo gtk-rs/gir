@@ -21,7 +21,7 @@ impl Bound {
         nullable: Nullable,
         r#async: bool,
     ) -> String {
-        let ref_str = ref_mode.for_rust_type();
+        let ref_str = ref_mode.to_string();
 
         // Generate `impl Trait` if this bound does not have an alias
         let trait_bound = match self.type_parameter_reference() {

@@ -238,7 +238,7 @@ fn analyze_property(
     {
         if let Ok(rust_type) = RustType::builder(env, prop.typ)
             .direction(library::ParameterDirection::Out)
-            .try_build()
+            .try_build_param()
         {
             imports.add_used_types(rust_type.used_types());
         }
@@ -280,7 +280,7 @@ fn analyze_property(
     {
         if let Ok(rust_type) = RustType::builder(env, prop.typ)
             .direction(library::ParameterDirection::In)
-            .try_build()
+            .try_build_param()
         {
             imports.add_used_types(rust_type.used_types());
         }

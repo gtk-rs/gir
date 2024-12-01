@@ -108,14 +108,14 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
                     match inner.as_str() {
                         "void" => "c_void",
                         // TODO: try use time:Tm
-                        "tm" => return Err(TypeError::Unimplemented(inner)),
+                        "tm" => return Err(TypeError::unimplemented(inner)),
                         _ => &*inner,
                     }
                 }
                 IntPtr => "intptr_t",
                 UIntPtr => "uintptr_t",
                 Bool => "bool",
-                Unsupported => return Err(TypeError::Unimplemented(inner)),
+                Unsupported => return Err(TypeError::unimplemented(inner)),
                 VarArgs => panic!("Should not reach here"),
             };
             Ok(inner.into())
@@ -130,7 +130,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
                         typ.get_name()
                     );
                     warn!("{}", msg);
-                    return Err(TypeError::Mismatch(msg));
+                    return Err(TypeError::mismatch(msg));
                 }
             } else {
                 warn!("Type `{}` missing c_type", typ.get_name());
@@ -173,7 +173,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
                             env.library.type_(tid).get_name()
                         );
                         warn!("{}", msg);
-                        Err(TypeError::Mismatch(msg))
+                        Err(TypeError::mismatch(msg))
                     }
                 } else {
                     fix_name(env, tid, &inner)
@@ -185,7 +185,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
                     inner
                 );
                 warn!("{}", msg);
-                Err(TypeError::Mismatch(msg))
+                Err(TypeError::mismatch(msg))
             }
         }
     };
@@ -227,7 +227,7 @@ fn fix_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
             .type_status_sys(&type_id.full_name(&env.library))
             .ignored()
         {
-            Err(TypeError::Ignored(name_with_prefix))
+            Err(TypeError::ignored(name_with_prefix))
         } else {
             Ok(name_with_prefix.into())
         }

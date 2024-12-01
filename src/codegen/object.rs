@@ -371,7 +371,7 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
             let param_type = RustType::builder(env, property.typ)
                 .direction(direction)
                 .ref_mode(property.set_in_ref_mode)
-                .try_build();
+                .try_build_param();
             let comment_prefix = if param_type.is_err() { "//" } else { "" };
             let mut param_type_str = param_type.into_string();
             let (param_type_override, bounds, conversion) = match param_type_str.as_str() {
@@ -382,7 +382,7 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                 ),
                 "&[&str]" => (
                     Some(format!("impl Into<{glib_crate_name}::StrV>")),
-                    String::from(""),
+                    String::new(),
                     ".into()",
                 ),
                 _ if !property.bounds.is_empty() => {
