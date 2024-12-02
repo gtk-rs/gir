@@ -7,7 +7,7 @@ import sys
 import asyncio
 
 DEFAULT_GIR_FILES_DIRECTORY = Path("./gir-files")
-DEFAULT_GIR_DIRECTORY = Path("./gir/")
+DEFAULT_GIR_DIRECTORY = Path("./gir/") # TODO: This is typically the directory _of this Python script_ (which external projects symlink to)
 
 
 def run_command(command, folder=None):
@@ -223,6 +223,9 @@ async def main():
 
     if conf.gir_path is None:
         update_submodule(DEFAULT_GIR_DIRECTORY, conf)
+        print("=> Building gir...")
+        run_command(["cargo", "build", "--release", "--manifest-path", DEFAULT_GIR_DIRECTORY / "Cargo.toml"])
+        print("<= Done!")
 
     print("=> Regenerating crates...")
     for path in conf.path:
