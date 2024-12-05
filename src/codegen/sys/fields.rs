@@ -140,7 +140,7 @@ fn analyze_fields(
 
 fn field_ffi_type(env: &Env, field: &Field) -> Result {
     if field.is_incomplete(&env.library) {
-        return Err(TypeError::Ignored(format!(
+        return Err(TypeError::ignored(format!(
             "field {} has incomplete type",
             &field.name
         )));
@@ -151,12 +151,12 @@ fn field_ffi_type(env: &Env, field: &Field) -> Result {
         let (failure, signature) = function_signature(env, func, true);
         let signature = format!("Option<unsafe extern \"C\" fn{signature}>");
         if failure {
-            Err(TypeError::Unimplemented(signature))
+            Err(TypeError::unimplemented(signature))
         } else {
             Ok(signature.into())
         }
     } else {
-        Err(TypeError::Ignored(format!(
+        Err(TypeError::ignored(format!(
             "field {} has empty c:type",
             &field.name
         )))

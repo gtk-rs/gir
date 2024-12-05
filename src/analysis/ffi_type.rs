@@ -122,7 +122,7 @@ fn ffi_inner(env: &Env, tid: TypeId, inner: &str) -> Result {
                         typ.get_name()
                     );
                     warn_main!(tid, "{}", msg);
-                    return Err(TypeError::Mismatch(msg));
+                    return Err(TypeError::mismatch(msg));
                 }
             } else {
                 warn_main!(tid, "Type `{}` missing c_type", typ.get_name());
@@ -156,7 +156,7 @@ fn ffi_inner(env: &Env, tid: TypeId, inner: &str) -> Result {
                             env.library.type_(tid).get_name()
                         );
                         warn_main!(tid, "{}", msg);
-                        Err(TypeError::Mismatch(msg))
+                        Err(TypeError::mismatch(msg))
                     }
                 } else {
                     fix_name(env, tid, inner)
@@ -168,7 +168,7 @@ fn ffi_inner(env: &Env, tid: TypeId, inner: &str) -> Result {
                     inner
                 );
                 warn_main!(tid, "{}", msg);
-                Err(TypeError::Mismatch(msg))
+                Err(TypeError::mismatch(msg))
             }
         }
     }
@@ -201,7 +201,7 @@ fn fix_name(env: &Env, type_id: TypeId, name: &str) -> Result {
             .type_status_sys(&type_id.full_name(&env.library))
             .ignored()
         {
-            Err(TypeError::Ignored(name_with_prefix))
+            Err(TypeError::ignored(name_with_prefix))
         } else {
             Ok(name_with_prefix.into())
         }

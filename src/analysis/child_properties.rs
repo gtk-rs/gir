@@ -1,12 +1,7 @@
 use log::error;
 
 use crate::{
-    analysis::{
-        bounds::{Bound, Bounds},
-        imports::Imports,
-        ref_mode::RefMode,
-        rust_type::RustType,
-    },
+    analysis::{bounds::Bounds, imports::Imports, ref_mode::RefMode, rust_type::RustType},
     config,
     consts::TYPE_PARAMETERS_START,
     env::Env,
@@ -118,45 +113,35 @@ fn analyze_property(
         }
         let nullable = library::Nullable(set_in_ref_mode.is_ref());
 
+        let mut bounds = Bounds::default();
         let mut bounds_str = String::new();
         let dir = ParameterDirection::In;
-        let set_params = if let Some(bound) = Bounds::type_for(env, typ) {
-            let r_type = RustType::builder(env, typ)
-                .ref_mode(RefMode::ByRefFake)
-                .try_build()
-                .into_string();
-
-            let _bound = Bound {
-                bound_type: bound,
-                parameter_name: TYPE_PARAMETERS_START.to_string(),
-                alias: Some(TYPE_PARAMETERS_START.to_owned()),
-                type_str: r_type,
-                callback_modified: false,
+        let set_params =
+            if bounds.add_for_property_setter(env, typ, &prop.name, set_in_ref_mode, nullable) {
+                // TODO: bounds_str push?!?!
+                bounds_str.push_str("TODO");
+                format!("{prop_name}: {TYPE_PARAMETERS_START}")
+                // let mut bounds = Bounds::default();
+                // bounds.add_parameter("P", &r_type, bound, false);
+                // let (s_bounds, _) = function::bounds(&bounds, &[], false);
+                // // Because the bounds won't necessarily be added into the final
+                // function, we // only keep the "inner" part to make
+                // the string computation easier. So // `<T: X>` becomes
+                // `T: X`. bounds_str.push_str(&s_bounds[1..s_bounds.
+                // len() - 1]); format!("{}: {}", prop_name,
+                // bounds.iter().last().unwrap().alias)
+            } else {
+                format!(
+                    "{}: {}",
+                    prop_name,
+                    RustType::builder(env, typ)
+                        .direction(dir)
+                        .nullable(nullable)
+                        .ref_mode(set_in_ref_mode)
+                        .try_build_param()
+                        .into_string()
+                )
             };
-            // TODO: bounds_str push?!?!
-            bounds_str.push_str("TODO");
-            format!("{prop_name}: {TYPE_PARAMETERS_START}")
-            // let mut bounds = Bounds::default();
-            // bounds.add_parameter("P", &r_type, bound, false);
-            // let (s_bounds, _) = function::bounds(&bounds, &[], false);
-            // // Because the bounds won't necessarily be added into the final
-            // function, we // only keep the "inner" part to make
-            // the string computation easier. So // `<T: X>` becomes
-            // `T: X`. bounds_str.push_str(&s_bounds[1..s_bounds.
-            // len() - 1]); format!("{}: {}", prop_name,
-            // bounds.iter().last().unwrap().alias)
-        } else {
-            format!(
-                "{}: {}",
-                prop_name,
-                RustType::builder(env, typ)
-                    .direction(dir)
-                    .nullable(nullable)
-                    .ref_mode(set_in_ref_mode)
-                    .try_build_param()
-                    .into_string()
-            )
-        };
 
         Some(ChildProperty {
             name,

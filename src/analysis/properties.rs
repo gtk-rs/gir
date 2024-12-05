@@ -2,7 +2,7 @@ use log::warn;
 
 use crate::{
     analysis::{
-        bounds::{Bounds, PropertyBound},
+        bounds::{Bound, Bounds},
         imports::Imports,
         ref_mode::RefMode,
         rust_type::RustType,
@@ -29,9 +29,14 @@ pub struct Property {
     pub get_out_ref_mode: RefMode,
     pub set_in_ref_mode: RefMode,
     pub bounds: Bounds,
-    pub set_bound: Option<PropertyBound>,
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
+}
+
+impl Property {
+    pub fn set_bound(&self) -> Option<&Bound> {
+        self.bounds.iter().next()
+    }
 }
 
 pub fn analyze(
@@ -238,7 +243,7 @@ fn analyze_property(
     {
         if let Ok(rust_type) = RustType::builder(env, prop.typ)
             .direction(library::ParameterDirection::Out)
-            .try_build()
+            .try_build_param()
         {
             imports.add_used_types(rust_type.used_types());
         }
@@ -267,7 +272,6 @@ fn analyze_property(
             nullable,
             get_out_ref_mode,
             set_in_ref_mode,
-            set_bound: None,
             bounds: Bounds::default(),
             version: getter_version,
             deprecated_version: prop.deprecated_version,
@@ -280,15 +284,18 @@ fn analyze_property(
     {
         if let Ok(rust_type) = RustType::builder(env, prop.typ)
             .direction(library::ParameterDirection::In)
-            .try_build()
+            .try_build_param()
         {
             imports.add_used_types(rust_type.used_types());
         }
         if type_string.is_ok() {
             imports.add("glib::prelude::*");
         }
-        let set_bound = PropertyBound::get(env, prop.typ);
-        if type_string.is_ok() && set_bound.is_some() {
+        let mut bounds = Bounds::default();
+        let set_has_bound =
+            bounds.add_for_property_setter(env, prop.typ, &prop.name, set_in_ref_mode, nullable);
+        if type_string.is_ok() && set_has_bound {
+            // FIXME this might actually depend on the bound
             imports.add("glib::prelude::*");
             if !*nullable {
                 // TODO: support non-nullable setter if found any
@@ -320,8 +327,7 @@ fn analyze_property(
             nullable,
             get_out_ref_mode,
             set_in_ref_mode,
-            set_bound,
-            bounds: Bounds::default(),
+            bounds,
             version: setter_version,
             deprecated_version: prop.deprecated_version,
         })

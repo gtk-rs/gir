@@ -67,10 +67,10 @@ pub enum Chunk {
     Name(String),
     ExternCFunc {
         name: String,
+        generic_params: String,
         parameters: Vec<Param>,
         body: Box<Chunk>,
         return_value: Option<String>,
-        bounds: String,
     },
     Cast {
         name: String,

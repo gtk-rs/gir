@@ -2,12 +2,11 @@ use std::cmp;
 
 use crate::{
     analysis::{
-        self, conversion_type::ConversionType, namespaces, out_parameters::Mode,
-        rust_type::RustType, try_from_glib::TryFromGlib,
+        self, namespaces, out_parameters::Mode, rust_type::RustType, try_from_glib::TryFromGlib,
     },
     env::Env,
-    library::{self, ParameterDirection, TypeId},
-    nameutil::{is_gstring, mangle_keywords, use_glib_type},
+    library::{self, TypeId},
+    nameutil::{mangle_keywords, use_glib_type},
     traits::*,
 };
 
@@ -27,26 +26,16 @@ impl ToReturnValue for library::Parameter {
         try_from_glib: &TryFromGlib,
         is_trampoline: bool,
     ) -> Option<String> {
-        let mut name = RustType::builder(env, self.typ)
+        let name = RustType::builder(env, self.typ)
             .direction(self.direction)
             .nullable(self.nullable)
             .scope(self.scope)
             .try_from_glib(try_from_glib)
+            .for_callback(is_trampoline)
             .try_build_param()
             .into_string();
-        if is_trampoline
-            && self.direction == library::ParameterDirection::Return
-            && is_gstring(&name)
-        {
-            name = "String".to_owned();
-        }
-        let type_str = match ConversionType::of(env, self.typ) {
-            ConversionType::Unknown => format!("/*Unknown conversion*/{name}"),
-            // TODO: records as in gtk_container_get_path_for_child
-            _ => name,
-        };
 
-        Some(type_str)
+        Some(name)
     }
 }
 
@@ -249,24 +238,17 @@ pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info)
         if pos > skip {
             return_str.push_str(", ");
         }
-        let s = out_parameter_as_return(out, env);
-        return_str.push_str(&s);
+        // TODO: upcasts?
+        return_str.push_str(
+            &RustType::builder(env, out.lib_par.typ)
+                .direction(out.lib_par.direction)
+                .nullable(out.lib_par.nullable)
+                .scope(out.lib_par.scope)
+                .try_from_glib(&out.try_from_glib)
+                .try_build_param()
+                .into_string(),
+        );
     }
     return_str.push_str(&suffix);
     return_str
-}
-
-fn out_parameter_as_return(out: &analysis::Parameter, env: &Env) -> String {
-    // TODO: upcasts?
-    let name = RustType::builder(env, out.lib_par.typ)
-        .direction(ParameterDirection::Return)
-        .nullable(out.lib_par.nullable)
-        .scope(out.lib_par.scope)
-        .try_from_glib(&out.try_from_glib)
-        .try_build_param()
-        .into_string();
-    match ConversionType::of(env, out.lib_par.typ) {
-        ConversionType::Unknown => format!("/*Unknown conversion*/{name}"),
-        _ => name,
-    }
 }

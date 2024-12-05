@@ -123,7 +123,7 @@ pub fn analyze(
         if let Ok(rust_type) = RustType::builder(env, typ)
             .direction(par.lib_par.direction)
             .try_from_glib(&par.try_from_glib)
-            .try_build()
+            .try_build_param()
         {
             used_types.extend(rust_type.into_used_types());
         }

@@ -14,11 +14,10 @@ impl TranslateToGlib for TransformationType {
             ToGlibDirect { ref name } => name.clone(),
             ToGlibScalar {
                 ref name,
-                needs_into,
+                ref to_glib_extra,
                 ..
             } => {
-                let pre_into = if needs_into { ".into()" } else { "" };
-                format!("{}{}{}", name, pre_into, ".into_glib()")
+                format!("{name}{to_glib_extra}.into_glib()")
             }
             ToGlibPointer {
                 ref name,

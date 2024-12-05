@@ -124,9 +124,10 @@ fn analyze_property(
     let (get_out_ref_mode, set_in_ref_mode, nullable) = get_property_ref_modes(env, prop);
 
     let mut bounds = Bounds::default();
-    if let Some(bound) = Bounds::type_for(env, prop.typ) {
+    let set_has_bound =
+        bounds.add_for_property_setter(env, prop.typ, &prop.name, set_in_ref_mode, nullable);
+    if set_has_bound {
         imports.add("glib::prelude::*");
-        bounds.add_parameter(&prop.name, &rust_type_res.into_string(), bound, false);
     }
 
     Some(Property {
@@ -139,7 +140,6 @@ fn analyze_property(
         nullable,
         get_out_ref_mode,
         set_in_ref_mode,
-        set_bound: None,
         bounds,
         version: prop_version,
         deprecated_version: prop.deprecated_version,

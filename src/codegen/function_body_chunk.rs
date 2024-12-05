@@ -3,6 +3,7 @@ use std::collections::{hash_map::Entry, BTreeMap, HashMap};
 use crate::{
     analysis::{
         self,
+        bounds::Bounds,
         conversion_type::ConversionType,
         function_parameters::{
             CParameter as AnalysisCParameter, Transformation, TransformationType,
@@ -70,12 +71,19 @@ pub struct Builder {
 
 // Key: user data index
 // Value: (global position used as id, type, callbacks)
-type FuncParameters<'a> = BTreeMap<usize, FuncParameter<'a>>;
+type UserDataById<'a> = BTreeMap<usize, UserData<'a>>;
 
-struct FuncParameter<'a> {
+struct UserData<'a> {
     pos: usize,
-    full_type: Option<(String, String)>,
+    typ_: Option<UserDataType>,
     callbacks: Vec<&'a Trampoline>,
+    generic_params: String,
+    qualified_aliases: String,
+}
+
+struct UserDataType {
+    immutable: String,
+    mutable: String,
 }
 
 impl Builder {
@@ -136,7 +144,7 @@ impl Builder {
         self.in_unsafe = in_unsafe;
         self
     }
-    pub fn generate(&self, env: &Env, bounds: &str, bounds_names: &str) -> Chunk {
+    pub fn generate(&self, env: &Env, outer_bounds: &Bounds) -> Chunk {
         let mut body = Vec::new();
 
         let mut uninitialized_vars = if self.outs_as_return {
@@ -145,28 +153,50 @@ impl Builder {
             Vec::new()
         };
 
-        let mut group_by_user_data = FuncParameters::new();
+        let mut user_data_by_id = UserDataById::new();
 
         // We group arguments by callbacks.
         if !self.callbacks.is_empty() || !self.destroys.is_empty() {
             for (pos, callback) in self.callbacks.iter().enumerate() {
                 let user_data_index = callback.user_data_index;
-                if group_by_user_data.contains_key(&user_data_index) {
+                if user_data_by_id.contains_key(&user_data_index) {
                     continue;
                 }
+
+                let mut bounds = Bounds::default();
                 let calls = self
                     .callbacks
                     .iter()
                     .filter(|c| c.user_data_index == user_data_index)
+                    .inspect(|c| {
+                        if let Some(bound) = outer_bounds.get_parameter_bound(&c.name).cloned() {
+                            bounds.push(bound)
+                        }
+                    })
                     .collect::<Vec<_>>();
-                group_by_user_data.insert(
+
+                let (generic_params, qualified_aliases) = if bounds.is_empty() {
+                    (String::new(), String::new())
+                } else {
+                    let qualified_aliases = format!(
+                        "::<{}>",
+                        bounds
+                            .iter_aliases()
+                            .map(|a| a.to_string())
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    );
+                    (bounds.to_generic_params_str(), qualified_aliases)
+                };
+
+                user_data_by_id.insert(
                     user_data_index,
-                    FuncParameter {
+                    UserData {
                         pos,
-                        full_type: if calls.len() > 1 {
+                        typ_: if calls.len() > 1 {
                             if calls.iter().all(|c| c.scope.is_call()) {
-                                Some((
-                                    format!(
+                                Some(UserDataType {
+                                    immutable: format!(
                                         "&({})",
                                         calls
                                             .iter()
@@ -174,7 +204,7 @@ impl Builder {
                                             .collect::<Vec<_>>()
                                             .join(", ")
                                     ),
-                                    format!(
+                                    mutable: format!(
                                         "&mut ({})",
                                         calls
                                             .iter()
@@ -182,7 +212,7 @@ impl Builder {
                                             .collect::<Vec<_>>()
                                             .join(", ")
                                     ),
-                                ))
+                                })
                             } else {
                                 let s = format!(
                                     "Box_<({})>",
@@ -192,18 +222,23 @@ impl Builder {
                                         .collect::<Vec<_>>()
                                         .join(", ")
                                 );
-                                Some((s.clone(), s))
+                                Some(UserDataType {
+                                    immutable: s.clone(),
+                                    mutable: s,
+                                })
                             }
                         } else {
                             None
                         },
                         callbacks: calls,
+                        generic_params,
+                        qualified_aliases,
                     },
                 );
             }
         }
 
-        let call = self.generate_call(&group_by_user_data);
+        let call = self.generate_call(&user_data_by_id);
         let call = self.generate_call_conversion(call, &mut uninitialized_vars);
         let ret = self.generate_out_return(&mut uninitialized_vars);
         let (call, ret) = self.apply_outs_mode(call, ret, &mut uninitialized_vars);
@@ -221,7 +256,7 @@ impl Builder {
         if !self.callbacks.is_empty() || !self.destroys.is_empty() {
             // Key: user data index
             // Value: the current pos in the tuple for the given argument.
-            let mut poses = HashMap::with_capacity(group_by_user_data.len());
+            let mut poses = HashMap::with_capacity(user_data_by_id.len());
             for trampoline in &self.callbacks {
                 *poses
                     .entry(&trampoline.user_data_index)
@@ -239,13 +274,11 @@ impl Builder {
                     env,
                     &mut chunks,
                     trampoline,
-                    &group_by_user_data[&user_data_index].full_type,
+                    &user_data_by_id[&user_data_index],
                     match pos {
                         Entry::Occupied(ref x) => Some(*x.get()),
                         _ => None,
                     },
-                    bounds,
-                    bounds_names,
                     false,
                 );
                 pos.and_modify(|x| {
@@ -257,18 +290,17 @@ impl Builder {
                     env,
                     &mut chunks,
                     destroy,
-                    &group_by_user_data[&destroy.user_data_index].full_type,
+                    &user_data_by_id[&destroy.user_data_index],
                     None, // doesn't matter for destroy
-                    bounds,
-                    bounds_names,
                     true,
                 );
             }
-            for FuncParameter {
+            for UserData {
                 pos,
-                full_type,
+                typ_: user_data_type,
                 callbacks: calls,
-            } in group_by_user_data.values()
+                ..
+            } in user_data_by_id.values()
             {
                 if calls.len() > 1 {
                     chunks.push(Chunk::Let {
@@ -303,7 +335,10 @@ impl Builder {
                             )
                         })),
                         type_: Some(Box::new(Chunk::Custom(
-                            full_type.clone().map(|x| x.0).unwrap(),
+                            user_data_type
+                                .as_ref()
+                                .map(|x| x.immutable.clone())
+                                .unwrap(),
                         ))),
                     });
                 } else if !calls.is_empty() {
@@ -384,14 +419,12 @@ impl Builder {
         env: &Env,
         chunks: &mut Vec<Chunk>,
         trampoline: &Trampoline,
-        full_type: &Option<(String, String)>,
+        user_data: &UserData,
         pos: Option<usize>,
-        bounds: &str,
-        bounds_names: &str,
         is_destroy: bool,
     ) {
         if !is_destroy {
-            if full_type.is_none() {
+            if user_data.typ_.is_none() {
                 if trampoline.scope.is_call() {
                     chunks.push(Chunk::Custom(format!(
                         "let mut {0}_data: {1} = {0};",
@@ -459,13 +492,13 @@ impl Builder {
             .last()
             .map_or_else(|| "Unknown".to_owned(), |p| p.name.clone());
 
-        if let Some(full_type) = full_type {
+        if let Some(ref user_data_typ_) = user_data.typ_ {
             if is_destroy || trampoline.scope.is_async() {
                 body.push(Chunk::Let {
                     name: format!("{}callback", if is_destroy { "_" } else { "" }),
                     is_mut: false,
                     value: Box::new(Chunk::Custom(format!("Box_::from_raw({func} as *mut _)"))),
-                    type_: Some(Box::new(Chunk::Custom(full_type.1.clone()))),
+                    type_: Some(Box::new(Chunk::Custom(user_data_typ_.mutable.clone()))),
                 });
             } else {
                 body.push(Chunk::Let {
@@ -486,15 +519,15 @@ impl Builder {
                         if !trampoline.scope.is_async() && !trampoline.scope.is_call() {
                             format!(
                                 "&{}",
-                                full_type
-                                    .1
+                                user_data_typ_
+                                    .mutable
                                     .strip_prefix("Box_<")
                                     .unwrap()
                                     .strip_suffix(">")
                                     .unwrap()
                             )
                         } else {
-                            full_type.1.clone()
+                            user_data_typ_.mutable.clone()
                         },
                     ))),
                 });
@@ -618,6 +651,7 @@ impl Builder {
 
         let extern_func = Chunk::ExternCFunc {
             name: format!("{}_func", trampoline.name),
+            generic_params: user_data.generic_params.clone(),
             parameters: trampoline
                 .parameters
                 .c_parameters
@@ -650,31 +684,25 @@ impl Builder {
             } else {
                 None
             },
-            bounds: bounds.to_owned(),
         };
 
         chunks.push(extern_func);
-        let bounds_str = if bounds_names.is_empty() {
-            String::new()
-        } else {
-            format!("::<{bounds_names}>")
-        };
         if !is_destroy {
             if *trampoline.nullable {
                 chunks.push(Chunk::Custom(format!(
                     "let {0} = if {0}_data.is_some() {{ Some({0}_func{1} as _) }} else {{ None }};",
-                    trampoline.name, bounds_str
+                    trampoline.name, user_data.qualified_aliases,
                 )));
             } else {
                 chunks.push(Chunk::Custom(format!(
                     "let {0} = Some({0}_func{1} as _);",
-                    trampoline.name, bounds_str
+                    trampoline.name, user_data.qualified_aliases,
                 )));
             }
         } else {
             chunks.push(Chunk::Custom(format!(
                 "let destroy_call{} = Some({}_func{} as _);",
-                trampoline.destroy_index, trampoline.name, bounds_str
+                trampoline.destroy_index, trampoline.name, user_data.qualified_aliases,
             )));
         }
     }
@@ -918,10 +946,10 @@ impl Builder {
                 "{}<{}: {}>",
                 trampoline.name, trampoline.bound_name, trampoline.callback_type
             ),
+            generic_params: String::new(),
             parameters,
             body: Box::new(Chunk::Chunks(body)),
             return_value: None,
-            bounds: String::new(),
         });
         let chunk = Chunk::Let {
             name: "callback".to_string(),
@@ -972,7 +1000,7 @@ impl Builder {
         }
     }
 
-    fn generate_call(&self, calls: &FuncParameters<'_>) -> Chunk {
+    fn generate_call(&self, calls: &UserDataById<'_>) -> Chunk {
         let params = self.generate_func_parameters(calls);
         Chunk::FfiCall {
             name: self.glib_name.clone(),
@@ -992,7 +1020,7 @@ impl Builder {
             call: Box::new(call),
         }
     }
-    fn generate_func_parameters(&self, calls: &FuncParameters<'_>) -> Vec<Chunk> {
+    fn generate_func_parameters(&self, calls: &UserDataById<'_>) -> Vec<Chunk> {
         let mut params = Vec::new();
         for trans in &self.transformations {
             if !trans.transformation_type.is_to_glib() {
@@ -1010,7 +1038,7 @@ impl Builder {
             params.push(chunk);
         }
         let mut to_insert = Vec::new();
-        for (user_data_index, FuncParameter { pos, callbacks, .. }) in calls.iter() {
+        for (user_data_index, UserData { pos, callbacks, .. }) in calls.iter() {
             let all_call = callbacks.iter().all(|c| c.scope.is_call());
             to_insert.push((
                 *user_data_index,
