@@ -390,7 +390,9 @@ fn analyze_callbacks(
                             par.ref_mode
                         },
                         par.nullable,
+                        par.direction,
                         par.instance_parameter,
+                        par.scope,
                     ),
                     None,
                 )

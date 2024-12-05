@@ -289,14 +289,16 @@ pub fn analyze(
         }
         if let Some(array_par) = array_par {
             let mut array_name = nameutil::mangle_keywords(&array_par.name);
-            if let Some(bound_type) = Bounds::type_for(env, array_par.typ) {
-                array_name = (array_name.into_owned()
-                    + &bound_type.get_to_glib_extra(
-                        *array_par.nullable,
-                        array_par.instance_parameter,
-                        move_,
-                    ))
-                    .into();
+            if let Some(to_glib_extra) = Bounds::get_to_glib_extra_for(
+                env,
+                array_par.typ,
+                if move_ { RefMode::None } else { RefMode::ByRef },
+                Nullable(false),
+                array_par.direction,
+                array_par.instance_parameter,
+                array_par.scope,
+            ) {
+                array_name = (array_name.into_owned() + &to_glib_extra).into();
             }
 
             add_rust_parameter = false;

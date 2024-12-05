@@ -80,18 +80,19 @@ fn generate_prop_func(
 }
 
 fn declaration(env: &Env, prop: &Property) -> String {
-    let bound: String;
+    let generic_param: String;
     let set_param = if prop.is_get {
-        bound = String::new();
+        generic_param = String::new();
         String::new()
     } else if let Some(set_bound) = prop.set_bound() {
-        let alias = set_bound
-            .alias
-            .expect("Property only supports IsA bound type with an alias");
-        bound = format!("<{}: IsA<{}>>", alias, set_bound.type_str);
-        format!(", {}: Option<&{}>", prop.var_name, alias)
+        generic_param = prop.bounds.to_generic_params_str();
+        format!(
+            ", {}: {}",
+            prop.var_name,
+            set_bound.full_type_parameter_reference(prop.set_in_ref_mode, prop.nullable, false),
+        )
     } else {
-        bound = String::new();
+        generic_param = String::new();
         let dir = library::ParameterDirection::In;
         let param_type = RustType::builder(env, prop.typ)
             .direction(dir)
@@ -99,7 +100,7 @@ fn declaration(env: &Env, prop: &Property) -> String {
             .ref_mode(prop.set_in_ref_mode)
             .try_build_param()
             .into_string();
-        format!(", {}: {}", prop.var_name, param_type)
+        format!(", {}: {param_type}", prop.var_name)
     };
     let return_str = if prop.is_get {
         let dir = library::ParameterDirection::Return;
@@ -114,8 +115,8 @@ fn declaration(env: &Env, prop: &Property) -> String {
         String::new()
     };
     format!(
-        "fn {}{}(&self{}){}",
-        prop.func_name, bound, set_param, return_str
+        "fn {}{generic_param}(&self{set_param}){return_str}",
+        prop.func_name,
     )
 }
 

@@ -16,6 +16,7 @@ use crate::{
 
 mod alias;
 mod bound;
+mod bounds;
 mod child_properties;
 mod constants;
 mod doc;

@@ -37,8 +37,7 @@ pub struct Trampoline {
     pub user_data_index: usize,
     pub destroy_index: usize,
     pub nullable: library::Nullable,
-    /// This field is used to give the type name when generating the "IsA<X>"
-    /// part.
+    /// This field is used to give the type name when generating the `IsA<X>` part.
     pub type_name: String,
 }
 
@@ -81,9 +80,9 @@ pub fn analyze(
     if in_trait || fundamental_type {
         let type_name = RustType::builder(env, type_tid).try_build();
         if fundamental_type {
-            bounds.add_parameter("this", &type_name.into_string(), BoundType::AsRef, false);
+            bounds.add_for("this", &type_name.into_string(), BoundType::AsRef);
         } else {
-            bounds.add_parameter("this", &type_name.into_string(), BoundType::IsA, false);
+            bounds.add_for("this", &type_name.into_string(), BoundType::IsA);
         }
     }
 

@@ -9,83 +9,108 @@ use crate::{
 impl Bound {
     /// Returns the type parameter reference.
     /// Currently always returns the alias.
-    pub(super) fn type_parameter_reference(&self) -> Option<char> {
-        self.alias
+    ///
+    /// This doesn't include the lifetime, which could be shared by other type
+    /// parameters. Use [Bounds::to_generic_params_str](crate::analysis::bounds::Bounds::to_generic_params_str)
+    /// to get the full generic parameter list, including lifetimes.
+    pub fn type_parameter_definition(&self, r#async: bool) -> Option<String> {
+        use BoundType::*;
+        match self.bound_type {
+            NoWrapper => {
+                let alias = self.alias.expect("must be defined in this context");
+                Some(format!("{alias}: {}", self.type_str))
+            }
+            IsA if self.alias.is_some() => Some(format!(
+                "{}: IsA<{}>{}",
+                self.alias.unwrap(),
+                self.type_str,
+                if r#async { " + Clone + 'static" } else { "" },
+            )),
+            IntoOptionIsA => {
+                let alias = self.alias.expect("must be defined in this context");
+                Some(format!(
+                    "{alias}: IsA<{}>{}",
+                    self.type_str,
+                    if r#async { " + Clone + 'static" } else { "" },
+                ))
+            }
+            _ => None,
+        }
     }
 
     /// Returns the type parameter reference, with [`BoundType::IsA`] wrapped
     /// in `ref_mode` and `nullable` as appropriate.
-    pub(super) fn full_type_parameter_reference(
+    pub fn full_type_parameter_reference(
         &self,
         ref_mode: RefMode,
         nullable: Nullable,
         r#async: bool,
     ) -> String {
-        let ref_str = ref_mode.to_string();
-
-        // Generate `impl Trait` if this bound does not have an alias
-        let trait_bound = match self.type_parameter_reference() {
-            Some(t) => t.to_string(),
-            None => {
-                let trait_bound = self.trait_bound(r#async);
-                let trait_bound = format!("impl {trait_bound}");
-
-                // Combining a ref mode and lifetime requires parentheses for disambiguation
-                match self.bound_type {
-                    BoundType::IsA => {
-                        // TODO: This is fragile
-                        let has_lifetime = r#async || self.lt.is_some();
-
-                        if !ref_str.is_empty() && has_lifetime {
-                            format!("({trait_bound})")
-                        } else {
-                            trait_bound
-                        }
-                    }
-                    _ => trait_bound,
-                }
-            }
-        };
-
+        use BoundType::*;
         match self.bound_type {
-            BoundType::IsA if *nullable => {
-                format!("Option<{ref_str}{trait_bound}>")
-            }
-            BoundType::IsA => format!("{ref_str}{trait_bound}"),
-            BoundType::AsRef if *nullable => {
-                format!("Option<{trait_bound}>")
-            }
-            BoundType::NoWrapper | BoundType::AsRef => trait_bound,
-        }
-    }
-
-    /// Returns the type parameter definition for this bound, usually
-    /// of the form `T: SomeTrait` or `T: IsA<Foo>`.
-    pub(super) fn type_parameter_definition(&self, r#async: bool) -> Option<String> {
-        self.alias
-            .map(|alias| format!("{}: {}", alias, self.trait_bound(r#async)))
-    }
-
-    /// Returns the trait bound, usually of the form `SomeTrait`
-    /// or `IsA<Foo>`.
-    pub(super) fn trait_bound(&self, r#async: bool) -> String {
-        match self.bound_type {
-            BoundType::NoWrapper => self.type_str.clone(),
-            BoundType::IsA => {
-                if r#async {
-                    assert!(self.lt.is_none(), "Async overwrites lifetime");
-                }
-                let is_a = format!("IsA<{}>", self.type_str);
-
-                let lifetime = r#async
+            NoWrapper => self
+                .alias
+                .expect("must be defined in this context")
+                .to_string(),
+            IsA if self.alias.is_none() => {
+                let suffix = r#async
                     .then(|| " + Clone + 'static".to_string())
-                    .or_else(|| self.lt.map(|l| format!(" + '{l}")))
                     .unwrap_or_default();
 
-                format!("{is_a}{lifetime}")
+                let mut trait_bound = format!("impl IsA<{}>{suffix}", self.type_str);
+
+                let ref_str = ref_mode.to_string();
+                if !ref_str.is_empty() && r#async {
+                    trait_bound = format!("({trait_bound})");
+                }
+
+                if *nullable {
+                    format!("Option<{ref_str}{trait_bound}>")
+                } else {
+                    format!("{ref_str}{trait_bound}")
+                }
             }
-            BoundType::AsRef if self.lt.is_some() => panic!("AsRef cannot have a lifetime"),
-            BoundType::AsRef => format!("AsRef<{}>", self.type_str),
+            IsA if self.alias.is_some() => {
+                let alias = self.alias.unwrap();
+                let ref_str = ref_mode.to_string();
+                if *nullable {
+                    format!("Option<{ref_str} {alias}>")
+                } else {
+                    format!("{ref_str} {alias}")
+                }
+            }
+            IsA => {
+                if *nullable {
+                    format!("Option<impl Isa<{}>>", self.type_str)
+                } else {
+                    format!("impl IsA<{}>", self.type_str)
+                }
+            }
+            AsRef => {
+                assert!(self.lt.is_none(), "AsRef cannot have a lifetime");
+
+                if *nullable {
+                    format!("Option<impl AsRef<{}>>", self.type_str)
+                } else {
+                    format!("impl AsRef<{}>", self.type_str)
+                }
+            }
+            IntoOption => {
+                format!("impl Into<Option<{}>>", self.type_str)
+            }
+            IntoOptionRef => {
+                assert!(self.lt.is_some(), "must be defined in this context");
+                let ref_str = ref_mode.to_string_with_maybe_lt(self.lt);
+
+                format!("impl Into<Option<{ref_str} {}>>", self.type_str)
+            }
+            IntoOptionIsA => {
+                assert!(self.lt.is_some(), "must be defined in this context");
+                let ref_str = ref_mode.to_string_with_maybe_lt(self.lt);
+                let alias = self.alias.expect("must be defined in this context");
+
+                format!("impl Into<Option<{ref_str} {alias}>>")
+            }
         }
     }
 }

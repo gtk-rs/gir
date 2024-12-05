@@ -128,6 +128,29 @@ impl RefMode {
     pub fn is_none(self) -> bool {
         matches!(self, Self::None)
     }
+
+    pub fn to_string_with_maybe_lt(self, lt: Option<char>) -> String {
+        match self {
+            RefMode::None | RefMode::ByRefFake => {
+                assert!(lt.is_none(), "incompatible ref mode {self:?} with lifetime");
+                String::new()
+            }
+            RefMode::ByRef | RefMode::ByRefImmut | RefMode::ByRefConst => {
+                if let Some(lt) = lt {
+                    format!("&'{lt}")
+                } else {
+                    "&".to_string()
+                }
+            }
+            RefMode::ByRefMut => {
+                if let Some(lt) = lt {
+                    format!("&'{lt} mut ")
+                } else {
+                    "&mut ".to_string()
+                }
+            }
+        }
+    }
 }
 
 impl fmt::Display for RefMode {

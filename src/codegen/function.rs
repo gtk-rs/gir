@@ -215,8 +215,6 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
     };
     let mut param_str = String::with_capacity(100);
 
-    let (bounds, _) = bounds(&analysis.bounds, &[], false, false);
-
     for par in &analysis.parameters.rust_parameters {
         if !param_str.is_empty() {
             param_str.push_str(", ");
@@ -229,7 +227,7 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
     format!(
         "fn {}{}({}){}",
         analysis.codegen_name(),
-        bounds,
+        analysis.bounds.to_generic_params_str(),
         param_str,
         return_str,
     )
@@ -252,96 +250,32 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
 
     let mut param_str = String::with_capacity(100);
 
-    let mut skipped = 0;
-    let mut skipped_bounds = vec![];
-    for (pos, par) in analysis.parameters.rust_parameters.iter().enumerate() {
+    let mut bounds = Bounds::default();
+    for par in analysis.parameters.rust_parameters.iter() {
         let c_par = &analysis.parameters.c_parameters[par.ind_c];
 
         if c_par.name == "callback" || c_par.name == "cancellable" {
-            skipped += 1;
-            if let Some(alias) = analysis
-                .bounds
-                .get_parameter_bound(&c_par.name)
-                .and_then(|bound| bound.type_parameter_reference())
-            {
-                skipped_bounds.push(alias);
-            }
             continue;
         }
 
-        if pos - skipped > 0 {
-            param_str.push_str(", ");
+        if let Some(bound) = analysis.bounds.get_parameter_bound(&c_par.name).cloned() {
+            bounds.push(bound);
         }
 
         let s = c_par.to_parameter(env, &analysis.bounds, true);
+        if !param_str.is_empty() {
+            param_str.push_str(", ");
+        }
         param_str.push_str(&s);
     }
 
-    let (bounds, _) = bounds(&analysis.bounds, skipped_bounds.as_ref(), true, false);
-
     format!(
         "fn {}{}({}){}",
-        async_future.name, bounds, param_str, return_str,
+        async_future.name,
+        bounds.to_generic_params_str_async(),
+        param_str,
+        return_str,
     )
-}
-
-pub fn bounds(
-    bounds: &Bounds,
-    skip: &[char],
-    r#async: bool,
-    filter_callback_modified: bool,
-) -> (String, Vec<String>) {
-    use crate::analysis::bounds::BoundType::*;
-
-    if bounds.is_empty() {
-        return (String::new(), Vec::new());
-    }
-
-    let skip_lifetimes = bounds
-        .iter()
-        // TODO: False or true?
-        .filter(|bound| bound.alias.is_some_and(|alias| skip.contains(&alias)))
-        .filter_map(|bound| match bound.bound_type {
-            IsA | AsRef => bound.lt,
-            _ => None,
-        })
-        .collect::<Vec<_>>();
-
-    let lifetimes = bounds
-        .iter_lifetimes()
-        .filter(|s| !skip_lifetimes.contains(s))
-        .map(|s| format!("'{s}"))
-        .collect::<Vec<_>>();
-
-    let bounds = bounds.iter().filter(|bound| {
-        bound.alias.map_or(true, |alias| !skip.contains(&alias))
-            && (!filter_callback_modified || !bound.callback_modified)
-    });
-
-    let type_names = lifetimes
-        .iter()
-        .cloned()
-        .chain(
-            bounds
-                .clone()
-                .filter_map(|b| b.type_parameter_definition(r#async)),
-        )
-        .collect::<Vec<_>>();
-
-    let type_names = if type_names.is_empty() {
-        String::new()
-    } else {
-        format!("<{}>", type_names.join(", "))
-    };
-
-    let bounds = lifetimes
-        .into_iter()
-        // TODO: enforce that this is only used on NoWrapper!
-        // TODO: Analyze if alias is used in function, otherwise set to None!
-        .chain(bounds.filter_map(|b| b.alias).map(|a| a.to_string()))
-        .collect::<Vec<_>>();
-
-    (type_names, bounds)
 }
 
 pub fn body_chunk(
@@ -396,9 +330,7 @@ pub fn body_chunk(
         }
     }
 
-    let (bounds, bounds_names) = bounds(&analysis.bounds, &[], false, true);
-
-    builder.generate(env, &bounds, &bounds_names.join(", "))
+    builder.generate(env, &analysis.bounds)
 }
 
 pub fn body_chunk_futures(
