@@ -2,27 +2,19 @@ use std::{borrow::Cow, collections::HashMap, path::*, sync::OnceLock};
 
 use crate::case::*;
 
-static mut CRATE_NAME_OVERRIDES: Option<HashMap<String, String>> = None;
+static CRATE_NAME_OVERRIDES: OnceLock<HashMap<String, String>> = OnceLock::new();
 
 pub(crate) fn set_crate_name_overrides(overrides: HashMap<String, String>) {
-    unsafe {
-        assert!(
-            CRATE_NAME_OVERRIDES.is_none(),
-            "Crate name overrides already set"
-        );
-        CRATE_NAME_OVERRIDES = Some(overrides);
-    }
+    assert!(
+        CRATE_NAME_OVERRIDES.set(overrides).is_ok(),
+        "Crate name overrides already set"
+    );
 }
 
 fn get_crate_name_override(crate_name: &str) -> Option<String> {
-    unsafe {
-        if let Some(ref overrides) = CRATE_NAME_OVERRIDES {
-            if let Some(crate_name) = overrides.get(crate_name) {
-                return Some(crate_name.clone());
-            }
-        }
-        None
-    }
+    CRATE_NAME_OVERRIDES
+        .get()
+        .and_then(|overrides| overrides.get(crate_name).cloned())
 }
 
 pub fn split_namespace_name(name: &str) -> (Option<&str>, &str) {
