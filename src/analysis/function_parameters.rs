@@ -107,6 +107,7 @@ pub enum TransformationType {
         array_name: String,
         array_length_name: String,
         array_length_type: String,
+        nullable: bool,
     },
     IntoRaw(String),
     ToSome(String),
@@ -176,7 +177,7 @@ impl Parameters {
         let transformation = Transformation {
             ind_c,
             ind_rust: None,
-            transformation_type: get_length_type(env, "", &c_par.name, c_par.typ),
+            transformation_type: get_length_type(env, "", &c_par.name, c_par.typ, c_par.nullable),
         };
         self.transformations.push(transformation);
     }
@@ -301,7 +302,13 @@ pub fn analyze(
             let transformation = Transformation {
                 ind_c,
                 ind_rust: None,
-                transformation_type: get_length_type(env, &array_name, &par.name, typ),
+                transformation_type: get_length_type(
+                    env,
+                    &array_name,
+                    &par.name,
+                    typ,
+                    array_par.nullable,
+                ),
             };
             parameters.transformations.push(transformation);
         }
@@ -448,12 +455,14 @@ fn get_length_type(
     array_name: &str,
     length_name: &str,
     length_typ: TypeId,
+    nullable_array: Nullable,
 ) -> TransformationType {
     let array_length_type = RustType::try_new(env, length_typ).into_string();
     TransformationType::Length {
         array_name: array_name.to_string(),
         array_length_name: length_name.to_string(),
         array_length_type,
+        nullable: *nullable_array,
     }
 }
 
