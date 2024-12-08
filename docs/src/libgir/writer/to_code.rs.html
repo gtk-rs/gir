@@ -382,7 +382,7 @@
                     );
                 } <span class="kw">else </span>{
                     v.push(<span class="macro">format!</span>(
-                        <span class="string">"connect_raw(self.as_ptr() as *mut _, b\"{signal}\\0\".as_ptr() as *const _,"
+                        <span class="string">"connect_raw(self.as_ptr() as *mut _, c\"{signal}\".as_ptr() as *const _,"
                     </span>));
                 }
                 <span class="kw">let </span>self_str = <span class="kw">if </span>in_trait { <span class="string">"Self, " </span>} <span class="kw">else </span>{ <span class="string">"" </span>};

@@ -227,39 +227,23 @@
 <a href="#226" id="226">226</a>
 <a href="#227" id="227">227</a>
 <a href="#228" id="228">228</a>
-<a href="#229" id="229">229</a>
-<a href="#230" id="230">230</a>
-<a href="#231" id="231">231</a>
-<a href="#232" id="232">232</a>
-<a href="#233" id="233">233</a>
-<a href="#234" id="234">234</a>
-<a href="#235" id="235">235</a>
-<a href="#236" id="236">236</a>
-<a href="#237" id="237">237</a></pre></div><pre class="rust"><code><span class="kw">use </span>std::{borrow::Cow, collections::HashMap, path::<span class="kw-2">*</span>, sync::OnceLock};
+<a href="#229" id="229">229</a></pre></div><pre class="rust"><code><span class="kw">use </span>std::{borrow::Cow, collections::HashMap, path::<span class="kw-2">*</span>, sync::OnceLock};
 
 <span class="kw">use </span><span class="kw">crate</span>::case::<span class="kw-2">*</span>;
 
-<span class="kw">static </span><span class="kw-2">mut </span>CRATE_NAME_OVERRIDES: <span class="prelude-ty">Option</span>&lt;HashMap&lt;String, String&gt;&gt; = <span class="prelude-val">None</span>;
+<span class="kw">static </span>CRATE_NAME_OVERRIDES: OnceLock&lt;HashMap&lt;String, String&gt;&gt; = OnceLock::new();
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>set_crate_name_overrides(overrides: HashMap&lt;String, String&gt;) {
-    <span class="kw">unsafe </span>{
-        <span class="macro">assert!</span>(
-            CRATE_NAME_OVERRIDES.is_none(),
-            <span class="string">"Crate name overrides already set"
-        </span>);
-        CRATE_NAME_OVERRIDES = <span class="prelude-val">Some</span>(overrides);
-    }
+    <span class="macro">assert!</span>(
+        CRATE_NAME_OVERRIDES.set(overrides).is_ok(),
+        <span class="string">"Crate name overrides already set"
+    </span>);
 }
 
 <span class="kw">fn </span>get_crate_name_override(crate_name: <span class="kw-2">&amp;</span>str) -&gt; <span class="prelude-ty">Option</span>&lt;String&gt; {
-    <span class="kw">unsafe </span>{
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>overrides) = CRATE_NAME_OVERRIDES {
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(crate_name) = overrides.get(crate_name) {
-                <span class="kw">return </span><span class="prelude-val">Some</span>(crate_name.clone());
-            }
-        }
-        <span class="prelude-val">None
-    </span>}
+    CRATE_NAME_OVERRIDES
+        .get()
+        .and_then(|overrides| overrides.get(crate_name).cloned())
 }
 
 <span class="kw">pub fn </span>split_namespace_name(name: <span class="kw-2">&amp;</span>str) -&gt; (<span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>str&gt;, <span class="kw-2">&amp;</span>str) {
