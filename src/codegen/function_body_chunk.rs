@@ -188,7 +188,7 @@ impl Builder {
                                     "Box_<({})>",
                                     calls
                                         .iter()
-                                        .map(|c| format!("&{}", c.bound_name))
+                                        .map(|c| c.bound_name.to_string())
                                         .collect::<Vec<_>>()
                                         .join(", ")
                                 );
@@ -484,7 +484,15 @@ impl Builder {
                     ))),
                     type_: Some(Box::new(Chunk::Custom(
                         if !trampoline.scope.is_async() && !trampoline.scope.is_call() {
-                            format!("&{}", full_type.1)
+                            format!(
+                                "&{}",
+                                full_type
+                                    .1
+                                    .strip_prefix("Box_<")
+                                    .unwrap()
+                                    .strip_suffix(">")
+                                    .unwrap()
+                            )
                         } else {
                             full_type.1.clone()
                         },
@@ -516,7 +524,7 @@ impl Builder {
                         )));
                     } else {
                         body.push(Chunk::Custom(format!(
-                            "let callback = callback{}",
+                            "let callback = &callback{};",
                             if let Some(pos) = pos {
                                 format!(".{pos}")
                             } else {
