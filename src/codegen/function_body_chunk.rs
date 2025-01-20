@@ -956,11 +956,16 @@ impl Builder {
             if let TransformationType::Length {
                 ref array_name,
                 ref array_length_name,
+                nullable,
                 ..
             } = trans.transformation_type
             {
                 if let In = self.parameters[trans.ind_c] {
-                    let value = Chunk::Custom(format!("{array_name}.len() as _"));
+                    let value = Chunk::Custom(if nullable {
+                        format!("{array_name}.as_ref().map(|a| a.len()).unwrap_or(0)")
+                    } else {
+                        format!("{array_name}.len() as _")
+                    });
                     chunks.push(Chunk::Let {
                         name: array_length_name.clone(),
                         is_mut: false,
