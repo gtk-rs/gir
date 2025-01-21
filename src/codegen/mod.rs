@@ -16,6 +16,7 @@ use crate::{
 
 mod alias;
 mod bound;
+mod bounds;
 mod child_properties;
 mod constants;
 mod doc;
@@ -32,7 +33,6 @@ mod properties;
 mod property_body;
 mod record;
 mod records;
-mod ref_mode;
 mod return_value;
 mod signal;
 mod signal_body;

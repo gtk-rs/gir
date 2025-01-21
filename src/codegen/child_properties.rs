@@ -120,18 +120,11 @@ fn declaration(env: &Env, prop: &ChildProperty, is_get: bool) -> String {
 }
 
 fn body(env: &Env, prop: &ChildProperty, in_trait: bool, is_get: bool) -> Chunk {
-    let mut builder = property_body::Builder::new_for_child_property(env);
-    builder
+    property_body::Builder::new_for_child_property(env)
         .name(&prop.name)
         .in_trait(in_trait)
         .var_name(&prop.prop_name)
-        .is_get(is_get);
-
-    if let Ok(type_) = RustType::try_new(env, prop.typ) {
-        builder.type_(type_.as_str());
-    } else {
-        builder.type_("/*Unknown type*/");
-    }
-
-    builder.generate()
+        .for_get(is_get)
+        .type_(&RustType::try_new(env, prop.typ).into_string())
+        .generate()
 }

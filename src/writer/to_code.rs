@@ -170,12 +170,12 @@ impl ToCode for Chunk {
             Name(ref name) => vec![name.clone()],
             ExternCFunc {
                 ref name,
+                ref generic_params,
                 ref parameters,
                 ref body,
                 ref return_value,
-                ref bounds,
             } => {
-                let prefix = format!(r#"unsafe extern "C" fn {name}{bounds}("#);
+                let prefix = format!(r#"unsafe extern "C" fn {name}{generic_params}("#);
                 let suffix = ")".to_string();
                 let params: Vec<_> = parameters
                     .iter()

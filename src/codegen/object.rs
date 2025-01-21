@@ -13,12 +13,11 @@ use super::{
 };
 use crate::{
     analysis::{
-        self, bounds::BoundType, object::has_builder_properties, record_type::RecordType,
-        ref_mode::RefMode, rust_type::RustType, safety_assertion_mode::SafetyAssertionMode,
+        self, object::has_builder_properties, record_type::RecordType, rust_type::RustType,
+        safety_assertion_mode::SafetyAssertionMode,
     },
     env::Env,
-    library::{self, Nullable},
-    nameutil,
+    library, nameutil,
     traits::IntoString,
 };
 
@@ -371,31 +370,40 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
             let param_type = RustType::builder(env, property.typ)
                 .direction(direction)
                 .ref_mode(property.set_in_ref_mode)
-                .try_build();
+                .nullable(property.nullable)
+                .try_build_param();
             let comment_prefix = if param_type.is_err() { "//" } else { "" };
             let mut param_type_str = param_type.into_string();
             let (param_type_override, bounds, conversion) = match param_type_str.as_str() {
                 "&str" => (
                     Some(format!("impl Into<{glib_crate_name}::GString>")),
                     String::new(),
-                    ".into()",
+                    ".into()".to_string(),
                 ),
                 "&[&str]" => (
                     Some(format!("impl Into<{glib_crate_name}::StrV>")),
-                    String::from(""),
-                    ".into()",
+                    String::new(),
+                    ".into()".to_string(),
                 ),
-                _ if !property.bounds.is_empty() => {
-                    let (bounds, _) = function::bounds(&property.bounds, &[], false, false);
-                    let param_bound = property.bounds.get_parameter_bound(&property.name);
-                    let alias = param_bound.map(|bound| {
-                        bound.full_type_parameter_reference(RefMode::ByRef, Nullable(false), false)
-                    });
-                    let conversion = param_bound.and_then(|bound| match bound.bound_type {
-                        BoundType::AsRef(_) => Some(".as_ref().clone()"),
-                        _ => None,
-                    });
-                    (alias, bounds, conversion.unwrap_or(".clone().upcast()"))
+                _ if property.set_bound().is_some() => {
+                    let set_bound = property.set_bound().unwrap();
+
+                    let param_type_override = set_bound.full_type_parameter_reference(
+                        property.set_in_ref_mode,
+                        property.nullable,
+                        false,
+                    );
+                    let conversion = set_bound.bound_type.get_to_glib_extra(
+                        *property.nullable,
+                        false,
+                        property.set_in_ref_mode.is_none(),
+                    );
+
+                    (
+                        Some(param_type_override),
+                        property.bounds.to_generic_params_str(),
+                        conversion,
+                    )
                 }
                 typ if typ.starts_with('&') => {
                     let should_clone =
@@ -415,9 +423,9 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                             ".clone()"
                         };
 
-                    (None, String::new(), should_clone)
+                    (None, String::new(), should_clone.to_string())
                 }
-                _ => (None, String::new(), ""),
+                _ => (None, String::new(), "".to_string()),
             };
             if let Some(param_type_override) = param_type_override {
                 param_type_str = param_type_override.to_string();

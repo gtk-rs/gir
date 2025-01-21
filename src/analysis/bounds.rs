@@ -9,33 +9,49 @@ use crate::{
         ref_mode::RefMode,
         rust_type::RustType,
     },
-    config,
+    config::{self, parameter_matchable::ParameterMatchable},
     consts::TYPE_PARAMETERS_START,
     env::Env,
-    library::{Basic, Class, Concurrency, Function, ParameterDirection, Type, TypeId},
-    traits::IntoString,
+    library::{
+        Basic, Class, Concurrency, Function, Nullable, ParameterDirection, ParameterScope, Type,
+        TypeId,
+    },
+    traits::*,
 };
 
-#[derive(Clone, Eq, Debug, PartialEq)]
+#[derive(Clone, Copy, Eq, Debug, PartialEq)]
 pub enum BoundType {
     NoWrapper,
-    // lifetime
-    IsA(Option<char>),
-    // lifetime <- shouldn't be used but just in case...
-    AsRef(Option<char>),
+    IsA,
+    AsRef,
+    IntoOption,
+    IntoOptionRef,
+    IntoOptionIsA,
 }
 
 impl BoundType {
-    pub fn need_isa(&self) -> bool {
-        matches!(*self, Self::IsA(_))
-    }
-
-    // TODO: This is just a heuristic for now, based on what we do in codegen!
-    // Theoretically the surrounding function should determine whether it needs to
-    // reuse an alias (ie. to use in `call_func::<P, Q, R>`) or not.
-    // In the latter case an `impl` is generated instead of a type name/alias.
-    pub fn has_alias(&self) -> bool {
-        matches!(*self, Self::NoWrapper)
+    pub fn get_to_glib_extra(
+        &self,
+        nullable: bool,
+        instance_parameter: bool,
+        move_: bool,
+    ) -> String {
+        use BoundType::*;
+        match *self {
+            NoWrapper => "",
+            AsRef if move_ && nullable => ".map(|p| p.as_ref().clone().upcast())",
+            AsRef if nullable => ".as_ref().map(|p| p.as_ref())",
+            AsRef if move_ => ".upcast()",
+            AsRef => ".as_ref()",
+            IsA if move_ && nullable => ".map(|p| p.upcast())",
+            IsA if nullable && !instance_parameter => ".map(|p| p.as_ref())",
+            IsA if move_ => ".upcast()",
+            IsA => ".as_ref()",
+            IntoOption | IntoOptionRef { .. } => ".into()",
+            IntoOptionIsA if move_ => ".into()",
+            IntoOptionIsA => ".into().as_ref().map(|p| p.as_ref())",
+        }
+        .to_string()
     }
 }
 
@@ -43,7 +59,7 @@ impl BoundType {
 pub struct Bound {
     pub bound_type: BoundType,
     pub parameter_name: String,
-    /// Bound does not have an alias when `param: impl type_str` is used
+    pub lt: Option<char>,
     pub alias: Option<char>,
     pub type_str: String,
     pub callback_modified: bool,
@@ -52,8 +68,8 @@ pub struct Bound {
 #[derive(Clone, Debug)]
 pub struct Bounds {
     unused: VecDeque<char>,
-    used: Vec<Bound>,
-    lifetimes: Vec<char>,
+    pub used: Vec<Bound>,
+    pub lifetimes: Vec<char>,
 }
 
 impl Default for Bounds {
@@ -86,189 +102,335 @@ impl Bounds {
         concurrency: Concurrency,
         configured_functions: &[&config::functions::Function],
     ) -> (Option<String>, Option<CallbackInfo>) {
-        let type_name = RustType::builder(env, par.typ)
-            .ref_mode(RefMode::ByRefFake)
-            .try_build();
-        if type_name.is_err() {
+        if par.direction == ParameterDirection::Out {
             return (None, None);
         }
-        let mut type_string = type_name.into_string();
-        let mut callback_info = None;
+
+        let nullable = configured_functions
+            .matched_parameters(&par.name)
+            .iter()
+            .find_map(|p| p.nullable)
+            .unwrap_or(par.nullable);
+        let ref_mode = if par.move_ {
+            RefMode::None
+        } else {
+            par.ref_mode
+        };
+        let Ok(rust_type) = RustType::builder(env, par.typ)
+            .direction(par.direction)
+            .nullable(nullable)
+            .ref_mode(ref_mode)
+            .try_build()
+        else {
+            return (None, None);
+        };
+
+        if par.instance_parameter {
+            let ret = Bounds::get_to_glib_extra_for(
+                env,
+                par.typ,
+                ref_mode,
+                nullable,
+                par.direction,
+                par.instance_parameter,
+                par.scope,
+            );
+
+            return (ret, None);
+        }
+
+        let mut type_string = rust_type.into_string();
         let mut ret = None;
-        let mut need_is_into_check = false;
+        let mut callback_info = None;
 
-        if !par.instance_parameter && par.direction != ParameterDirection::Out {
-            if let Some(bound_type) = Bounds::type_for(env, par.typ) {
-                ret = Some(Bounds::get_to_glib_extra(
-                    &bound_type,
-                    *par.nullable,
-                    par.instance_parameter,
-                    par.move_,
-                ));
-                if r#async && (par.name == "callback" || par.name.ends_with("_callback")) {
-                    let func_name = func.c_identifier.as_ref().unwrap();
-                    let finish_func_name = if let Some(finish_func_name) = &func.finish_func {
-                        finish_func_name.to_string()
+        if let Some(mut bound_type) = Bounds::type_for(
+            env,
+            par.typ,
+            ref_mode,
+            nullable,
+            par.direction,
+            par.instance_parameter,
+            par.scope,
+        ) {
+            ret = Some(bound_type.get_to_glib_extra(
+                *par.nullable,
+                par.instance_parameter,
+                par.move_,
+            ));
+
+            if r#async && (par.name == "callback" || par.name.ends_with("_callback")) {
+                bound_type = BoundType::NoWrapper;
+
+                let func_name = func.c_identifier.as_ref().unwrap();
+                let finish_func_name = if let Some(finish_func_name) = &func.finish_func {
+                    finish_func_name.to_string()
+                } else {
+                    finish_function_name(func_name)
+                };
+                if let Some(function) = find_function(env, &finish_func_name) {
+                    // FIXME: This should work completely based on the analysis of the finish()
+                    // function but that a) happens afterwards and b) is
+                    // not accessible from here either.
+                    let mut out_parameters =
+                        find_out_parameters(env, function, configured_functions);
+                    if use_function_return_for_result(
+                        env,
+                        function.ret.typ,
+                        &func.name,
+                        configured_functions,
+                    ) {
+                        let nullable = configured_functions
+                            .iter()
+                            .find_map(|f| f.ret.nullable)
+                            .unwrap_or(function.ret.nullable);
+
+                        out_parameters.insert(
+                            0,
+                            RustType::builder(env, function.ret.typ)
+                                .direction(function.ret.direction)
+                                .nullable(nullable)
+                                .try_build_param()
+                                .into_string(),
+                        );
+                    }
+                    let parameters = format_out_parameters(&out_parameters);
+                    let error_type = find_error_type(env, function);
+                    if let Some(ref error) = error_type {
+                        type_string = format!("FnOnce(Result<{parameters}, {error}>) + 'static");
                     } else {
-                        finish_function_name(func_name)
-                    };
-                    if let Some(function) = find_function(env, &finish_func_name) {
-                        // FIXME: This should work completely based on the analysis of the finish()
-                        // function but that a) happens afterwards and b) is
-                        // not accessible from here either.
-                        let mut out_parameters =
-                            find_out_parameters(env, function, configured_functions);
-                        if use_function_return_for_result(
-                            env,
-                            function.ret.typ,
-                            &func.name,
-                            configured_functions,
-                        ) {
-                            let nullable = configured_functions
-                                .iter()
-                                .find_map(|f| f.ret.nullable)
-                                .unwrap_or(function.ret.nullable);
-
-                            out_parameters.insert(
-                                0,
-                                RustType::builder(env, function.ret.typ)
-                                    .direction(function.ret.direction)
-                                    .nullable(nullable)
-                                    .try_build()
-                                    .into_string(),
-                            );
-                        }
-                        let parameters = format_out_parameters(&out_parameters);
-                        let error_type = find_error_type(env, function);
-                        if let Some(ref error) = error_type {
-                            type_string =
-                                format!("FnOnce(Result<{parameters}, {error}>) + 'static");
-                        } else {
-                            type_string = format!("FnOnce({parameters}) + 'static");
-                        }
-                        let bound_name = *self.unused.front().unwrap();
-                        callback_info = Some(CallbackInfo {
-                            callback_type: type_string.clone(),
-                            success_parameters: parameters,
-                            error_parameters: error_type,
-                            bound_name,
-                        });
+                        type_string = format!("FnOnce({parameters}) + 'static");
                     }
-                } else if par.c_type == "GDestroyNotify" || env.library.type_(par.typ).is_function()
-                {
-                    need_is_into_check = par.c_type != "GDestroyNotify";
-                    if let Type::Function(_) = env.library.type_(par.typ) {
-                        let callback_parameters_config =
-                            configured_functions.iter().find_map(|f| {
-                                f.parameters
-                                    .iter()
-                                    .find(|p| p.ident.is_match(&par.name))
-                                    .map(|p| &p.callback_parameters)
-                            });
-
-                        let mut rust_ty = RustType::builder(env, par.typ)
-                            .direction(par.direction)
-                            .scope(par.scope)
-                            .concurrency(concurrency);
-                        if let Some(callback_parameters_config) = callback_parameters_config {
-                            rust_ty =
-                                rust_ty.callback_parameters_config(callback_parameters_config);
-                        }
-                        type_string = rust_ty
-                            .try_from_glib(&par.try_from_glib)
-                            .try_build()
-                            .into_string();
-                        let bound_name = *self.unused.front().unwrap();
-                        callback_info = Some(CallbackInfo {
-                            callback_type: type_string.clone(),
-                            success_parameters: String::new(),
-                            error_parameters: None,
-                            bound_name,
-                        });
-                    }
+                    let bound_name = *self.unused.front().unwrap();
+                    callback_info = Some(CallbackInfo {
+                        callback_type: type_string.clone(),
+                        success_parameters: parameters,
+                        error_parameters: error_type,
+                        bound_name,
+                    });
                 }
-                if (!need_is_into_check || !*par.nullable) && par.c_type != "GDestroyNotify" {
-                    self.add_parameter(&par.name, &type_string, bound_type, r#async);
+            } else if par.c_type == "GDestroyNotify" || env.library.type_(par.typ).is_function() {
+                if let Type::Function(_) = env.library.type_(par.typ) {
+                    let callback_parameters_config = configured_functions.iter().find_map(|f| {
+                        f.parameters
+                            .iter()
+                            .find(|p| p.ident.is_match(&par.name))
+                            .map(|p| &p.callback_parameters)
+                    });
+
+                    let mut rust_ty = RustType::builder(env, par.typ)
+                        .direction(par.direction)
+                        .scope(par.scope)
+                        .concurrency(concurrency);
+                    if let Some(callback_parameters_config) = callback_parameters_config {
+                        rust_ty = rust_ty.callback_parameters_config(callback_parameters_config);
+                    }
+                    type_string = rust_ty
+                        .try_from_glib(&par.try_from_glib)
+                        .try_build()
+                        .into_string();
+                    let bound_name = *self.unused.front().unwrap();
+                    callback_info = Some(CallbackInfo {
+                        callback_type: type_string.clone(),
+                        success_parameters: String::new(),
+                        error_parameters: None,
+                        bound_name,
+                    });
                 }
             }
-        } else if par.instance_parameter {
-            if let Some(bound_type) = Bounds::type_for(env, par.typ) {
-                ret = Some(Bounds::get_to_glib_extra(
-                    &bound_type,
-                    *par.nullable,
-                    true,
-                    par.move_,
-                ));
+
+            if par.c_type != "GDestroyNotify" {
+                self.add_for(&par.name, &type_string, bound_type);
             }
         }
 
         (ret, callback_info)
     }
 
-    pub fn type_for(env: &Env, type_id: TypeId) -> Option<BoundType> {
-        use self::BoundType::*;
+    pub fn add_for_property_setter(
+        &mut self,
+        env: &Env,
+        type_id: TypeId,
+        name: &str,
+        ref_mode: RefMode,
+        nullable: Nullable,
+    ) -> bool {
+        let Some(bound_type) = Bounds::type_for(
+            env,
+            type_id,
+            ref_mode,
+            nullable,
+            ParameterDirection::In,
+            false,
+            ParameterScope::None,
+        ) else {
+            return false;
+        };
+
+        let type_str = RustType::builder(env, type_id)
+            .nullable(nullable)
+            .direction(ParameterDirection::In)
+            .ref_mode(ref_mode)
+            .try_build()
+            .into_string();
+
+        self.add_for(name, &type_str, bound_type);
+
+        true
+    }
+
+    fn type_for(
+        env: &Env,
+        type_id: TypeId,
+        ref_mode: RefMode,
+        nullable: Nullable,
+        direction: ParameterDirection,
+        instance_parameter: bool,
+        scope: ParameterScope,
+    ) -> Option<BoundType> {
         match env.library.type_(type_id) {
-            Type::Basic(Basic::Filename | Basic::OsString) => Some(AsRef(None)),
+            Type::Basic(Basic::Filename | Basic::OsString) => Some(BoundType::AsRef),
             Type::Class(Class {
                 is_fundamental: true,
                 ..
-            }) => Some(AsRef(None)),
+            }) => Some(BoundType::AsRef),
             Type::Class(Class {
                 final_type: true, ..
-            }) => None,
+            }) => {
+                if *nullable
+                    && direction == ParameterDirection::In
+                    && !ref_mode.is_none()
+                    && !instance_parameter
+                {
+                    Some(BoundType::IntoOptionRef)
+                } else {
+                    None
+                }
+            }
             Type::Class(Class {
                 final_type: false, ..
-            }) => Some(IsA(None)),
-            Type::Interface(..) => Some(IsA(None)),
+            })
+            | Type::Interface(..) => {
+                if *nullable
+                    && direction == ParameterDirection::In
+                    && !ref_mode.is_none()
+                    && !instance_parameter
+                {
+                    Some(BoundType::IntoOptionIsA)
+                } else {
+                    Some(BoundType::IsA)
+                }
+            }
             Type::List(_) | Type::SList(_) | Type::CArray(_) => None,
-            Type::Function(_) => Some(NoWrapper),
-            _ => None,
+            Type::Function(_) => Some(BoundType::NoWrapper),
+            _ => {
+                if *nullable && direction == ParameterDirection::In && scope.is_none() {
+                    if !ref_mode.is_none() {
+                        Some(BoundType::IntoOptionRef)
+                    } else {
+                        Some(BoundType::IntoOption)
+                    }
+                } else {
+                    None
+                }
+            }
         }
     }
 
-    pub fn get_to_glib_extra(
-        bound_type: &BoundType,
-        nullable: bool,
+    pub fn get_to_glib_extra_for(
+        env: &Env,
+        type_id: TypeId,
+        ref_mode: RefMode,
+        nullable: Nullable,
+        direction: ParameterDirection,
         instance_parameter: bool,
-        move_: bool,
-    ) -> String {
-        use self::BoundType::*;
-        match bound_type {
-            AsRef(_) if move_ && nullable => ".map(|p| p.as_ref().clone().upcast())".to_owned(),
-            AsRef(_) if nullable => ".as_ref().map(|p| p.as_ref())".to_owned(),
-            AsRef(_) if move_ => ".upcast()".to_owned(),
-            AsRef(_) => ".as_ref()".to_owned(),
-            IsA(_) if move_ && nullable => ".map(|p| p.upcast())".to_owned(),
-            IsA(_) if nullable && !instance_parameter => ".map(|p| p.as_ref())".to_owned(),
-            IsA(_) if move_ => ".upcast()".to_owned(),
-            IsA(_) => ".as_ref()".to_owned(),
-            _ => String::new(),
+        scope: ParameterScope,
+    ) -> Option<String> {
+        let bound_type = Self::type_for(
+            env,
+            type_id,
+            ref_mode,
+            nullable,
+            direction,
+            instance_parameter,
+            scope,
+        )?;
+
+        let res = bound_type.get_to_glib_extra(*nullable, instance_parameter, ref_mode.is_none());
+
+        if res.is_empty() {
+            return None;
         }
+
+        Some(res)
     }
 
-    pub fn add_parameter(
-        &mut self,
-        name: &str,
-        type_str: &str,
-        mut bound_type: BoundType,
-        r#async: bool,
-    ) {
-        if r#async && name == "callback" {
-            bound_type = BoundType::NoWrapper;
-        }
+    pub fn add_for(&mut self, name: &str, type_str: &str, bound_type: BoundType) {
         if self.used.iter().any(|n| n.parameter_name == name) {
             return;
         }
-        let alias = bound_type
-            .has_alias()
-            .then(|| self.unused.pop_front().expect("No free type aliases!"));
+
+        let mut lt = None;
+        let mut alias = None;
+        match bound_type {
+            BoundType::NoWrapper => {
+                // TODO: This is just a heuristic for now, based on what we do in codegen!
+                // Theoretically the surrounding function should determine whether it needs to
+                // reuse an alias (ie. to use in `call_func::<P, Q, R>`) or not.
+                // In the latter case an `impl` is generated instead of a type name/alias.
+                alias = Some(self.unused.pop_front().expect("No free type aliases!"));
+            }
+            BoundType::IntoOptionRef => {
+                lt = Some(self.get_lifetime());
+            }
+            BoundType::IntoOptionIsA => {
+                lt = Some(self.get_lifetime());
+                alias = Some(self.unused.pop_front().expect("No free type aliases!"));
+            }
+            _ => (),
+        }
+
         self.used.push(Bound {
             bound_type,
             parameter_name: name.to_owned(),
+            lt,
             alias,
             type_str: type_str.to_owned(),
             callback_modified: false,
         });
+    }
+
+    pub fn push(&mut self, bound: Bound) {
+        if let Some(lt) = bound.lt {
+            if !self.lifetimes.contains(&lt) {
+                self.lifetimes.push(lt);
+                self.lifetimes.sort();
+            }
+        }
+
+        if let Some(alias) = bound.alias {
+            if self
+                .used
+                .iter()
+                .any(|b| b.alias.map_or(false, |a| a == alias))
+            {
+                panic!("Pushing a bound with an alias already in use");
+            }
+
+            self.unused.retain(|u| *u != alias);
+        }
+
+        self.used.push(bound);
+        self.used.sort_by_key(|u| u.alias);
+    }
+
+    fn get_lifetime(&mut self) -> char {
+        // In practice, we always need at most one lifetime so far
+        let lt = 'a';
+        if self.lifetimes.is_empty() {
+            self.lifetimes.push(lt);
+        }
+
+        lt
     }
 
     pub fn get_parameter_bound(&self, name: &str) -> Option<&Bound> {
@@ -280,9 +442,9 @@ impl Bounds {
         use self::BoundType::*;
         for used in &self.used {
             match used.bound_type {
-                NoWrapper => (),
-                IsA(_) => imports.add("glib::prelude::*"),
-                AsRef(_) => imports.add_used_type(&used.type_str),
+                NoWrapper { .. } | IntoOption | IntoOptionRef { .. } => (),
+                IsA { .. } | IntoOptionIsA { .. } => imports.add("glib::prelude::*"),
+                AsRef { .. } => imports.add_used_type(&used.type_str),
             }
         }
     }
@@ -295,30 +457,8 @@ impl Bounds {
         self.used.iter()
     }
 
-    pub fn iter_lifetimes(&self) -> Iter<'_, char> {
-        self.lifetimes.iter()
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct PropertyBound {
-    pub alias: char,
-    pub type_str: String,
-}
-
-impl PropertyBound {
-    pub fn get(env: &Env, type_id: TypeId) -> Option<Self> {
-        let type_ = env.type_(type_id);
-        if type_.is_final_type() {
-            return None;
-        }
-        Some(Self {
-            alias: TYPE_PARAMETERS_START,
-            type_str: RustType::builder(env, type_id)
-                .ref_mode(RefMode::ByRefFake)
-                .try_build()
-                .into_string(),
-        })
+    pub fn iter_aliases(&self) -> impl Iterator<Item = char> + '_ {
+        self.used.iter().flat_map(|u| u.alias)
     }
 }
 
@@ -342,19 +482,15 @@ fn find_out_parameters(
             // function but that a) happens afterwards and b) is not accessible
             // from here either.
             let nullable = configured_functions
+                .matched_parameters(&param.name)
                 .iter()
-                .find_map(|f| {
-                    f.parameters
-                        .iter()
-                        .filter(|p| p.ident.is_match(&param.name))
-                        .find_map(|p| p.nullable)
-                })
+                .find_map(|p| p.nullable)
                 .unwrap_or(param.nullable);
 
             RustType::builder(env, param.typ)
                 .direction(param.direction)
                 .nullable(nullable)
-                .try_build()
+                .try_build_param()
                 .into_string()
         })
         .collect()
@@ -388,29 +524,30 @@ fn find_error_type(env: &Env, function: &Function) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::mem::discriminant;
 
     #[test]
     fn get_new_all() {
         let mut bounds: Bounds = Default::default();
-        let typ = BoundType::IsA(None);
-        bounds.add_parameter("a", "", typ.clone(), false);
+        let typ = BoundType::IsA;
+        bounds.add_for("a", "", typ);
         assert_eq!(bounds.iter().len(), 1);
         // Don't add second time
-        bounds.add_parameter("a", "", typ.clone(), false);
+        bounds.add_for("a", "", typ);
         assert_eq!(bounds.iter().len(), 1);
-        bounds.add_parameter("b", "", typ.clone(), false);
-        bounds.add_parameter("c", "", typ.clone(), false);
-        bounds.add_parameter("d", "", typ.clone(), false);
-        bounds.add_parameter("e", "", typ.clone(), false);
-        bounds.add_parameter("f", "", typ.clone(), false);
-        bounds.add_parameter("g", "", typ.clone(), false);
-        bounds.add_parameter("h", "", typ.clone(), false);
+        bounds.add_for("b", "", typ);
+        bounds.add_for("c", "", typ);
+        bounds.add_for("d", "", typ);
+        bounds.add_for("e", "", typ);
+        bounds.add_for("f", "", typ);
+        bounds.add_for("g", "", typ);
+        bounds.add_for("h", "", typ);
         assert_eq!(bounds.iter().len(), 8);
-        bounds.add_parameter("h", "", typ.clone(), false);
+        bounds.add_for("h", "", typ);
         assert_eq!(bounds.iter().len(), 8);
-        bounds.add_parameter("i", "", typ.clone(), false);
-        bounds.add_parameter("j", "", typ.clone(), false);
-        bounds.add_parameter("k", "", typ, false);
+        bounds.add_for("i", "", typ);
+        bounds.add_for("j", "", typ);
+        bounds.add_for("k", "", typ);
     }
 
     #[test]
@@ -420,7 +557,7 @@ mod tests {
         let typ = BoundType::NoWrapper;
         for c in 'a'..='l' {
             // Should panic on `l` because all type parameters are exhausted
-            bounds.add_parameter(c.to_string().as_str(), "", typ.clone(), false);
+            bounds.add_for(c.to_string().as_str(), "", typ);
         }
     }
 
@@ -428,32 +565,32 @@ mod tests {
     fn get_parameter_bound() {
         let mut bounds: Bounds = Default::default();
         let typ = BoundType::NoWrapper;
-        bounds.add_parameter("a", "", typ.clone(), false);
-        bounds.add_parameter("b", "", typ.clone(), false);
+        bounds.add_for("a", "", typ);
+        bounds.add_for("b", "", typ);
         let bound = bounds.get_parameter_bound("a").unwrap();
         // `NoWrapper `bounds are expected to have an alias:
         assert_eq!(bound.alias, Some('P'));
-        assert_eq!(bound.bound_type, typ);
+        assert_eq!(discriminant(&bound.bound_type), discriminant(&typ));
         let bound = bounds.get_parameter_bound("b").unwrap();
         assert_eq!(bound.alias, Some('Q'));
-        assert_eq!(bound.bound_type, typ);
+        assert_eq!(discriminant(&bound.bound_type), discriminant(&typ));
         assert_eq!(bounds.get_parameter_bound("c"), None);
     }
 
     #[test]
     fn impl_bound() {
         let mut bounds: Bounds = Default::default();
-        let typ = BoundType::IsA(None);
-        bounds.add_parameter("a", "", typ.clone(), false);
-        bounds.add_parameter("b", "", typ.clone(), false);
+        let typ = BoundType::IsA;
+        bounds.add_for("a", "", typ);
+        bounds.add_for("b", "", typ);
         let bound = bounds.get_parameter_bound("a").unwrap();
         // `IsA` is simplified to an inline `foo: impl IsA<Bar>` and
         // lacks an alias/type-parameter:
         assert_eq!(bound.alias, None);
         assert_eq!(bound.bound_type, typ);
 
-        let typ = BoundType::AsRef(None);
-        bounds.add_parameter("c", "", typ.clone(), false);
+        let typ = BoundType::AsRef;
+        bounds.add_for("c", "", typ);
         let bound = bounds.get_parameter_bound("c").unwrap();
         // Same `impl AsRef<Foo>` simplification as `IsA`:
         assert_eq!(bound.alias, None);
