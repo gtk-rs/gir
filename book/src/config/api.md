@@ -298,8 +298,24 @@ version = "3.12"
     version = "3.18"
 ```
 
-For enumerations and bitflags, you can also configure additional `#[derive()]`
-clauses optionally conditioned to a `cfg`.
+For enumerations, bitflags and boxed types / records, you can configure
+the `#[derive()]` clauses, optionally conditioned to a `cfg`.
+
+Providing `#[derive()]` clauses behaves differently depending on the type
+they are added to:
+
+* for boxed types / records (except `inline_boxed` types), the provided
+  `#[derive()]` clauses replace all the derives that are normally added
+  by default (i.e. `#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]`);
+  if the default derives are needed, they must be explicitly listed.
+* for `inline_boxed` types, only the `Debug` trait can be specified (and thus
+  added); providing any other trait will cause gir to fail with an error.
+* for enumerations, the provided `#[derive()]` clauses replace all the ones
+  that are normally derived by default (i.e. `#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]`)
+  with the exception of `Copy` and `Clone` that are always derived;
+  if the default derives are needed, they must be explicitly listed.
+* for bitflags, the provided `#[derive()]` clauses are simply added to
+  the derives implemented by default.
 
 ```toml
 [[object]]
