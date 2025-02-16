@@ -102,6 +102,7 @@ fn analyze_signal(
     if trampoline.is_ok() {
         imports.add_used_types(&used_types);
         imports.add("glib::prelude::*");
+        imports.add("glib::object::ObjectType as _");
         imports.add("glib::signal::{connect_raw, SignalHandlerId}");
         imports.add("std::boxed::Box as Box_");
     }

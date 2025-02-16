@@ -158,7 +158,7 @@ impl ToCode for Chunk {
                     );
                 } else {
                     v.push(format!(
-                        "connect_raw(self.as_ptr() as *mut _, b\"{signal}\\0\".as_ptr() as *const _,"
+                        "connect_raw(self.as_ptr() as *mut _, c\"{signal}\".as_ptr() as *const _,"
                     ));
                 }
                 let self_str = if in_trait { "Self, " } else { "" };
