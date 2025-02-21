@@ -92,7 +92,7 @@ pub fn generate(
 
     let unsafe_ = if analysis.unsafe_ { "unsafe " } else { "" };
     let declaration = declaration(env, analysis);
-    let suffix = if only_declaration { ";" } else { " {" };
+    let suffix = if only_declaration { ";" } else if analysis.unsafe_ { " { unsafe {" } else { " {" };
 
     writeln!(w)?;
     cfg_deprecated(w, env, None, analysis.deprecated_version, commented, indent)?;
@@ -187,7 +187,11 @@ pub fn generate(
                     writeln!(w)?;
                 }
             }
-            writeln!(w, "{}{}}}", tabs(indent), comment_prefix)?;
+            if analysis.unsafe_ {
+                writeln!(w, "{}{}}}}}", tabs(indent), comment_prefix)?;
+            } else {
+                writeln!(w, "{}{}}}", tabs(indent), comment_prefix)?;
+            }
         }
     }
 
