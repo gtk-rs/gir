@@ -459,7 +459,7 @@ fn parse_object(
     if status != GStatus::Manual
         && !conversion_type
             .as_ref()
-            .map_or(true, ConversionType::can_use_to_generate)
+            .is_none_or(ConversionType::can_use_to_generate)
     {
         warn!(
             "unexpected conversion_type {:?} configuration used for non-manual object {}",

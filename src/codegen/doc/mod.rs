@@ -137,7 +137,7 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
                 .config
                 .objects
                 .get(&tid.full_name(&env.library))
-                .map_or(true, |obj| obj.status.ignored())
+                .is_none_or(|obj| obj.status.ignored())
                 && !env.is_totally_deprecated(None, enum_.deprecated_version)
             {
                 generators.push((
@@ -150,7 +150,7 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
                 .config
                 .objects
                 .get(&tid.full_name(&env.library))
-                .map_or(true, |obj| obj.status.ignored())
+                .is_none_or(|obj| obj.status.ignored())
                 && !env.is_totally_deprecated(None, bitfield.deprecated_version)
             {
                 generators.push((
@@ -208,7 +208,7 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
                     fn_new_name,
                     &doc_ignored_parameters,
                     None,
-                    f_info.map_or(true, |f| f.generate_doc),
+                    f_info.is_none_or(|f| f.generate_doc),
                 )?;
             }
         }
@@ -226,7 +226,7 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
             .config
             .objects
             .get(&constant.typ.full_name(&env.library))
-            .map_or(true, |c| c.generate_doc);
+            .is_none_or(|c| c.generate_doc);
         if generate_doc {
             write_item_doc(w, &ty_id, |w| {
                 if let Some(ref doc) = constant.doc {
@@ -530,7 +530,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
                 fn_new_name,
                 &doc_ignored_parameters,
                 Some((&info.type_id, object_location)),
-                f_info.map_or(true, |f| f.generate_doc),
+                f_info.is_none_or(|f| f.generate_doc),
             )?;
         }
     }
@@ -604,7 +604,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
                 fn_new_name,
                 &doc_ignored_parameters,
                 Some((&info.type_id, object_location)),
-                f_info.map_or(true, |f| f.generate_doc),
+                f_info.is_none_or(|f| f.generate_doc),
             )?;
         }
     }
@@ -663,7 +663,7 @@ fn create_record_doc(w: &mut dyn Write, env: &Env, info: &analysis::record::Info
     let trait_name = object
         .and_then(|o| o.trait_name.clone())
         .unwrap_or_else(|| format!("{}Ext", info.name));
-    let generate_doc = object.map_or(true, |r| r.generate_doc);
+    let generate_doc = object.is_none_or(|r| r.generate_doc);
     if generate_doc {
         write_item_doc(w, &ty, |w| {
             if let Some(ref doc) = record.doc {
@@ -708,7 +708,7 @@ fn create_record_doc(w: &mut dyn Write, env: &Env, info: &analysis::record::Info
                 fn_new_name,
                 &HashSet::new(),
                 Some((&info.type_id, None)),
-                f_info.map_or(true, |f| f.generate_doc),
+                f_info.is_none_or(|f| f.generate_doc),
             )?;
         }
     }
@@ -719,7 +719,7 @@ fn create_enum_doc(w: &mut dyn Write, env: &Env, enum_: &Enumeration, tid: TypeI
     let ty = enum_.to_stripper_type();
     let config = env.config.objects.get(&tid.full_name(&env.library));
 
-    if config.map_or(true, |c| c.generate_doc) {
+    if config.is_none_or(|c| c.generate_doc) {
         write_item_doc(w, &ty, |w| {
             if let Some(ref doc) = enum_.doc {
                 writeln!(w, "{}", reformat_doc(doc, env, Some((&tid, None))))?;
@@ -778,7 +778,7 @@ fn create_bitfield_doc(
     let config = env.config.objects.get(&tid.full_name(&env.library));
 
     write_item_doc(w, &ty, |w| {
-        if config.map_or(true, |c| c.generate_doc) {
+        if config.is_none_or(|c| c.generate_doc) {
             if let Some(ref doc) = bitfield.doc {
                 writeln!(w, "{}", reformat_doc(doc, env, Some((&tid, None))))?;
             }
@@ -1007,7 +1007,7 @@ fn create_property_doc(
         .config
         .objects
         .get(&obj_info.type_id.full_name(&env.library))
-        .map_or(true, |r| r.generate_doc);
+        .is_none_or(|r| r.generate_doc);
     if !generate_doc {
         return Ok(());
     }

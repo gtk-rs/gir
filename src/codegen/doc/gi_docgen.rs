@@ -215,11 +215,7 @@ fn find_virtual_method_by_name(
                     &env.library.namespaces[f.ns_id as usize].name == n
                 })
         },
-        |o| {
-            type_.map_or(true, |t| {
-                o.name == t && is_same_namespace(env, namespace, o.type_id)
-            })
-        },
+        |o| type_.is_none_or(|t| o.name == t && is_same_namespace(env, namespace, o.type_id)),
         |_| false,
         |_| false,
         |_| false,
@@ -245,26 +241,10 @@ fn find_method_or_function_by_name(
                     &env.library.namespaces[f.ns_id as usize].name == n
                 })
         },
-        |o| {
-            type_.map_or(true, |t| {
-                o.name == t && is_same_namespace(env, namespace, o.type_id)
-            })
-        },
-        |r| {
-            type_.map_or(true, |t| {
-                r.name == t && is_same_namespace(env, namespace, r.type_id)
-            })
-        },
-        |e| {
-            type_.map_or(true, |t| {
-                e.name == t && is_same_namespace(env, namespace, e.type_id)
-            })
-        },
-        |f| {
-            type_.map_or(true, |t| {
-                f.name == t && is_same_namespace(env, namespace, f.type_id)
-            })
-        },
+        |o| type_.is_none_or(|t| o.name == t && is_same_namespace(env, namespace, o.type_id)),
+        |r| type_.is_none_or(|t| r.name == t && is_same_namespace(env, namespace, r.type_id)),
+        |e| type_.is_none_or(|t| e.name == t && is_same_namespace(env, namespace, e.type_id)),
+        |f| type_.is_none_or(|t| f.name == t && is_same_namespace(env, namespace, f.type_id)),
         is_class_method,
         false,
     )

@@ -314,7 +314,7 @@ pub fn bounds(
         .collect::<Vec<_>>();
 
     let bounds = bounds.iter().filter(|bound| {
-        bound.alias.map_or(true, |alias| !skip.contains(&alias))
+        bound.alias.is_none_or(|alias| !skip.contains(&alias))
             && (!filter_callback_modified || !bound.callback_modified)
     });
 
