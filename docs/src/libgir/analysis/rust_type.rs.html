@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/analysis/rust_type.rs`."><title>rust_type.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-42caa33d.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.84.1 (e71f9a9a9 2025-01-27)" data-channel="1.84.1" data-search-js="search-92e6798f.js" data-settings-js="settings-0f613d39.js" ><script src="../../../static.files/storage-59e33391.js"></script><script defer src="../../../static.files/src-script-56102188.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">libgir/analysis/</div>rust_type.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/analysis/rust_type.rs`."><title>rust_type.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0 (4d91de4e4 2025-02-17)" data-channel="1.85.0" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../../../static.files/storage-59e33391.js"></script><script defer src="../../../static.files/src-script-56102188.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">libgir/analysis/</div>rust_type.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -723,7 +723,7 @@
 
 <span class="kw">impl </span>RustType {
     <span class="doccomment">/// Try building the `RustType` with no specific additional configuration.
-    </span><span class="kw">pub fn </span>try_new(env: <span class="kw-2">&amp;</span>Env, type_id: library::TypeId) -&gt; <span class="prelude-ty">Result </span>{
+    </span><span class="kw">pub fn </span>try_new(env: <span class="kw-2">&amp;</span>Env, type_id: library::TypeId) -&gt; <span class="prelude-ty">Result</span> {
         RustTypeBuilder::new(env, type_id).try_build()
     }
 
@@ -773,7 +773,7 @@
         <span class="prelude-val">Ok</span>(type_name)
     }
 
-    <span class="kw">fn </span>try_new_and_use(env: <span class="kw-2">&amp;</span>Env, type_id: library::TypeId) -&gt; <span class="prelude-ty">Result </span>{
+    <span class="kw">fn </span>try_new_and_use(env: <span class="kw-2">&amp;</span>Env, type_id: library::TypeId) -&gt; <span class="prelude-ty">Result</span> {
         <span class="self">Self</span>::check(env, type_id, <span class="kw-2">&amp;</span>env.library.type_(type_id).get_name()).map(|type_name| {
             RustType {
                 inner: type_name.clone(),
@@ -786,7 +786,7 @@
         env: <span class="kw-2">&amp;</span>Env,
         type_id: library::TypeId,
         type_name: <span class="kw">impl </span>ToString,
-    ) -&gt; <span class="prelude-ty">Result </span>{
+    ) -&gt; <span class="prelude-ty">Result</span> {
         <span class="self">Self</span>::check(env, type_id, <span class="kw-2">&amp;</span>type_name).map(|type_name| RustType {
             inner: type_name.clone(),
             used_types: <span class="macro">vec!</span>[type_name],
@@ -844,7 +844,7 @@
     }
 }
 
-<span class="kw">pub type </span><span class="prelude-ty">Result </span>= result::Result&lt;RustType, TypeError&gt;;
+<span class="kw">pub type </span><span class="prelude-ty">Result</span> = result::Result&lt;RustType, TypeError&gt;;
 
 <span class="kw">fn </span>into_inner(res: <span class="prelude-ty">Result</span>) -&gt; String {
     <span class="kw">use </span><span class="self">self</span>::TypeError::<span class="kw-2">*</span>;
@@ -854,7 +854,7 @@
     }
 }
 
-<span class="kw">impl </span>IntoString <span class="kw">for </span><span class="prelude-ty">Result </span>{
+<span class="kw">impl </span>IntoString <span class="kw">for </span><span class="prelude-ty">Result</span> {
     <span class="kw">fn </span>into_string(<span class="self">self</span>) -&gt; String {
         <span class="kw">use </span><span class="self">self</span>::TypeError::<span class="kw-2">*</span>;
         <span class="kw">match </span><span class="self">self </span>{
@@ -866,8 +866,8 @@
     }
 }
 
-<span class="kw">impl </span>MapAny&lt;RustType&gt; <span class="kw">for </span><span class="prelude-ty">Result </span>{
-    <span class="kw">fn </span>map_any&lt;F: FnOnce(RustType) -&gt; RustType&gt;(<span class="self">self</span>, op: F) -&gt; <span class="prelude-ty">Result </span>{
+<span class="kw">impl </span>MapAny&lt;RustType&gt; <span class="kw">for </span><span class="prelude-ty">Result</span> {
+    <span class="kw">fn </span>map_any&lt;F: FnOnce(RustType) -&gt; RustType&gt;(<span class="self">self</span>, op: F) -&gt; <span class="prelude-ty">Result</span> {
         <span class="kw">use </span><span class="self">self</span>::TypeError::<span class="kw-2">*</span>;
         <span class="kw">match </span><span class="self">self </span>{
             <span class="prelude-val">Ok</span>(rust_type) =&gt; <span class="prelude-val">Ok</span>(op(rust_type)),
@@ -943,7 +943,7 @@
         <span class="self">self
     </span>}
 
-    <span class="kw">pub fn </span>try_build(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result </span>{
+    <span class="kw">pub fn </span>try_build(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span> {
         <span class="kw">use </span><span class="kw">crate</span>::library::{Basic::<span class="kw-2">*</span>, Type::<span class="kw-2">*</span>};
         <span class="kw">let </span>ok = |s: <span class="kw-2">&amp;</span>str| <span class="prelude-val">Ok</span>(RustType::from(s));
         <span class="kw">let </span>ok_and_use = |s: <span class="kw-2">&amp;</span>str| <span class="prelude-val">Ok</span>(RustType::new_and_use(<span class="kw-2">&amp;</span>s));
@@ -1315,7 +1315,7 @@
         rust_type
     }
 
-    <span class="kw">pub fn </span>try_build_param(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result </span>{
+    <span class="kw">pub fn </span>try_build_param(<span class="self">self</span>) -&gt; <span class="prelude-ty">Result</span> {
         <span class="kw">use </span><span class="kw">crate</span>::library::Type::<span class="kw-2">*</span>;
         <span class="kw">let </span>type_ = <span class="self">self</span>.env.library.type_(<span class="self">self</span>.type_id);
 
