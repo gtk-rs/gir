@@ -45,7 +45,7 @@ pub fn generate(
 
     writeln!(
         w,
-        "{}unsafe extern \"C\" fn {}<{}F: {}>({}, f: {}){} {{",
+        "{}unsafe extern \"C\" fn {}<{}F: {}>({}, f: {}){} {{ unsafe {{",
         prepend,
         analysis.name,
         self_bound,
@@ -58,7 +58,7 @@ pub fn generate(
     transformation_vars(w, env, analysis, &prepend)?;
     let call = trampoline_call_func(env, analysis, in_trait);
     writeln!(w, "{prepend}\t{call}")?;
-    writeln!(w, "{prepend}}}")?;
+    writeln!(w, "{prepend}}}}}")?;
 
     Ok(())
 }
