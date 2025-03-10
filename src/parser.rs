@@ -11,6 +11,31 @@ use crate::{
     xmlparser::{Element, XmlParser},
 };
 
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub enum DocFormat {
+    GtkDocMarkdown,
+    GtkDocDocbook,
+    GiDocgen,
+    Hotdoc,
+    #[default]
+    Unknown,
+}
+
+impl std::str::FromStr for DocFormat {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "gtk-doc-markdown" => Ok(Self::GtkDocMarkdown),
+            "gtk-doc-docbook" => Ok(Self::GtkDocDocbook),
+            "gi-docgen" => Ok(Self::GiDocgen),
+            "hotdoc" => Ok(Self::Hotdoc),
+            "unknown" => Ok(Self::Unknown),
+            e => Err(format!("Invalid doc:format {e}")),
+        }
+    }
+}
+
 const EMPTY_CTYPE: &str = "/*EMPTY*/";
 
 pub fn is_empty_c_type(c_type: &str) -> bool {
@@ -80,7 +105,11 @@ impl Library {
                 std::mem::take(&mut packages),
                 std::mem::take(&mut includes),
             ),
-            "format" => parser.ignore_element(),
+            "format" => {
+                let format = DocFormat::from_str(elem.attr_required("name")?)?;
+                self.doc_format = format;
+                Ok(())
+            }
             "attribute" => parser.ignore_element(),
             _ => Err(parser.unexpected_element(elem)),
         })?;

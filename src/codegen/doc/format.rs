@@ -10,6 +10,7 @@ use crate::{
     analysis::functions::Info,
     library::{FunctionKind, TypeId},
     nameutil,
+    parser::DocFormat,
 };
 
 const LANGUAGE_SEP_BEGIN: &str = "<!-- language=\"";
@@ -139,7 +140,7 @@ fn replace_symbols(
     env: &Env,
     in_type: Option<(&TypeId, Option<LocationInObject>)>,
 ) -> String {
-    if env.config.use_gi_docgen {
+    if env.config.use_gi_docgen || env.library.doc_format == DocFormat::GiDocgen {
         let out = gi_docgen::replace_c_types(input, env, in_type);
         let out = gi_docgen_symbol().replace_all(&out, |caps: &Captures<'_>| match &caps[2] {
             "TRUE" => "[`true`]".to_string(),
