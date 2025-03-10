@@ -9,7 +9,7 @@ use std::{
 
 use crate::{
     analysis::conversion_type::ConversionType, config::gobjects::GStatus, env::Env,
-    nameutil::split_namespace_name, traits::*, version::Version,
+    nameutil::split_namespace_name, parser::DocFormat, traits::*, version::Version,
 };
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1056,18 +1056,16 @@ pub const INTERNAL_NAMESPACE_NAME: &str = "*";
 pub const INTERNAL_NAMESPACE: u16 = 0;
 pub const MAIN_NAMESPACE: u16 = 1;
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct Library {
     pub namespaces: Vec<Namespace>,
     pub index: HashMap<String, u16>,
+    pub doc_format: DocFormat,
 }
 
 impl Library {
     pub fn new(main_namespace_name: &str) -> Self {
-        let mut library = Self {
-            namespaces: Vec::new(),
-            index: HashMap::new(),
-        };
+        let mut library = Self::default();
         assert_eq!(
             INTERNAL_NAMESPACE,
             library.add_namespace(INTERNAL_NAMESPACE_NAME)

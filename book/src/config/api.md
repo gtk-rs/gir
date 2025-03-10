@@ -14,7 +14,6 @@ target_path = "."
 # auto_path = "src/auto"
 work_mode = "normal"
 # Whether the library uses https://gitlab.gnome.org/GNOME/gi-docgen for its documentation
-use_gi_docgen = false
 generate_safety_asserts = true
 deprecate_by_min_version = true
 # With this option enabled, versions for gir and gir-files saved only to one file to minimize noise,
@@ -123,7 +122,7 @@ visibility = "pub" # or 'crate' / 'private' / 'super'
 # works for flags and enums. You have to pass the "GIR" member name.
 default_value = "fill"
 # Change the name of the generated trait to e.g avoid naming conflicts
-trait_name = "TraitnameExt" 
+trait_name = "TraitnameExt"
 # In case you don't want to generate the documentation for this type.
 generate_doc = false
     # define overrides for function
@@ -336,7 +335,7 @@ status = "generate"
     name = "stock_list_ids"
     # allows to ignore global functions
     ignore = true
-    # allows to define if the function was moved to a trait 
+    # allows to define if the function was moved to a trait
     doc_trait_name = "StockExt"
     # allows to define if the function was moved to a struct
     doc_struct_name = "Stock"
