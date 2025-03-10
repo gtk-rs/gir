@@ -9,7 +9,7 @@ use std::{
 
 use crate::{
     analysis::conversion_type::ConversionType, config::gobjects::GStatus, env::Env,
-    nameutil::split_namespace_name, traits::*, version::Version,
+    nameutil::split_namespace_name, parser::DocFormat, traits::*, version::Version,
 };
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -1060,6 +1060,7 @@ pub const MAIN_NAMESPACE: u16 = 1;
 pub struct Library {
     pub namespaces: Vec<Namespace>,
     pub index: HashMap<String, u16>,
+    pub doc_format: DocFormat,
 }
 
 impl Library {
