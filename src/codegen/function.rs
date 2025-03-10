@@ -156,7 +156,7 @@ pub fn generate(
     }
 
     if analysis.async_future.is_some() {
-        let declaration = declaration_futures(env, analysis);
+        let declaration = declaration_futures(env, analysis, in_trait);
         let suffix = if only_declaration { ";" } else { " {" };
 
         writeln!(w)?;
@@ -179,7 +179,7 @@ pub fn generate(
         )?;
 
         if !only_declaration {
-            let body = body_chunk_futures(env, analysis).unwrap();
+            let body = body_chunk_futures(env, analysis, in_trait).unwrap();
             for s in body.lines() {
                 if !s.is_empty() {
                     writeln!(w, "{}{}{}", tabs(indent + 1), comment_prefix, s)?;
@@ -235,19 +235,32 @@ pub fn declaration(env: &Env, analysis: &analysis::functions::Info) -> String {
     )
 }
 
-pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> String {
+pub fn declaration_futures(
+    env: &Env,
+    analysis: &analysis::functions::Info,
+    in_trait: bool,
+) -> String {
     let async_future = analysis.async_future.as_ref().unwrap();
 
     let return_str = if let Some(ref error_parameters) = async_future.error_parameters {
-        format!(
-            " -> Pin<Box_<dyn std::future::Future<Output = Result<{}, {}>> + 'static>>",
-            async_future.success_parameters, error_parameters
-        )
-    } else {
+        if in_trait {
+            format!(
+                " -> Pin<Box_<dyn std::future::Future<Output = Result<{}, {}>> + 'static>>",
+                async_future.success_parameters, error_parameters
+            )
+        } else {
+            format!(
+                " -> Result<{}, {}>",
+                async_future.success_parameters, error_parameters
+            )
+        }
+    } else if in_trait {
         format!(
             " -> Pin<Box_<dyn std::future::Future<Output = {}> + 'static>>",
             async_future.success_parameters
         )
+    } else {
+        format!(" -> {}", async_future.success_parameters)
     };
 
     let mut param_str = String::with_capacity(100);
@@ -278,10 +291,11 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
     }
 
     let (bounds, _) = bounds(&analysis.bounds, skipped_bounds.as_ref(), true, false);
+    let async_sig = if in_trait { "" } else { "async " };
 
     format!(
-        "fn {}{}({}){}",
-        async_future.name, bounds, param_str, return_str,
+        "{}fn {}{}({}){}",
+        async_sig, async_future.name, bounds, param_str, return_str,
     )
 }
 
@@ -404,6 +418,7 @@ pub fn body_chunk(
 pub fn body_chunk_futures(
     env: &Env,
     analysis: &analysis::functions::Info,
+    in_trait: bool,
 ) -> StdResult<String, fmt::Error> {
     use std::fmt::Write;
 
@@ -452,15 +467,19 @@ pub fn body_chunk_futures(
         }
     }
 
+    if in_trait {
+        writeln!(body, "Box_::pin(")?;
+    }
+
     if async_future.is_method {
         writeln!(
             body,
-            "Box_::pin({gio_future_name}::new(self, move |obj, cancellable, send| {{"
+            "{gio_future_name}::new(self, move |obj, cancellable, send| {{"
         )?;
     } else {
         writeln!(
             body,
-            "Box_::pin({gio_future_name}::new(&(), move |_obj, cancellable, send| {{"
+            "{gio_future_name}::new(&(), move |_obj, cancellable, send| {{"
         )?;
     }
 
@@ -499,7 +518,11 @@ pub fn body_chunk_futures(
     writeln!(body, "\t\t\tsend.resolve(res);")?;
     writeln!(body, "\t\t}},")?;
     writeln!(body, "\t);")?;
-    writeln!(body, "}}))")?;
+    if in_trait {
+        writeln!(body, "}}))")?;
+    } else {
+        writeln!(body, "}}).await")?;
+    }
 
     Ok(body)
 }
