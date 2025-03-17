@@ -16,6 +16,7 @@ pub enum Chunk {
     FfiCall {
         name: String,
         params: Vec<Chunk>,
+        ignore_return: bool,
     },
     FfiCallParameter {
         transformation_type: TransformationType,

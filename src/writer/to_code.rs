@@ -27,10 +27,17 @@ impl ToCode for Chunk {
             FfiCall {
                 ref name,
                 ref params,
+                ref ignore_return,
             } => {
                 let prefix = format!("{name}(");
                 // TODO: change to format_block or format_block_smart
-                let s = format_block_one_line(&prefix, ")", &params.to_code(env), "", ", ");
+                let s = format_block_one_line(
+                    &prefix,
+                    if *ignore_return { ");" } else { ")" },
+                    &params.to_code(env),
+                    "",
+                    ", ",
+                );
                 vec![s]
             }
             FfiCallParameter {
