@@ -842,27 +842,33 @@ impl Builder {
             });
         body.extend(output_vars);
 
-        let ret_name = if trampoline.ffi_ret.is_some() {
-            if has_error_parameter {
+        if trampoline.ffi_ret.is_some() {
+            let ret_name = if has_error_parameter {
                 "ret"
             } else {
                 "result" // Needed as in case of an error param we would have
                          // let result = if error.is_null() { Ok()} else {
                          // Err()};
-            }
-        } else {
-            "_"
-        };
+            };
 
-        body.push(Chunk::Let {
-            name: ret_name.to_string(),
-            is_mut: false,
-            value: Box::new(Chunk::FfiCall {
+            body.push(Chunk::Let {
+                name: ret_name.to_string(),
+                is_mut: false,
+                value: Box::new(Chunk::FfiCall {
+                    name: trampoline.finish_func_name.clone(),
+                    params: finish_args,
+                    ignore_return: false,
+                }),
+                type_: None,
+            });
+        } else {
+            body.push(Chunk::FfiCall {
                 name: trampoline.finish_func_name.clone(),
                 params: finish_args,
-            }),
-            type_: None,
-        });
+                ignore_return: true,
+            });
+        }
+
         if has_error_parameter {
             body.push(Chunk::Let {
                 name: "result".to_string(),
@@ -919,7 +925,7 @@ impl Builder {
                 trampoline.name, trampoline.bound_name, trampoline.callback_type
             ),
             parameters,
-            body: Box::new(Chunk::Chunks(body)),
+            body: Box::new(Chunk::Chunks(body.clone())),
             return_value: None,
             bounds: String::new(),
         });
@@ -977,6 +983,7 @@ impl Builder {
         Chunk::FfiCall {
             name: self.glib_name.clone(),
             params,
+            ignore_return: false,
         }
     }
     fn generate_call_conversion(
