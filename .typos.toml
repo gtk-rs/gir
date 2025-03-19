@@ -6,3 +6,4 @@ extend-exclude = ["*.svg"]
 gir = "gir"
 inout = "inout"
 serde = "serde"
+typ = "typ"
