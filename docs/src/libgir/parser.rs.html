@@ -1580,7 +1580,8 @@
 <a href="#1579" id="1579">1579</a>
 <a href="#1580" id="1580">1580</a>
 <a href="#1581" id="1581">1581</a>
-<a href="#1582" id="1582">1582</a></pre></div><pre class="rust"><code><span class="kw">use </span>std::{
+<a href="#1582" id="1582">1582</a>
+<a href="#1583" id="1583">1583</a></pre></div><pre class="rust"><code><span class="kw">use </span>std::{
     path::{Path, PathBuf},
     str::FromStr,
 };
@@ -1662,6 +1663,7 @@
                 std::mem::take(<span class="kw-2">&amp;mut </span>packages),
                 std::mem::take(<span class="kw-2">&amp;mut </span>includes),
             ),
+            <span class="string">"format" </span>=&gt; parser.ignore_element(),
             <span class="string">"attribute" </span>=&gt; parser.ignore_element(),
             <span class="kw">_ </span>=&gt; <span class="prelude-val">Err</span>(parser.unexpected_element(elem)),
         })<span class="question-mark">?</span>;
