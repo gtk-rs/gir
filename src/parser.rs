@@ -80,6 +80,7 @@ impl Library {
                 std::mem::take(&mut packages),
                 std::mem::take(&mut includes),
             ),
+            "format" => parser.ignore_element(),
             "attribute" => parser.ignore_element(),
             _ => Err(parser.unexpected_element(elem)),
         })?;
