@@ -409,7 +409,7 @@ impl<'env> RustTypeBuilder<'env> {
                     };
 
                     if let Some(s) = array_type {
-                        skip_option = true;
+                        skip_option = self.direction == ParameterDirection::Return;
                         if self.ref_mode.is_ref() {
                             Ok(format!("[{s}]").into())
                         } else {
