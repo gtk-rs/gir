@@ -554,11 +554,11 @@ impl Builder {
                 is_mut: false,
                 value: Box::new(Chunk::Custom(
                     if is_destroy || trampoline.scope.is_async() {
-                        format!("Box_::from_raw({} as *mut {})", func, trampoline.bound_name)
+                        format!("unsafe {{ Box_::from_raw({} as *mut {}) }}", func, trampoline.bound_name)
                     } else if trampoline.scope.is_call() {
                         format!("{} as *mut {}", func, trampoline.bound_name)
                     } else {
-                        format!("&*({} as *mut {})", func, trampoline.bound_name)
+                        format!("unsafe {{ &*({} as *mut {}) }}", func, trampoline.bound_name)
                     },
                 )),
                 type_: None,
