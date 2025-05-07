@@ -255,7 +255,7 @@ fn generate_constants(w: &mut dyn Write, env: &Env, constants: &[Constant]) -> R
             x @ Err(..) => ("//", x.into_string()),
         };
         let mut value = constant.value.clone();
-        if type_ == "*mut c_char" {
+        if type_ == "*mut c_char" || type_ == "*const c_char" {
             type_ = "&[u8]".into();
             value = format!("b\"{}\\0\"", general::escape_string(&value));
         } else if type_ == "gboolean" {
