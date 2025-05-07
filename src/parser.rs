@@ -13,6 +13,18 @@ use crate::{
 
 const EMPTY_CTYPE: &str = "/*EMPTY*/";
 
+/// Element 'type'-related attributes
+///
+/// Attributes related to  the 'type' of current XML element, some of which
+/// might be part of child XML elements of current XML element.
+#[derive(Debug, Default)]
+struct ElementTypeAttrs {
+    tid: TypeId,
+    c_type: Option<String>,
+    array_length: Option<u32>,
+    zero_terminated: Option<bool>,
+}
+
 pub fn is_empty_c_type(c_type: &str) -> bool {
     c_type == EMPTY_CTYPE
 }
@@ -193,7 +205,7 @@ impl Library {
                 self.read_function_to_vec(parser, ns_id, elem, &mut fns)
             }
             "implements" => self.read_type(parser, ns_id, elem).map(|r| {
-                impls.push(r.0);
+                impls.push(r.tid);
             }),
             "signal" => self
                 .read_signal(parser, ns_id, elem)
@@ -627,18 +639,19 @@ impl Library {
                 if typ.is_some() {
                     return Err(parser.fail("Too many <type> elements"));
                 }
-                self.read_type(parser, ns_id, elem).map(|t| {
-                    typ = Some(t);
-                })
+                typ = Some(self.read_type(parser, ns_id, elem)?);
+                Ok(())
             }
             "callback" => {
                 if typ.is_some() {
                     return Err(parser.fail("Too many <type> elements"));
                 }
-                self.read_function(parser, ns_id, elem.name(), elem, true)
-                    .map(|f| {
-                        typ = Some((Type::function(self, f), None, None));
-                    })
+                let f = self.read_function(parser, ns_id, elem.name(), elem, true)?;
+                typ = Some(ElementTypeAttrs {
+                    tid: Type::function(self, f),
+                    ..Default::default()
+                });
+                Ok(())
             }
             "doc" => parser.text().map(|t| doc = Some(t)),
             "source-position" => parser.ignore_element(),
@@ -646,7 +659,13 @@ impl Library {
             _ => Err(parser.unexpected_element(elem)),
         })?;
 
-        if let Some((tid, c_type, array_length)) = typ {
+        if let Some(ElementTypeAttrs {
+            tid,
+            c_type,
+            array_length,
+            ..
+        }) = typ
+        {
             Ok(Field {
                 name: field_name.into(),
                 typ: tid,
@@ -703,7 +722,7 @@ impl Library {
                 self.read_function_to_vec(parser, ns_id, elem, &mut fns)
             }
             "prerequisite" => self.read_type(parser, ns_id, elem).map(|r| {
-                prereqs.push(r.0);
+                prereqs.push(r.tid);
             }),
             "signal" => self
                 .read_signal(parser, ns_id, elem)
@@ -887,15 +906,14 @@ impl Library {
                         elem.position(),
                     ));
                 }
-                let (typ, c_type, array_length) = self.read_type(parser, ns_id, elem)?;
-                if let Some(c_type) = c_type {
-                    inner = Some((typ, c_type, array_length));
-                } else {
+                let elem_type = self.read_type(parser, ns_id, elem)?;
+                if elem_type.c_type.is_none() {
                     return Err(parser.fail_with_position(
                         "Missing <constant> element's c:type",
                         elem.position(),
                     ));
                 }
+                inner = Some(elem_type);
                 Ok(())
             }
             "doc" => parser.text().map(|t| doc = Some(t)),
@@ -906,28 +924,29 @@ impl Library {
             _ => Err(parser.unexpected_element(elem)),
         })?;
 
-        if let Some((typ, c_type, _array_length)) = inner {
-            self.add_constant(
-                ns_id,
-                Constant {
-                    name: const_name.into(),
-                    c_identifier: c_identifier.into(),
-                    typ,
-                    c_type,
-                    value: value.into(),
-                    version,
-                    deprecated_version,
-                    doc,
-                    doc_deprecated,
-                },
-            );
-            Ok(())
-        } else {
-            Err(parser.fail_with_position(
+        let Some(elem_type) = inner else {
+            return Err(parser.fail_with_position(
                 "Missing <type> element inside <constant> element",
                 elem.position(),
-            ))
-        }
+            ));
+        };
+
+        self.add_constant(
+            ns_id,
+            Constant {
+                name: const_name.into(),
+                c_identifier: c_identifier.into(),
+                typ: elem_type.tid,
+                c_type: elem_type.c_type.unwrap(),
+                value: value.into(),
+                version,
+                deprecated_version,
+                doc,
+                doc_deprecated,
+            },
+        );
+
+        Ok(())
     }
 
     fn read_alias(
@@ -952,12 +971,11 @@ impl Library {
                         elem.position(),
                     ));
                 }
-                let (typ, c_type, array_length) = self.read_type(parser, ns_id, elem)?;
-                if let Some(c_type) = c_type {
-                    inner = Some((typ, c_type, array_length));
-                } else {
+                let elem_type = self.read_type(parser, ns_id, elem)?;
+                if elem_type.c_type.is_none() {
                     return Err(parser.fail("Missing <alias> target's c:type"));
                 }
+                inner = Some(elem_type);
                 Ok(())
             }
             "doc" => parser.text().map(|t| doc = Some(t)),
@@ -967,23 +985,24 @@ impl Library {
             _ => Err(parser.unexpected_element(elem)),
         })?;
 
-        if let Some((typ, c_type, _array_length)) = inner {
-            let typ = Type::Alias(Alias {
-                name: alias_name.into(),
-                c_identifier: c_identifier.into(),
-                typ,
-                target_c_type: c_type,
-                doc,
-                doc_deprecated,
-            });
-            self.add_type(ns_id, alias_name, typ);
-            Ok(())
-        } else {
-            Err(parser.fail_with_position(
+        let Some(elem_type) = inner else {
+            return Err(parser.fail_with_position(
                 "Missing <type> element inside <alias> element",
                 elem.position(),
-            ))
-        }
+            ));
+        };
+
+        let typ = Type::Alias(Alias {
+            name: alias_name.into(),
+            c_identifier: c_identifier.into(),
+            typ: elem_type.tid,
+            target_c_type: elem_type.c_type.unwrap(),
+            doc,
+            doc_deprecated,
+        });
+        self.add_type(ns_id, alias_name, typ);
+
+        Ok(())
     }
 
     fn read_member(
@@ -1288,17 +1307,20 @@ impl Library {
                         elem.position(),
                     ));
                 }
-                typ = Some(self.read_type(parser, ns_id, elem)?);
-                if let Some((tid, None, _)) = typ {
-                    if allow_no_ctype {
-                        typ = Some((tid, Some(EMPTY_CTYPE.to_owned()), None));
-                    } else {
+
+                let mut elem_type = self.read_type(parser, ns_id, elem)?;
+                if elem_type.c_type.is_none() {
+                    if !allow_no_ctype {
                         return Err(parser.fail_with_position(
                             &format!("Missing c:type attribute in <{}> element", elem.name()),
                             elem.position(),
                         ));
                     }
+
+                    elem_type.c_type = Some(EMPTY_CTYPE.to_owned());
                 }
+
+                typ = Some(elem_type);
                 Ok(())
             }
             "varargs" => {
@@ -1310,20 +1332,21 @@ impl Library {
             _ => Err(parser.unexpected_element(elem)),
         })?;
 
-        if let Some((tid, c_type, mut array_length)) = typ {
+        if let Some(mut elem_type) = typ {
             if for_method {
-                array_length = array_length.map(|l| l + 1);
+                elem_type.array_length = elem_type.array_length.map(|l| l + 1);
             }
             Ok(Parameter {
                 name: param_name.into(),
-                typ: tid,
-                c_type: c_type.unwrap(),
+                typ: elem_type.tid,
+                c_type: elem_type.c_type.unwrap(),
                 instance_parameter,
                 direction,
                 transfer,
                 caller_allocates,
                 nullable: Nullable(nullable),
-                array_length,
+                array_length: elem_type.array_length,
+                zero_terminated: elem_type.zero_terminated,
                 is_error: false,
                 doc,
                 scope,
@@ -1387,10 +1410,11 @@ impl Library {
                     has_empty_type_tag = true;
                     return parser.ignore_element();
                 }
-                typ = Some(self.read_type(parser, ns_id, elem)?);
-                if let Some((tid, None, _)) = typ {
-                    typ = Some((tid, Some(EMPTY_CTYPE.to_owned()), None));
+                let mut elem_type = self.read_type(parser, ns_id, elem)?;
+                if elem_type.c_type.is_none() {
+                    elem_type.c_type = Some(EMPTY_CTYPE.to_owned());
                 }
+                typ = Some(elem_type);
                 Ok(())
             }
             "doc" => parser.text().map(|t| doc = Some(t)),
@@ -1431,29 +1455,29 @@ impl Library {
             return Ok(None);
         }
 
-        if let Some((tid, c_type, _array_length)) = typ {
-            Ok(Some(Property {
-                name: prop_name.into(),
-                readable,
-                writable,
-                construct,
-                construct_only,
-                transfer,
-                typ: tid,
-                c_type,
-                version,
-                deprecated_version,
-                doc,
-                doc_deprecated,
-                getter,
-                setter,
-            }))
-        } else {
-            Err(parser.fail_with_position(
+        let Some(elem_type) = typ else {
+            return Err(parser.fail_with_position(
                 "Missing <type> element in <property> element",
                 elem.position(),
-            ))
-        }
+            ));
+        };
+
+        Ok(Some(Property {
+            name: prop_name.into(),
+            readable,
+            writable,
+            construct,
+            construct_only,
+            transfer,
+            typ: elem_type.tid,
+            c_type: elem_type.c_type,
+            version,
+            deprecated_version,
+            doc,
+            doc_deprecated,
+            getter,
+            setter,
+        }))
     }
 
     fn read_type(
@@ -1461,7 +1485,7 @@ impl Library {
         parser: &mut XmlParser<'_>,
         ns_id: u16,
         elem: &Element,
-    ) -> Result<(TypeId, Option<String>, Option<u32>), String> {
+    ) -> Result<ElementTypeAttrs, String> {
         let type_name = elem
             .attr("name")
             .or_else(|| {
@@ -1479,6 +1503,17 @@ impl Library {
             })?;
         let c_type = elem.attr("type").map(|s| s.into());
         let array_length = elem.attr("length").and_then(|s| s.parse().ok());
+        let zero_terminated = match elem.attr("zero-terminated").map(str::parse::<u8>) {
+            None => None,
+            Some(Ok(0)) => Some(false),
+            Some(Ok(1)) => Some(true),
+            _ => {
+                return Err(parser.fail_with_position(
+                    "unexpected value for attr 'zero-terminated'",
+                    elem.position(),
+                ))
+            }
+        };
 
         let inner = parser.elements(|parser, elem| match elem.name() {
             "type" | "array" => self.read_type(parser, ns_id, elem),
@@ -1496,30 +1531,41 @@ impl Library {
                     .as_ref()
                     .is_some_and(|c_type| c_type == "_Bool" || c_type == "bool")
             {
-                Ok((self.find_or_stub_type(ns_id, "bool"), c_type, array_length))
-            } else {
-                Ok((
-                    self.find_or_stub_type(ns_id, type_name),
+                Ok(ElementTypeAttrs {
+                    tid: self.find_or_stub_type(ns_id, "bool"),
                     c_type,
                     array_length,
-                ))
+                    zero_terminated,
+                })
+            } else {
+                Ok(ElementTypeAttrs {
+                    tid: self.find_or_stub_type(ns_id, type_name),
+                    c_type,
+                    array_length,
+                    zero_terminated,
+                })
             }
         } else {
             let tid = if type_name == "array" {
                 let inner_type = &inner[0];
                 Type::c_array(
                     self,
-                    inner_type.0,
+                    inner_type.tid,
                     elem.attr("fixed-size").and_then(|n| n.parse().ok()),
-                    inner_type.1.clone(),
+                    inner_type.c_type.clone(),
                 )
             } else {
-                let inner = inner.iter().map(|r| r.0).collect();
+                let inner = inner.iter().map(|r| r.tid).collect();
                 Type::container(self, type_name, inner).ok_or_else(|| {
                     parser.fail_with_position("Unknown container type", elem.position())
                 })?
             };
-            Ok((tid, c_type, array_length))
+            Ok(ElementTypeAttrs {
+                tid,
+                c_type,
+                array_length,
+                zero_terminated,
+            })
         }
     }
 
@@ -1582,4 +1628,36 @@ fn make_file_name(dir: &Path, name: &str) -> PathBuf {
     let name = format!("{name}.gir");
     path.push(name);
     path
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn array_param_nullable_not_zero_terminated() {
+        XmlParser::new(
+            br#"<?xml version="1.0"?>
+            <parameter name="data" transfer-ownership="none" nullable="1">
+              <array length="2" zero-terminated="0" type="const guchar*">
+                <type name="guint8" type="guchar"/>
+              </array>
+            </parameter>"#
+                .as_slice(),
+        )
+        .document(|p, _| {
+            p.element_with_name("parameter", |p, elem| {
+                let elem = Library::new("Glib")
+                    .read_parameter(p, MAIN_NAMESPACE, elem, false, false)
+                    .unwrap();
+                assert_eq!(elem.c_type, "const guchar*");
+                assert_eq!(elem.array_length.unwrap(), 2);
+                assert!(!elem.zero_terminated.unwrap());
+                assert!(*elem.nullable);
+
+                Ok(())
+            })
+        })
+        .unwrap();
+    }
 }

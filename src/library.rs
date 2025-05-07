@@ -532,6 +532,7 @@ pub struct Parameter {
     pub caller_allocates: bool,
     pub nullable: Nullable,
     pub array_length: Option<u32>,
+    pub zero_terminated: Option<bool>,
     pub is_error: bool,
     pub doc: Option<String>,
     pub scope: ParameterScope,
