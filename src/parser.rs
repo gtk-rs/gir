@@ -644,6 +644,7 @@ impl Library {
                     })
             }
             "doc" => parser.text().map(|t| doc = Some(t)),
+            "source-position" => parser.ignore_element(),
             "attribute" => parser.ignore_element(),
             _ => Err(parser.unexpected_element(elem)),
         })?;
@@ -1212,6 +1213,7 @@ impl Library {
             }
             "doc" => parser.text().map(|t| doc = Some(t)),
             "doc-deprecated" => parser.text().map(|t| doc_deprecated = Some(t)),
+            "source-position" => parser.ignore_element(),
             "attribute" => parser.ignore_element(),
             _ => Err(parser.unexpected_element(elem)),
         })?;
@@ -1399,6 +1401,7 @@ impl Library {
             }
             "doc" => parser.text().map(|t| doc = Some(t)),
             "doc-deprecated" => parser.text().map(|t| doc_deprecated = Some(t)),
+            "source-position" => parser.ignore_element(),
             "attribute" => {
                 if let (Some(name), Some(value)) = (elem.attr("name"), elem.attr("value")) {
                     match name {
