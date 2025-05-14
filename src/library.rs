@@ -12,8 +12,9 @@ use crate::{
     nameutil::split_namespace_name, traits::*, version::Version,
 };
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub enum Transfer {
+    #[default]
     None,
     Container,
     Full,
@@ -118,7 +119,7 @@ impl FromStr for ParameterScope {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct Nullable(pub bool);
 
 impl Deref for Nullable {
@@ -520,7 +521,7 @@ pub struct Property {
     pub setter: Option<String>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Parameter {
     pub name: String,
     pub typ: TypeId,

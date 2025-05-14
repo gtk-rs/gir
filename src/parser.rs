@@ -575,17 +575,11 @@ impl Library {
                 name: "error".into(),
                 typ: self.find_or_stub_type(ns_id, "GLib.Error"),
                 c_type: "GError**".into(),
-                instance_parameter: false,
                 direction: ParameterDirection::Out,
                 transfer: Transfer::Full,
-                caller_allocates: false,
                 nullable: Nullable(true),
-                array_length: None,
                 is_error: true,
-                doc: None,
-                scope: ParameterScope::None,
-                closure: None,
-                destroy: None,
+                ..Default::default()
             });
         }
 
@@ -1105,14 +1099,9 @@ impl Library {
                 instance_parameter: false,
                 direction: ParameterDirection::Out,
                 transfer: Transfer::Full,
-                caller_allocates: false,
                 nullable: Nullable(true),
-                array_length: None,
                 is_error: true,
-                doc: None,
-                scope: ParameterScope::None,
-                closure: None,
-                destroy: None,
+                ..Default::default()
             });
         }
         if let Some(ret) = ret {
@@ -1337,16 +1326,11 @@ impl Library {
                 typ: self.find_type(INTERNAL_NAMESPACE, "varargs").unwrap(),
                 c_type: String::new(),
                 instance_parameter,
-                direction: Default::default(),
-                transfer: Transfer::None,
-                caller_allocates: false,
-                nullable: Nullable(false),
-                array_length: None,
-                is_error: false,
                 doc,
                 scope,
                 closure,
                 destroy,
+                ..Default::default()
             })
         } else {
             Err(parser.fail_with_position(
