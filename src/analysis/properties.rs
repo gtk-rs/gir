@@ -348,17 +348,8 @@ fn analyze_property(
                         .find_type(library::INTERNAL_NAMESPACE, "none")
                         .unwrap(),
                     c_type: "none".into(),
-                    instance_parameter: false,
                     direction: library::ParameterDirection::Return,
-                    transfer: library::Transfer::None,
-                    caller_allocates: false,
-                    nullable: library::Nullable(false),
-                    array_length: None,
-                    is_error: false,
-                    doc: None,
-                    scope: library::ParameterScope::None,
-                    closure: None,
-                    destroy: None,
+                    ..Default::default()
                 },
                 is_action: false,
                 is_detailed: false, /* well, technically this *is* an instance of a detailed
