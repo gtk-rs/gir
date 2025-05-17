@@ -242,7 +242,7 @@ impl XmlParser<'_> {
 
     fn end_document(&mut self) -> Result<(), String> {
         match self.next_event()? {
-            XmlEvent::EndDocument { .. } => Ok(()),
+            XmlEvent::EndDocument => Ok(()),
             e => Err(self.unexpected_event(&e)),
         }
     }

@@ -1,6 +1,6 @@
 use std::{
     fs,
-    io::{Error, ErrorKind, Result, Write},
+    io::{Error, Result, Write},
 };
 
 use log::info;
@@ -70,8 +70,7 @@ fn generate_lib(w: &mut dyn Write, env: &Env) -> Result<()> {
             && enums.iter().all(|x| x.functions.is_empty())
             && unions.iter().all(|x| x.functions.is_empty()))
     {
-        return Err(Error::new(
-            ErrorKind::Other,
+        return Err(Error::other(
             "No shared library found, but functions were found",
         ));
     }
