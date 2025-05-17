@@ -52,7 +52,7 @@ impl Library {
                     (Some(name), Some(ver)) => {
                         if self.find_namespace(name).is_none() {
                             let lib = format!("{name}-{ver}");
-                            if libs.iter().any(|x| *x == lib) {
+                            if libs.contains(&lib) {
                                 return Err(format!(
                                     "`{}` includes itself (full path:`{}`)!",
                                     lib,

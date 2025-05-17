@@ -1,7 +1,7 @@
 use std::io::{Result, Write};
 
 use super::{
-    general::{cfg_deprecated, doc_alias, version_condition},
+    general::{cfg_condition, cfg_deprecated, doc_alias, version_condition},
     property_body,
 };
 use crate::{
@@ -50,6 +50,7 @@ fn generate_prop_func(
         commented,
         indent,
     )?;
+    cfg_condition(w, prop.cfg_condition.as_ref(), commented, indent)?;
     version_condition(w, env, None, prop.version, commented, indent)?;
     let add_doc_alias = if let Some(func_name_alias) = prop.func_name_alias.as_ref() {
         &prop.name != func_name_alias && prop.name != prop.var_name

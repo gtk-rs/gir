@@ -32,6 +32,7 @@ pub struct Property {
     pub set_bound: Option<PropertyBound>,
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
+    pub cfg_condition: Option<String>,
 }
 
 pub fn analyze(
@@ -121,11 +122,16 @@ fn analyze_property(
         .min()
         .or(prop.version)
         .or(Some(env.config.min_cfg_version));
+
+    let cfg_condition = configured_properties
+        .iter()
+        .find_map(|p| p.cfg_condition.clone());
+
     let generate = configured_properties.iter().find_map(|f| f.generate);
     let generate_set = generate.is_some();
     let generate = generate.unwrap_or_else(PropertyGenerateFlags::all);
 
-    let imports = &mut imports.with_defaults(prop_version, &None);
+    let imports = &mut imports.with_defaults(prop_version, &cfg_condition);
     imports.add("glib::translate::*");
 
     let type_string = RustType::try_new(env, prop.typ);
@@ -271,6 +277,7 @@ fn analyze_property(
             bounds: Bounds::default(),
             version: getter_version,
             deprecated_version: prop.deprecated_version,
+            cfg_condition: cfg_condition.clone(),
         })
     } else {
         None
@@ -324,6 +331,7 @@ fn analyze_property(
             bounds: Bounds::default(),
             version: setter_version,
             deprecated_version: prop.deprecated_version,
+            cfg_condition: cfg_condition.clone(),
         })
     } else {
         None
@@ -394,6 +402,7 @@ fn analyze_property(
                 doc_hidden: false,
                 is_detailed: false, // see above comment
                 generate_doc: obj.generate_doc,
+                cfg_condition,
             })
         } else {
             None

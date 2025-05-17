@@ -109,11 +109,15 @@ fn analyze_property(
         .min()
         .or(prop.version);
 
+    let cfg_condition = configured_properties
+        .iter()
+        .find_map(|p| p.cfg_condition.clone());
+
     let for_builder = prop.construct_only || prop.construct || prop.writable;
     if !for_builder {
         return None;
     }
-    let imports = &mut imports.with_defaults(prop_version, &None);
+    let imports = &mut imports.with_defaults(prop_version, &cfg_condition);
     let rust_type_res = RustType::try_new(env, prop.typ);
     if let Ok(ref rust_type) = rust_type_res {
         if !rust_type.as_str().contains("GString") {
@@ -143,5 +147,6 @@ fn analyze_property(
         bounds,
         version: prop_version,
         deprecated_version: prop.deprecated_version,
+        cfg_condition,
     })
 }

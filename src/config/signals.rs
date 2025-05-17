@@ -107,6 +107,7 @@ pub struct Signal {
     pub doc_hidden: bool,
     pub doc_trait_name: Option<String>,
     pub generate_doc: bool,
+    pub cfg_condition: Option<String>,
 }
 
 impl Signal {
@@ -128,6 +129,7 @@ impl Signal {
                 "manual",
                 "inhibit",
                 "version",
+                "cfg_condition",
                 "parameter",
                 "return",
                 "doc_hidden",
@@ -166,6 +168,10 @@ impl Signal {
             .lookup("version")
             .and_then(Value::as_str)
             .and_then(|s| s.parse().ok());
+        let cfg_condition = toml
+            .lookup("cfg_condition")
+            .and_then(Value::as_str)
+            .map(ToOwned::to_owned);
         let parameters = Parameters::parse(toml.lookup("parameter"), object_name);
         let ret = Return::parse(toml.lookup("return"), object_name);
 
@@ -199,6 +205,7 @@ impl Signal {
             doc_hidden,
             doc_trait_name,
             generate_doc,
+            cfg_condition,
         })
     }
 }
