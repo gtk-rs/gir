@@ -1,7 +1,7 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/properties.rs`."><title>properties.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-6c3ea77c.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0 (05f9846f8 2025-03-31)" data-channel="1.86.0" data-search-js="search-581efc7a.js" data-settings-js="settings-6dad6058.js" ><script src="../../../static.files/storage-3a5871a4.js"></script><script defer src="../../../static.files/src-script-b8d3f215.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-4d63596a.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">libgir/codegen/</div>properties.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>std::io::{<span class="prelude-ty">Result</span>, Write};
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/properties.rs`."><title>properties.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-916cea96.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.87.0 (17067e9ac 2025-05-09)" data-channel="1.87.0" data-search-js="search-e7298875.js" data-settings-js="settings-d72f25bb.js" ><script src="../../../static.files/storage-82c7156e.js"></script><script defer src="../../../static.files/src-script-63605ae7.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-fb8c74a8.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">libgir/codegen/</div>properties.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>std::io::{<span class="prelude-ty">Result</span>, Write};
 <a href=#2 id=2 data-nosnippet>2</a>
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use super</span>::{
-<a href=#4 id=4 data-nosnippet>4</a>    general::{cfg_deprecated, doc_alias, version_condition},
+<a href=#4 id=4 data-nosnippet>4</a>    general::{cfg_condition, cfg_deprecated, doc_alias, version_condition},
 <a href=#5 id=5 data-nosnippet>5</a>    property_body,
 <a href=#6 id=6 data-nosnippet>6</a>};
 <a href=#7 id=7 data-nosnippet>7</a><span class="kw">use crate</span>::{
@@ -50,85 +50,86 @@
 <a href=#50 id=50 data-nosnippet>50</a>        commented,
 <a href=#51 id=51 data-nosnippet>51</a>        indent,
 <a href=#52 id=52 data-nosnippet>52</a>    )<span class="question-mark">?</span>;
-<a href=#53 id=53 data-nosnippet>53</a>    version_condition(w, env, <span class="prelude-val">None</span>, prop.version, commented, indent)<span class="question-mark">?</span>;
-<a href=#54 id=54 data-nosnippet>54</a>    <span class="kw">let </span>add_doc_alias = <span class="kw">if let </span><span class="prelude-val">Some</span>(func_name_alias) = prop.func_name_alias.as_ref() {
-<a href=#55 id=55 data-nosnippet>55</a>        <span class="kw-2">&amp;</span>prop.name != func_name_alias &amp;&amp; prop.name != prop.var_name
-<a href=#56 id=56 data-nosnippet>56</a>    } <span class="kw">else </span>{
-<a href=#57 id=57 data-nosnippet>57</a>        prop.name != prop.var_name
-<a href=#58 id=58 data-nosnippet>58</a>    };
-<a href=#59 id=59 data-nosnippet>59</a>    <span class="kw">if </span>add_doc_alias {
-<a href=#60 id=60 data-nosnippet>60</a>        doc_alias(w, <span class="kw-2">&amp;</span>prop.name, comment_prefix, indent)<span class="question-mark">?</span>;
-<a href=#61 id=61 data-nosnippet>61</a>    }
-<a href=#62 id=62 data-nosnippet>62</a>    <span class="macro">writeln!</span>(
-<a href=#63 id=63 data-nosnippet>63</a>        w,
-<a href=#64 id=64 data-nosnippet>64</a>        <span class="string">"{}{}{}{}{}"</span>,
-<a href=#65 id=65 data-nosnippet>65</a>        tabs(indent),
-<a href=#66 id=66 data-nosnippet>66</a>        comment_prefix,
-<a href=#67 id=67 data-nosnippet>67</a>        pub_prefix,
-<a href=#68 id=68 data-nosnippet>68</a>        decl,
-<a href=#69 id=69 data-nosnippet>69</a>        decl_suffix
-<a href=#70 id=70 data-nosnippet>70</a>    )<span class="question-mark">?</span>;
-<a href=#71 id=71 data-nosnippet>71</a>
-<a href=#72 id=72 data-nosnippet>72</a>    <span class="kw">if </span>!only_declaration {
-<a href=#73 id=73 data-nosnippet>73</a>        <span class="kw">let </span>body = body(env, prop, in_trait).to_code(env);
-<a href=#74 id=74 data-nosnippet>74</a>        <span class="kw">for </span>s <span class="kw">in </span>body {
-<a href=#75 id=75 data-nosnippet>75</a>            <span class="macro">writeln!</span>(w, <span class="string">"{}{}{}"</span>, tabs(indent), comment_prefix, s)<span class="question-mark">?</span>;
-<a href=#76 id=76 data-nosnippet>76</a>        }
-<a href=#77 id=77 data-nosnippet>77</a>    }
-<a href=#78 id=78 data-nosnippet>78</a>
-<a href=#79 id=79 data-nosnippet>79</a>    <span class="prelude-val">Ok</span>(())
-<a href=#80 id=80 data-nosnippet>80</a>}
-<a href=#81 id=81 data-nosnippet>81</a>
-<a href=#82 id=82 data-nosnippet>82</a><span class="kw">fn </span>declaration(env: <span class="kw-2">&amp;</span>Env, prop: <span class="kw-2">&amp;</span>Property) -&gt; String {
-<a href=#83 id=83 data-nosnippet>83</a>    <span class="kw">let </span>bound: String;
-<a href=#84 id=84 data-nosnippet>84</a>    <span class="kw">let </span>set_param = <span class="kw">if </span>prop.is_get {
-<a href=#85 id=85 data-nosnippet>85</a>        bound = String::new();
-<a href=#86 id=86 data-nosnippet>86</a>        String::new()
-<a href=#87 id=87 data-nosnippet>87</a>    } <span class="kw">else if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>set_bound) = prop.set_bound {
-<a href=#88 id=88 data-nosnippet>88</a>        bound = <span class="macro">format!</span>(<span class="string">"&lt;{}: IsA&lt;{}&gt;&gt;"</span>, set_bound.alias, set_bound.type_str);
-<a href=#89 id=89 data-nosnippet>89</a>        <span class="macro">format!</span>(<span class="string">", {}: Option&lt;&amp;{}&gt;"</span>, prop.var_name, set_bound.alias)
-<a href=#90 id=90 data-nosnippet>90</a>    } <span class="kw">else </span>{
-<a href=#91 id=91 data-nosnippet>91</a>        bound = String::new();
-<a href=#92 id=92 data-nosnippet>92</a>        <span class="kw">let </span>dir = library::ParameterDirection::In;
-<a href=#93 id=93 data-nosnippet>93</a>        <span class="kw">let </span>param_type = RustType::builder(env, prop.typ)
-<a href=#94 id=94 data-nosnippet>94</a>            .direction(dir)
-<a href=#95 id=95 data-nosnippet>95</a>            .nullable(prop.nullable)
-<a href=#96 id=96 data-nosnippet>96</a>            .ref_mode(prop.set_in_ref_mode)
-<a href=#97 id=97 data-nosnippet>97</a>            .try_build_param()
-<a href=#98 id=98 data-nosnippet>98</a>            .into_string();
-<a href=#99 id=99 data-nosnippet>99</a>        <span class="macro">format!</span>(<span class="string">", {}: {}"</span>, prop.var_name, param_type)
-<a href=#100 id=100 data-nosnippet>100</a>    };
-<a href=#101 id=101 data-nosnippet>101</a>    <span class="kw">let </span>return_str = <span class="kw">if </span>prop.is_get {
-<a href=#102 id=102 data-nosnippet>102</a>        <span class="kw">let </span>dir = library::ParameterDirection::Return;
-<a href=#103 id=103 data-nosnippet>103</a>        <span class="kw">let </span>ret_type = RustType::builder(env, prop.typ)
-<a href=#104 id=104 data-nosnippet>104</a>            .direction(dir)
-<a href=#105 id=105 data-nosnippet>105</a>            .nullable(prop.nullable)
-<a href=#106 id=106 data-nosnippet>106</a>            .ref_mode(prop.get_out_ref_mode)
-<a href=#107 id=107 data-nosnippet>107</a>            .try_build_param()
-<a href=#108 id=108 data-nosnippet>108</a>            .into_string();
-<a href=#109 id=109 data-nosnippet>109</a>        <span class="macro">format!</span>(<span class="string">" -&gt; {ret_type}"</span>)
-<a href=#110 id=110 data-nosnippet>110</a>    } <span class="kw">else </span>{
-<a href=#111 id=111 data-nosnippet>111</a>        String::new()
-<a href=#112 id=112 data-nosnippet>112</a>    };
-<a href=#113 id=113 data-nosnippet>113</a>    <span class="macro">format!</span>(
-<a href=#114 id=114 data-nosnippet>114</a>        <span class="string">"fn {}{}(&amp;self{}){}"</span>,
-<a href=#115 id=115 data-nosnippet>115</a>        prop.func_name, bound, set_param, return_str
-<a href=#116 id=116 data-nosnippet>116</a>    )
-<a href=#117 id=117 data-nosnippet>117</a>}
-<a href=#118 id=118 data-nosnippet>118</a>
-<a href=#119 id=119 data-nosnippet>119</a><span class="kw">fn </span>body(env: <span class="kw-2">&amp;</span>Env, prop: <span class="kw-2">&amp;</span>Property, in_trait: bool) -&gt; Chunk {
-<a href=#120 id=120 data-nosnippet>120</a>    <span class="kw">let </span><span class="kw-2">mut </span>builder = property_body::Builder::new(env);
-<a href=#121 id=121 data-nosnippet>121</a>    builder
-<a href=#122 id=122 data-nosnippet>122</a>        .name(<span class="kw-2">&amp;</span>prop.name)
-<a href=#123 id=123 data-nosnippet>123</a>        .in_trait(in_trait)
-<a href=#124 id=124 data-nosnippet>124</a>        .var_name(<span class="kw-2">&amp;</span>prop.var_name)
-<a href=#125 id=125 data-nosnippet>125</a>        .is_get(prop.is_get);
-<a href=#126 id=126 data-nosnippet>126</a>
-<a href=#127 id=127 data-nosnippet>127</a>    <span class="kw">if let </span><span class="prelude-val">Ok</span>(type_) = RustType::try_new(env, prop.typ) {
-<a href=#128 id=128 data-nosnippet>128</a>        builder.type_(type_.as_str());
-<a href=#129 id=129 data-nosnippet>129</a>    } <span class="kw">else </span>{
-<a href=#130 id=130 data-nosnippet>130</a>        builder.type_(<span class="string">"/*Unknown type*/"</span>);
-<a href=#131 id=131 data-nosnippet>131</a>    }
-<a href=#132 id=132 data-nosnippet>132</a>
-<a href=#133 id=133 data-nosnippet>133</a>    builder.generate()
-<a href=#134 id=134 data-nosnippet>134</a>}</code></pre></div></section></main></body></html>
+<a href=#53 id=53 data-nosnippet>53</a>    cfg_condition(w, prop.cfg_condition.as_ref(), commented, indent)<span class="question-mark">?</span>;
+<a href=#54 id=54 data-nosnippet>54</a>    version_condition(w, env, <span class="prelude-val">None</span>, prop.version, commented, indent)<span class="question-mark">?</span>;
+<a href=#55 id=55 data-nosnippet>55</a>    <span class="kw">let </span>add_doc_alias = <span class="kw">if let </span><span class="prelude-val">Some</span>(func_name_alias) = prop.func_name_alias.as_ref() {
+<a href=#56 id=56 data-nosnippet>56</a>        <span class="kw-2">&amp;</span>prop.name != func_name_alias &amp;&amp; prop.name != prop.var_name
+<a href=#57 id=57 data-nosnippet>57</a>    } <span class="kw">else </span>{
+<a href=#58 id=58 data-nosnippet>58</a>        prop.name != prop.var_name
+<a href=#59 id=59 data-nosnippet>59</a>    };
+<a href=#60 id=60 data-nosnippet>60</a>    <span class="kw">if </span>add_doc_alias {
+<a href=#61 id=61 data-nosnippet>61</a>        doc_alias(w, <span class="kw-2">&amp;</span>prop.name, comment_prefix, indent)<span class="question-mark">?</span>;
+<a href=#62 id=62 data-nosnippet>62</a>    }
+<a href=#63 id=63 data-nosnippet>63</a>    <span class="macro">writeln!</span>(
+<a href=#64 id=64 data-nosnippet>64</a>        w,
+<a href=#65 id=65 data-nosnippet>65</a>        <span class="string">"{}{}{}{}{}"</span>,
+<a href=#66 id=66 data-nosnippet>66</a>        tabs(indent),
+<a href=#67 id=67 data-nosnippet>67</a>        comment_prefix,
+<a href=#68 id=68 data-nosnippet>68</a>        pub_prefix,
+<a href=#69 id=69 data-nosnippet>69</a>        decl,
+<a href=#70 id=70 data-nosnippet>70</a>        decl_suffix
+<a href=#71 id=71 data-nosnippet>71</a>    )<span class="question-mark">?</span>;
+<a href=#72 id=72 data-nosnippet>72</a>
+<a href=#73 id=73 data-nosnippet>73</a>    <span class="kw">if </span>!only_declaration {
+<a href=#74 id=74 data-nosnippet>74</a>        <span class="kw">let </span>body = body(env, prop, in_trait).to_code(env);
+<a href=#75 id=75 data-nosnippet>75</a>        <span class="kw">for </span>s <span class="kw">in </span>body {
+<a href=#76 id=76 data-nosnippet>76</a>            <span class="macro">writeln!</span>(w, <span class="string">"{}{}{}"</span>, tabs(indent), comment_prefix, s)<span class="question-mark">?</span>;
+<a href=#77 id=77 data-nosnippet>77</a>        }
+<a href=#78 id=78 data-nosnippet>78</a>    }
+<a href=#79 id=79 data-nosnippet>79</a>
+<a href=#80 id=80 data-nosnippet>80</a>    <span class="prelude-val">Ok</span>(())
+<a href=#81 id=81 data-nosnippet>81</a>}
+<a href=#82 id=82 data-nosnippet>82</a>
+<a href=#83 id=83 data-nosnippet>83</a><span class="kw">fn </span>declaration(env: <span class="kw-2">&amp;</span>Env, prop: <span class="kw-2">&amp;</span>Property) -&gt; String {
+<a href=#84 id=84 data-nosnippet>84</a>    <span class="kw">let </span>bound: String;
+<a href=#85 id=85 data-nosnippet>85</a>    <span class="kw">let </span>set_param = <span class="kw">if </span>prop.is_get {
+<a href=#86 id=86 data-nosnippet>86</a>        bound = String::new();
+<a href=#87 id=87 data-nosnippet>87</a>        String::new()
+<a href=#88 id=88 data-nosnippet>88</a>    } <span class="kw">else if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref </span>set_bound) = prop.set_bound {
+<a href=#89 id=89 data-nosnippet>89</a>        bound = <span class="macro">format!</span>(<span class="string">"&lt;{}: IsA&lt;{}&gt;&gt;"</span>, set_bound.alias, set_bound.type_str);
+<a href=#90 id=90 data-nosnippet>90</a>        <span class="macro">format!</span>(<span class="string">", {}: Option&lt;&amp;{}&gt;"</span>, prop.var_name, set_bound.alias)
+<a href=#91 id=91 data-nosnippet>91</a>    } <span class="kw">else </span>{
+<a href=#92 id=92 data-nosnippet>92</a>        bound = String::new();
+<a href=#93 id=93 data-nosnippet>93</a>        <span class="kw">let </span>dir = library::ParameterDirection::In;
+<a href=#94 id=94 data-nosnippet>94</a>        <span class="kw">let </span>param_type = RustType::builder(env, prop.typ)
+<a href=#95 id=95 data-nosnippet>95</a>            .direction(dir)
+<a href=#96 id=96 data-nosnippet>96</a>            .nullable(prop.nullable)
+<a href=#97 id=97 data-nosnippet>97</a>            .ref_mode(prop.set_in_ref_mode)
+<a href=#98 id=98 data-nosnippet>98</a>            .try_build_param()
+<a href=#99 id=99 data-nosnippet>99</a>            .into_string();
+<a href=#100 id=100 data-nosnippet>100</a>        <span class="macro">format!</span>(<span class="string">", {}: {}"</span>, prop.var_name, param_type)
+<a href=#101 id=101 data-nosnippet>101</a>    };
+<a href=#102 id=102 data-nosnippet>102</a>    <span class="kw">let </span>return_str = <span class="kw">if </span>prop.is_get {
+<a href=#103 id=103 data-nosnippet>103</a>        <span class="kw">let </span>dir = library::ParameterDirection::Return;
+<a href=#104 id=104 data-nosnippet>104</a>        <span class="kw">let </span>ret_type = RustType::builder(env, prop.typ)
+<a href=#105 id=105 data-nosnippet>105</a>            .direction(dir)
+<a href=#106 id=106 data-nosnippet>106</a>            .nullable(prop.nullable)
+<a href=#107 id=107 data-nosnippet>107</a>            .ref_mode(prop.get_out_ref_mode)
+<a href=#108 id=108 data-nosnippet>108</a>            .try_build_param()
+<a href=#109 id=109 data-nosnippet>109</a>            .into_string();
+<a href=#110 id=110 data-nosnippet>110</a>        <span class="macro">format!</span>(<span class="string">" -&gt; {ret_type}"</span>)
+<a href=#111 id=111 data-nosnippet>111</a>    } <span class="kw">else </span>{
+<a href=#112 id=112 data-nosnippet>112</a>        String::new()
+<a href=#113 id=113 data-nosnippet>113</a>    };
+<a href=#114 id=114 data-nosnippet>114</a>    <span class="macro">format!</span>(
+<a href=#115 id=115 data-nosnippet>115</a>        <span class="string">"fn {}{}(&amp;self{}){}"</span>,
+<a href=#116 id=116 data-nosnippet>116</a>        prop.func_name, bound, set_param, return_str
+<a href=#117 id=117 data-nosnippet>117</a>    )
+<a href=#118 id=118 data-nosnippet>118</a>}
+<a href=#119 id=119 data-nosnippet>119</a>
+<a href=#120 id=120 data-nosnippet>120</a><span class="kw">fn </span>body(env: <span class="kw-2">&amp;</span>Env, prop: <span class="kw-2">&amp;</span>Property, in_trait: bool) -&gt; Chunk {
+<a href=#121 id=121 data-nosnippet>121</a>    <span class="kw">let </span><span class="kw-2">mut </span>builder = property_body::Builder::new(env);
+<a href=#122 id=122 data-nosnippet>122</a>    builder
+<a href=#123 id=123 data-nosnippet>123</a>        .name(<span class="kw-2">&amp;</span>prop.name)
+<a href=#124 id=124 data-nosnippet>124</a>        .in_trait(in_trait)
+<a href=#125 id=125 data-nosnippet>125</a>        .var_name(<span class="kw-2">&amp;</span>prop.var_name)
+<a href=#126 id=126 data-nosnippet>126</a>        .is_get(prop.is_get);
+<a href=#127 id=127 data-nosnippet>127</a>
+<a href=#128 id=128 data-nosnippet>128</a>    <span class="kw">if let </span><span class="prelude-val">Ok</span>(type_) = RustType::try_new(env, prop.typ) {
+<a href=#129 id=129 data-nosnippet>129</a>        builder.type_(type_.as_str());
+<a href=#130 id=130 data-nosnippet>130</a>    } <span class="kw">else </span>{
+<a href=#131 id=131 data-nosnippet>131</a>        builder.type_(<span class="string">"/*Unknown type*/"</span>);
+<a href=#132 id=132 data-nosnippet>132</a>    }
+<a href=#133 id=133 data-nosnippet>133</a>
+<a href=#134 id=134 data-nosnippet>134</a>    builder.generate()
+<a href=#135 id=135 data-nosnippet>135</a>}</code></pre></div></section></main></body></html>
