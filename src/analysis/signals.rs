@@ -19,6 +19,7 @@ pub struct Info {
     pub doc_hidden: bool,
     pub is_detailed: bool,
     pub generate_doc: bool,
+    pub cfg_condition: Option<String>,
 }
 
 pub fn analyze(
@@ -73,6 +74,9 @@ fn analyze_signal(
         .filter_map(|f| f.version)
         .min()
         .or(signal.version);
+    let cfg_condition = configured_signals
+        .iter()
+        .find_map(|s| s.cfg_condition.clone());
     let deprecated_version = signal.deprecated_version;
     let doc_hidden = configured_signals.iter().any(|f| f.doc_hidden);
 
@@ -118,5 +122,6 @@ fn analyze_signal(
         doc_hidden,
         is_detailed: signal.is_detailed,
         generate_doc,
+        cfg_condition,
     }
 }

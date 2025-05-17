@@ -12,6 +12,7 @@ pub struct Property {
     pub ident: Ident,
     pub status: GStatus,
     pub version: Option<Version>,
+    pub cfg_condition: Option<String>,
     pub generate: Option<PropertyGenerateFlags>,
     pub bypass_auto_rename: bool,
     pub doc_trait_name: Option<String>,
@@ -33,6 +34,7 @@ impl Parse for Property {
                 "ignore",
                 "manual",
                 "version",
+                "cfg_condition",
                 "name",
                 "pattern",
                 "generate",
@@ -64,6 +66,10 @@ impl Parse for Property {
             .lookup("version")
             .and_then(Value::as_str)
             .and_then(|s| s.parse().ok());
+        let cfg_condition = toml
+            .lookup("cfg_condition")
+            .and_then(Value::as_str)
+            .map(ToOwned::to_owned);
         let generate = toml.lookup("generate").and_then(|v| {
             PropertyGenerateFlags::parse_flags(v, "generate")
                 .map_err(|e| error!("{} for object {}", e, object_name))
@@ -86,6 +92,7 @@ impl Parse for Property {
             ident,
             status,
             version,
+            cfg_condition,
             generate,
             bypass_auto_rename,
             doc_trait_name,
