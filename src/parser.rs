@@ -1496,7 +1496,11 @@ impl Library {
                     "<type> element is missing an inner element type",
                     elem.position(),
                 ))
-            } else if type_name == "gboolean" && c_type.as_deref() == Some("_Bool") {
+            } else if type_name == "gboolean"
+                && c_type
+                    .as_ref()
+                    .is_some_and(|c_type| c_type == "_Bool" || c_type == "bool")
+            {
                 Ok((self.find_or_stub_type(ns_id, "bool"), c_type, array_length))
             } else {
                 Ok((
