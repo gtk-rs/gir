@@ -1496,91 +1496,95 @@
 <a href=#1496 id=1496 data-nosnippet>1496</a>                    <span class="string">"&lt;type&gt; element is missing an inner element type"</span>,
 <a href=#1497 id=1497 data-nosnippet>1497</a>                    elem.position(),
 <a href=#1498 id=1498 data-nosnippet>1498</a>                ))
-<a href=#1499 id=1499 data-nosnippet>1499</a>            } <span class="kw">else if </span>type_name == <span class="string">"gboolean" </span>&amp;&amp; c_type.as_deref() == <span class="prelude-val">Some</span>(<span class="string">"_Bool"</span>) {
-<a href=#1500 id=1500 data-nosnippet>1500</a>                <span class="prelude-val">Ok</span>((<span class="self">self</span>.find_or_stub_type(ns_id, <span class="string">"bool"</span>), c_type, array_length))
-<a href=#1501 id=1501 data-nosnippet>1501</a>            } <span class="kw">else </span>{
-<a href=#1502 id=1502 data-nosnippet>1502</a>                <span class="prelude-val">Ok</span>((
-<a href=#1503 id=1503 data-nosnippet>1503</a>                    <span class="self">self</span>.find_or_stub_type(ns_id, type_name),
-<a href=#1504 id=1504 data-nosnippet>1504</a>                    c_type,
-<a href=#1505 id=1505 data-nosnippet>1505</a>                    array_length,
-<a href=#1506 id=1506 data-nosnippet>1506</a>                ))
-<a href=#1507 id=1507 data-nosnippet>1507</a>            }
-<a href=#1508 id=1508 data-nosnippet>1508</a>        } <span class="kw">else </span>{
-<a href=#1509 id=1509 data-nosnippet>1509</a>            <span class="kw">let </span>tid = <span class="kw">if </span>type_name == <span class="string">"array" </span>{
-<a href=#1510 id=1510 data-nosnippet>1510</a>                <span class="kw">let </span>inner_type = <span class="kw-2">&amp;</span>inner[<span class="number">0</span>];
-<a href=#1511 id=1511 data-nosnippet>1511</a>                Type::c_array(
-<a href=#1512 id=1512 data-nosnippet>1512</a>                    <span class="self">self</span>,
-<a href=#1513 id=1513 data-nosnippet>1513</a>                    inner_type.<span class="number">0</span>,
-<a href=#1514 id=1514 data-nosnippet>1514</a>                    elem.attr(<span class="string">"fixed-size"</span>).and_then(|n| n.parse().ok()),
-<a href=#1515 id=1515 data-nosnippet>1515</a>                    inner_type.<span class="number">1</span>.clone(),
-<a href=#1516 id=1516 data-nosnippet>1516</a>                )
-<a href=#1517 id=1517 data-nosnippet>1517</a>            } <span class="kw">else </span>{
-<a href=#1518 id=1518 data-nosnippet>1518</a>                <span class="kw">let </span>inner = inner.iter().map(|r| r.<span class="number">0</span>).collect();
-<a href=#1519 id=1519 data-nosnippet>1519</a>                Type::container(<span class="self">self</span>, type_name, inner).ok_or_else(|| {
-<a href=#1520 id=1520 data-nosnippet>1520</a>                    parser.fail_with_position(<span class="string">"Unknown container type"</span>, elem.position())
-<a href=#1521 id=1521 data-nosnippet>1521</a>                })<span class="question-mark">?
-<a href=#1522 id=1522 data-nosnippet>1522</a>            </span>};
-<a href=#1523 id=1523 data-nosnippet>1523</a>            <span class="prelude-val">Ok</span>((tid, c_type, array_length))
-<a href=#1524 id=1524 data-nosnippet>1524</a>        }
-<a href=#1525 id=1525 data-nosnippet>1525</a>    }
-<a href=#1526 id=1526 data-nosnippet>1526</a>
-<a href=#1527 id=1527 data-nosnippet>1527</a>    <span class="kw">fn </span>read_version(
-<a href=#1528 id=1528 data-nosnippet>1528</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-<a href=#1529 id=1529 data-nosnippet>1529</a>        parser: <span class="kw-2">&amp;</span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
-<a href=#1530 id=1530 data-nosnippet>1530</a>        ns_id: u16,
-<a href=#1531 id=1531 data-nosnippet>1531</a>        elem: <span class="kw-2">&amp;</span>Element,
-<a href=#1532 id=1532 data-nosnippet>1532</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Version&gt;, String&gt; {
-<a href=#1533 id=1533 data-nosnippet>1533</a>        <span class="self">self</span>.read_version_attribute(parser, ns_id, elem, <span class="string">"version"</span>)
-<a href=#1534 id=1534 data-nosnippet>1534</a>    }
-<a href=#1535 id=1535 data-nosnippet>1535</a>
-<a href=#1536 id=1536 data-nosnippet>1536</a>    <span class="kw">fn </span>read_deprecated_version(
-<a href=#1537 id=1537 data-nosnippet>1537</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-<a href=#1538 id=1538 data-nosnippet>1538</a>        parser: <span class="kw-2">&amp;</span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
-<a href=#1539 id=1539 data-nosnippet>1539</a>        ns_id: u16,
-<a href=#1540 id=1540 data-nosnippet>1540</a>        elem: <span class="kw-2">&amp;</span>Element,
-<a href=#1541 id=1541 data-nosnippet>1541</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Version&gt;, String&gt; {
-<a href=#1542 id=1542 data-nosnippet>1542</a>        <span class="self">self</span>.read_version_attribute(parser, ns_id, elem, <span class="string">"deprecated-version"</span>)
-<a href=#1543 id=1543 data-nosnippet>1543</a>    }
-<a href=#1544 id=1544 data-nosnippet>1544</a>
-<a href=#1545 id=1545 data-nosnippet>1545</a>    <span class="kw">fn </span>read_version_attribute(
-<a href=#1546 id=1546 data-nosnippet>1546</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-<a href=#1547 id=1547 data-nosnippet>1547</a>        parser: <span class="kw-2">&amp;</span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
-<a href=#1548 id=1548 data-nosnippet>1548</a>        ns_id: u16,
-<a href=#1549 id=1549 data-nosnippet>1549</a>        elem: <span class="kw-2">&amp;</span>Element,
-<a href=#1550 id=1550 data-nosnippet>1550</a>        attr: <span class="kw-2">&amp;</span>str,
-<a href=#1551 id=1551 data-nosnippet>1551</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Version&gt;, String&gt; {
-<a href=#1552 id=1552 data-nosnippet>1552</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(v) = elem.attr(attr) {
-<a href=#1553 id=1553 data-nosnippet>1553</a>            <span class="kw">match </span>v.parse() {
-<a href=#1554 id=1554 data-nosnippet>1554</a>                <span class="prelude-val">Ok</span>(v) =&gt; {
-<a href=#1555 id=1555 data-nosnippet>1555</a>                    <span class="self">self</span>.register_version(ns_id, v);
-<a href=#1556 id=1556 data-nosnippet>1556</a>                    <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(v))
-<a href=#1557 id=1557 data-nosnippet>1557</a>                }
-<a href=#1558 id=1558 data-nosnippet>1558</a>                <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(parser.fail(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"Invalid `{attr}` attribute: {e}"</span>))),
-<a href=#1559 id=1559 data-nosnippet>1559</a>            }
-<a href=#1560 id=1560 data-nosnippet>1560</a>        } <span class="kw">else </span>{
-<a href=#1561 id=1561 data-nosnippet>1561</a>            <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
-<a href=#1562 id=1562 data-nosnippet>1562</a>        }
-<a href=#1563 id=1563 data-nosnippet>1563</a>    }
-<a href=#1564 id=1564 data-nosnippet>1564</a>
-<a href=#1565 id=1565 data-nosnippet>1565</a>    <span class="kw">fn </span>read_object_c_type&lt;<span class="lifetime">'a</span>&gt;(
-<a href=#1566 id=1566 data-nosnippet>1566</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-<a href=#1567 id=1567 data-nosnippet>1567</a>        parser: <span class="kw-2">&amp;</span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
-<a href=#1568 id=1568 data-nosnippet>1568</a>        elem: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Element,
-<a href=#1569 id=1569 data-nosnippet>1569</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, String&gt; {
-<a href=#1570 id=1570 data-nosnippet>1570</a>        elem.attr(<span class="string">"type"</span>)
-<a href=#1571 id=1571 data-nosnippet>1571</a>            .or_else(|| elem.attr(<span class="string">"type-name"</span>))
-<a href=#1572 id=1572 data-nosnippet>1572</a>            .ok_or_else(|| {
-<a href=#1573 id=1573 data-nosnippet>1573</a>                parser.fail(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
-<a href=#1574 id=1574 data-nosnippet>1574</a>                    <span class="string">"Missing `c:type`/`glib:type-name` attributes on element &lt;{}&gt;"</span>,
-<a href=#1575 id=1575 data-nosnippet>1575</a>                    elem.name()
-<a href=#1576 id=1576 data-nosnippet>1576</a>                ))
-<a href=#1577 id=1577 data-nosnippet>1577</a>            })
-<a href=#1578 id=1578 data-nosnippet>1578</a>    }
-<a href=#1579 id=1579 data-nosnippet>1579</a>}
-<a href=#1580 id=1580 data-nosnippet>1580</a>
-<a href=#1581 id=1581 data-nosnippet>1581</a><span class="kw">fn </span>make_file_name(dir: <span class="kw-2">&amp;</span>Path, name: <span class="kw-2">&amp;</span>str) -&gt; PathBuf {
-<a href=#1582 id=1582 data-nosnippet>1582</a>    <span class="kw">let </span><span class="kw-2">mut </span>path = dir.to_path_buf();
-<a href=#1583 id=1583 data-nosnippet>1583</a>    <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">"{name}.gir"</span>);
-<a href=#1584 id=1584 data-nosnippet>1584</a>    path.push(name);
-<a href=#1585 id=1585 data-nosnippet>1585</a>    path
-<a href=#1586 id=1586 data-nosnippet>1586</a>}</code></pre></div></section></main></body></html>
+<a href=#1499 id=1499 data-nosnippet>1499</a>            } <span class="kw">else if </span>type_name == <span class="string">"gboolean"
+<a href=#1500 id=1500 data-nosnippet>1500</a>                </span>&amp;&amp; c_type
+<a href=#1501 id=1501 data-nosnippet>1501</a>                    .as_ref()
+<a href=#1502 id=1502 data-nosnippet>1502</a>                    .is_some_and(|c_type| c_type == <span class="string">"_Bool" </span>|| c_type == <span class="string">"bool"</span>)
+<a href=#1503 id=1503 data-nosnippet>1503</a>            {
+<a href=#1504 id=1504 data-nosnippet>1504</a>                <span class="prelude-val">Ok</span>((<span class="self">self</span>.find_or_stub_type(ns_id, <span class="string">"bool"</span>), c_type, array_length))
+<a href=#1505 id=1505 data-nosnippet>1505</a>            } <span class="kw">else </span>{
+<a href=#1506 id=1506 data-nosnippet>1506</a>                <span class="prelude-val">Ok</span>((
+<a href=#1507 id=1507 data-nosnippet>1507</a>                    <span class="self">self</span>.find_or_stub_type(ns_id, type_name),
+<a href=#1508 id=1508 data-nosnippet>1508</a>                    c_type,
+<a href=#1509 id=1509 data-nosnippet>1509</a>                    array_length,
+<a href=#1510 id=1510 data-nosnippet>1510</a>                ))
+<a href=#1511 id=1511 data-nosnippet>1511</a>            }
+<a href=#1512 id=1512 data-nosnippet>1512</a>        } <span class="kw">else </span>{
+<a href=#1513 id=1513 data-nosnippet>1513</a>            <span class="kw">let </span>tid = <span class="kw">if </span>type_name == <span class="string">"array" </span>{
+<a href=#1514 id=1514 data-nosnippet>1514</a>                <span class="kw">let </span>inner_type = <span class="kw-2">&amp;</span>inner[<span class="number">0</span>];
+<a href=#1515 id=1515 data-nosnippet>1515</a>                Type::c_array(
+<a href=#1516 id=1516 data-nosnippet>1516</a>                    <span class="self">self</span>,
+<a href=#1517 id=1517 data-nosnippet>1517</a>                    inner_type.<span class="number">0</span>,
+<a href=#1518 id=1518 data-nosnippet>1518</a>                    elem.attr(<span class="string">"fixed-size"</span>).and_then(|n| n.parse().ok()),
+<a href=#1519 id=1519 data-nosnippet>1519</a>                    inner_type.<span class="number">1</span>.clone(),
+<a href=#1520 id=1520 data-nosnippet>1520</a>                )
+<a href=#1521 id=1521 data-nosnippet>1521</a>            } <span class="kw">else </span>{
+<a href=#1522 id=1522 data-nosnippet>1522</a>                <span class="kw">let </span>inner = inner.iter().map(|r| r.<span class="number">0</span>).collect();
+<a href=#1523 id=1523 data-nosnippet>1523</a>                Type::container(<span class="self">self</span>, type_name, inner).ok_or_else(|| {
+<a href=#1524 id=1524 data-nosnippet>1524</a>                    parser.fail_with_position(<span class="string">"Unknown container type"</span>, elem.position())
+<a href=#1525 id=1525 data-nosnippet>1525</a>                })<span class="question-mark">?
+<a href=#1526 id=1526 data-nosnippet>1526</a>            </span>};
+<a href=#1527 id=1527 data-nosnippet>1527</a>            <span class="prelude-val">Ok</span>((tid, c_type, array_length))
+<a href=#1528 id=1528 data-nosnippet>1528</a>        }
+<a href=#1529 id=1529 data-nosnippet>1529</a>    }
+<a href=#1530 id=1530 data-nosnippet>1530</a>
+<a href=#1531 id=1531 data-nosnippet>1531</a>    <span class="kw">fn </span>read_version(
+<a href=#1532 id=1532 data-nosnippet>1532</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+<a href=#1533 id=1533 data-nosnippet>1533</a>        parser: <span class="kw-2">&amp;</span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
+<a href=#1534 id=1534 data-nosnippet>1534</a>        ns_id: u16,
+<a href=#1535 id=1535 data-nosnippet>1535</a>        elem: <span class="kw-2">&amp;</span>Element,
+<a href=#1536 id=1536 data-nosnippet>1536</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Version&gt;, String&gt; {
+<a href=#1537 id=1537 data-nosnippet>1537</a>        <span class="self">self</span>.read_version_attribute(parser, ns_id, elem, <span class="string">"version"</span>)
+<a href=#1538 id=1538 data-nosnippet>1538</a>    }
+<a href=#1539 id=1539 data-nosnippet>1539</a>
+<a href=#1540 id=1540 data-nosnippet>1540</a>    <span class="kw">fn </span>read_deprecated_version(
+<a href=#1541 id=1541 data-nosnippet>1541</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+<a href=#1542 id=1542 data-nosnippet>1542</a>        parser: <span class="kw-2">&amp;</span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
+<a href=#1543 id=1543 data-nosnippet>1543</a>        ns_id: u16,
+<a href=#1544 id=1544 data-nosnippet>1544</a>        elem: <span class="kw-2">&amp;</span>Element,
+<a href=#1545 id=1545 data-nosnippet>1545</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Version&gt;, String&gt; {
+<a href=#1546 id=1546 data-nosnippet>1546</a>        <span class="self">self</span>.read_version_attribute(parser, ns_id, elem, <span class="string">"deprecated-version"</span>)
+<a href=#1547 id=1547 data-nosnippet>1547</a>    }
+<a href=#1548 id=1548 data-nosnippet>1548</a>
+<a href=#1549 id=1549 data-nosnippet>1549</a>    <span class="kw">fn </span>read_version_attribute(
+<a href=#1550 id=1550 data-nosnippet>1550</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+<a href=#1551 id=1551 data-nosnippet>1551</a>        parser: <span class="kw-2">&amp;</span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
+<a href=#1552 id=1552 data-nosnippet>1552</a>        ns_id: u16,
+<a href=#1553 id=1553 data-nosnippet>1553</a>        elem: <span class="kw-2">&amp;</span>Element,
+<a href=#1554 id=1554 data-nosnippet>1554</a>        attr: <span class="kw-2">&amp;</span>str,
+<a href=#1555 id=1555 data-nosnippet>1555</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="prelude-ty">Option</span>&lt;Version&gt;, String&gt; {
+<a href=#1556 id=1556 data-nosnippet>1556</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(v) = elem.attr(attr) {
+<a href=#1557 id=1557 data-nosnippet>1557</a>            <span class="kw">match </span>v.parse() {
+<a href=#1558 id=1558 data-nosnippet>1558</a>                <span class="prelude-val">Ok</span>(v) =&gt; {
+<a href=#1559 id=1559 data-nosnippet>1559</a>                    <span class="self">self</span>.register_version(ns_id, v);
+<a href=#1560 id=1560 data-nosnippet>1560</a>                    <span class="prelude-val">Ok</span>(<span class="prelude-val">Some</span>(v))
+<a href=#1561 id=1561 data-nosnippet>1561</a>                }
+<a href=#1562 id=1562 data-nosnippet>1562</a>                <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(parser.fail(<span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"Invalid `{attr}` attribute: {e}"</span>))),
+<a href=#1563 id=1563 data-nosnippet>1563</a>            }
+<a href=#1564 id=1564 data-nosnippet>1564</a>        } <span class="kw">else </span>{
+<a href=#1565 id=1565 data-nosnippet>1565</a>            <span class="prelude-val">Ok</span>(<span class="prelude-val">None</span>)
+<a href=#1566 id=1566 data-nosnippet>1566</a>        }
+<a href=#1567 id=1567 data-nosnippet>1567</a>    }
+<a href=#1568 id=1568 data-nosnippet>1568</a>
+<a href=#1569 id=1569 data-nosnippet>1569</a>    <span class="kw">fn </span>read_object_c_type&lt;<span class="lifetime">'a</span>&gt;(
+<a href=#1570 id=1570 data-nosnippet>1570</a>        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+<a href=#1571 id=1571 data-nosnippet>1571</a>        parser: <span class="kw-2">&amp;</span>XmlParser&lt;<span class="lifetime">'_</span>&gt;,
+<a href=#1572 id=1572 data-nosnippet>1572</a>        elem: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Element,
+<a href=#1573 id=1573 data-nosnippet>1573</a>    ) -&gt; <span class="prelude-ty">Result</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, String&gt; {
+<a href=#1574 id=1574 data-nosnippet>1574</a>        elem.attr(<span class="string">"type"</span>)
+<a href=#1575 id=1575 data-nosnippet>1575</a>            .or_else(|| elem.attr(<span class="string">"type-name"</span>))
+<a href=#1576 id=1576 data-nosnippet>1576</a>            .ok_or_else(|| {
+<a href=#1577 id=1577 data-nosnippet>1577</a>                parser.fail(<span class="kw-2">&amp;</span><span class="macro">format!</span>(
+<a href=#1578 id=1578 data-nosnippet>1578</a>                    <span class="string">"Missing `c:type`/`glib:type-name` attributes on element &lt;{}&gt;"</span>,
+<a href=#1579 id=1579 data-nosnippet>1579</a>                    elem.name()
+<a href=#1580 id=1580 data-nosnippet>1580</a>                ))
+<a href=#1581 id=1581 data-nosnippet>1581</a>            })
+<a href=#1582 id=1582 data-nosnippet>1582</a>    }
+<a href=#1583 id=1583 data-nosnippet>1583</a>}
+<a href=#1584 id=1584 data-nosnippet>1584</a>
+<a href=#1585 id=1585 data-nosnippet>1585</a><span class="kw">fn </span>make_file_name(dir: <span class="kw-2">&amp;</span>Path, name: <span class="kw-2">&amp;</span>str) -&gt; PathBuf {
+<a href=#1586 id=1586 data-nosnippet>1586</a>    <span class="kw">let </span><span class="kw-2">mut </span>path = dir.to_path_buf();
+<a href=#1587 id=1587 data-nosnippet>1587</a>    <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">"{name}.gir"</span>);
+<a href=#1588 id=1588 data-nosnippet>1588</a>    path.push(name);
+<a href=#1589 id=1589 data-nosnippet>1589</a>    path
+<a href=#1590 id=1590 data-nosnippet>1590</a>}</code></pre></div></section></main></body></html>
