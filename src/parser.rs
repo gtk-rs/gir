@@ -21,6 +21,7 @@ const EMPTY_CTYPE: &str = "/*EMPTY*/";
 struct ElementTypeAttrs {
     tid: TypeId,
     c_type: Option<String>,
+    is_array: bool,
     array_length: Option<u32>,
     zero_terminated: Option<bool>,
 }
@@ -1273,7 +1274,7 @@ impl Library {
         let transfer = elem
             .attr_from_str("transfer-ownership")?
             .unwrap_or(Transfer::None);
-        let nullable = elem.attr_bool("nullable", false);
+        let mut nullable = elem.attr_bool("nullable", false);
         let scope = elem.attr_from_str("scope")?.unwrap_or(ParameterScope::None);
         let closure = elem.attr_from_str("closure")?;
         let destroy = elem.attr_from_str("destroy")?;
@@ -1311,6 +1312,7 @@ impl Library {
                 }
 
                 typ = Some(elem_type);
+
                 Ok(())
             }
             "varargs" => {
@@ -1323,9 +1325,32 @@ impl Library {
         })?;
 
         if let Some(mut elem_type) = typ {
-            if for_method {
-                elem_type.array_length = elem_type.array_length.map(|l| l + 1);
+            if elem_type.is_array {
+                // Note: these could be handled in the `analysis` part, however that would be quite
+                //       annoying because many code places check the parsed `nullable` instead of
+                //       the `analysis` result. Gir necessitates a rewrite...
+                use ParameterDirection::*;
+                match direction {
+                    Return | Out | InOut => {
+                        // Some arrays in return position come with nullable=true & zero-terminated=false
+                        // annotations. In practice, the C implementations return NULL when the size is 0.
+                        // So it doesn't make much sense using an `Option<_>` by default for nullable arrays.
+                        nullable = false
+                    }
+                    _ => {
+                        // We can only generate a Rust `Option` from a nullable array annotation
+                        // if the array is not zero terminated. Otherwise we would need an extra
+                        // indication to differentiate an empty array from an undefined value,
+                        // which should be indicated in the doc and would need manual implementation.
+                        nullable &= !elem_type.zero_terminated.unwrap_or(true);
+                    }
+                }
+
+                if for_method {
+                    elem_type.array_length = elem_type.array_length.map(|l| l + 1);
+                }
             }
+
             Ok(Parameter {
                 name: param_name.into(),
                 typ: elem_type.tid,
@@ -1335,6 +1360,7 @@ impl Library {
                 transfer,
                 caller_allocates,
                 nullable: Nullable(nullable),
+                is_array: elem_type.is_array,
                 array_length: elem_type.array_length,
                 zero_terminated: elem_type.zero_terminated,
                 is_error: false,
@@ -1458,6 +1484,7 @@ impl Library {
             construct,
             construct_only,
             transfer,
+            is_array: elem_type.is_array,
             typ: elem_type.tid,
             c_type: elem_type.c_type,
             version,
@@ -1475,7 +1502,7 @@ impl Library {
         ns_id: u16,
         elem: &Element,
     ) -> Result<ElementTypeAttrs, String> {
-        let type_name = elem
+        let mut type_name = elem
             .attr("name")
             .or_else(|| {
                 if elem.name() == "array" {
@@ -1515,23 +1542,19 @@ impl Library {
                     "<type> element is missing an inner element type",
                     elem.position(),
                 ))
-            } else if type_name == "gboolean"
-                && c_type
-                    .as_ref()
-                    .is_some_and(|c_type| c_type == "_Bool" || c_type == "bool")
-            {
-                Ok(ElementTypeAttrs {
-                    tid: self.find_or_stub_type(ns_id, "bool"),
-                    c_type,
-                    array_length,
-                    zero_terminated,
-                })
             } else {
+                if type_name == "gboolean"
+                    && c_type
+                        .as_ref()
+                        .is_some_and(|c_type| c_type == "_Bool" || c_type == "bool")
+                {
+                    type_name = "bool";
+                }
+
                 Ok(ElementTypeAttrs {
                     tid: self.find_or_stub_type(ns_id, type_name),
                     c_type,
-                    array_length,
-                    zero_terminated,
+                    ..Default::default()
                 })
             }
         } else {
@@ -1552,6 +1575,7 @@ impl Library {
             Ok(ElementTypeAttrs {
                 tid,
                 c_type,
+                is_array: true,
                 array_length,
                 zero_terminated,
             })
@@ -1642,6 +1666,91 @@ mod tests {
                 assert_eq!(elem.c_type, "const guchar*");
                 assert!(*elem.nullable);
                 assert!(!elem.zero_terminated.unwrap());
+
+                Ok(())
+            })
+        })
+        .unwrap();
+    }
+
+    #[test]
+    fn array_param_nullable_zero_terminated_default() {
+        XmlParser::new(
+            br#"<?xml version="1.0"?>
+            <parameter name="data" transfer-ownership="none" nullable="1">
+              <array length="2" type="const guchar*">
+                <type name="guint8" type="guchar"/>
+              </array>
+            </parameter>"#
+                .as_slice(),
+        )
+        .document(|p, _| {
+            p.element_with_name("parameter", |p, elem| {
+                let elem = Library::new("Glib")
+                    .read_parameter(p, MAIN_NAMESPACE, elem, false, false)
+                    .unwrap();
+                assert_eq!(elem.c_type, "const guchar*");
+                // We can only generate a Rust `Option` from a nullable array annotation
+                // if the array is not zero terminated. Otherwise we would need an extra
+                // indication to differentiate an empty array from an undefined value,
+                // which should be indicated in the doc and would need manual implementation.
+                assert!(!*elem.nullable);
+                // the default seems to be true
+                assert!(elem.zero_terminated.is_none());
+
+                Ok(())
+            })
+        })
+        .unwrap();
+    }
+
+    #[test]
+    fn array_param_nullable_zero_terminated() {
+        XmlParser::new(
+            br#"<?xml version="1.0"?>
+            <parameter name="data" transfer-ownership="none" nullable="1">
+              <array length="2" zero-terminated="1" type="const guchar*">
+                <type name="guint8" type="guchar"/>
+              </array>
+            </parameter>"#
+                .as_slice(),
+        )
+        .document(|p, _| {
+            p.element_with_name("parameter", |p, elem| {
+                let elem = Library::new("Glib")
+                    .read_parameter(p, MAIN_NAMESPACE, elem, false, false)
+                    .unwrap();
+                assert_eq!(elem.c_type, "const guchar*");
+                // We can only generate a Rust `Option` from a nullable array annotation
+                // if the array is not zero terminated. Otherwise we would need an extra
+                // indication to differentiate an empty array from an undefined value,
+                // which should be indicated in the doc and would need manual implementation.
+                assert!(!*elem.nullable);
+                assert!(elem.zero_terminated.unwrap());
+
+                Ok(())
+            })
+        })
+        .unwrap();
+    }
+
+    #[test]
+    fn array_prop() {
+        XmlParser::new(
+            br#"<?xml version="1.0"?>
+            <property name="advertised-protocols" version="2.60" writable="1" transfer-ownership="none" setter="set_advertised_protocols">
+              <array>
+                <type name="utf8"/>
+              </array>
+            </property>"#
+                .as_slice(),
+        )
+        .document(|p, _| {
+            p.element_with_name("property", |p, elem| {
+                let elem = Library::new("Glib")
+                    .read_property(p, MAIN_NAMESPACE, elem, "")
+                    .unwrap().unwrap();
+                assert!(elem.is_array);
 
                 Ok(())
             })

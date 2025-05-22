@@ -3,7 +3,7 @@ use std::{
     collections::{BTreeMap, BTreeSet, HashMap, HashSet},
     fmt,
     iter::Iterator,
-    ops::{Deref, DerefMut},
+    ops::{BitAnd, Deref, DerefMut},
     str::FromStr,
 };
 
@@ -132,6 +132,14 @@ impl Deref for Nullable {
 impl DerefMut for Nullable {
     fn deref_mut(&mut self) -> &mut bool {
         &mut self.0
+    }
+}
+
+impl BitAnd<bool> for Nullable {
+    type Output = Nullable;
+
+    fn bitand(self, rhs: bool) -> Nullable {
+        Nullable(*self & rhs)
     }
 }
 
@@ -513,6 +521,7 @@ pub struct Property {
     pub typ: TypeId,
     pub c_type: Option<String>,
     pub transfer: Transfer,
+    pub is_array: bool,
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
     pub doc: Option<String>,
@@ -531,6 +540,7 @@ pub struct Parameter {
     pub transfer: Transfer,
     pub caller_allocates: bool,
     pub nullable: Nullable,
+    pub is_array: bool,
     pub array_length: Option<u32>,
     pub zero_terminated: Option<bool>,
     pub is_error: bool,
