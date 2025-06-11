@@ -251,7 +251,6 @@ impl<'env> RustTypeBuilder<'env> {
         let ok = |s: &str| Ok(RustType::from(s));
         let ok_and_use = |s: &str| Ok(RustType::new_and_use(&s));
         let err = |s: &str| Err(TypeError::Unimplemented(s.into()));
-        let mut skip_option = false;
         let type_ = self.env.library.type_(self.type_id);
         let mut rust_type = match *type_ {
             Basic(fund) => {
@@ -355,7 +354,6 @@ impl<'env> RustTypeBuilder<'env> {
             List(inner_tid) | SList(inner_tid) | CArray(inner_tid) | PtrArray(inner_tid)
                 if ConversionType::of(self.env, inner_tid) == ConversionType::Pointer =>
             {
-                skip_option = true;
                 let inner_ref_mode = match self.env.type_(inner_tid) {
                     Class(..) | Interface(..) => RefMode::None,
                     Record(record) => match RecordType::of(record) {
@@ -409,7 +407,6 @@ impl<'env> RustTypeBuilder<'env> {
                     };
 
                     if let Some(s) = array_type {
-                        skip_option = true;
                         if self.ref_mode.is_ref() {
                             Ok(format!("[{s}]").into())
                         } else {
@@ -604,7 +601,7 @@ impl<'env> RustTypeBuilder<'env> {
             }
         }
 
-        if *self.nullable && !skip_option {
+        if *self.nullable {
             match ConversionType::of(self.env, self.type_id) {
                 ConversionType::Pointer | ConversionType::Scalar => {
                     rust_type = rust_type.map_any(|rust_type| {
