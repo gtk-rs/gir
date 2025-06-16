@@ -12,7 +12,7 @@ edition = "2021"
 
 [dependencies]
 bitflags = "2.9"
-getopts = "0.2.21"
+getopts = "0.2.23"
 getter_rules = { package = "fix-getters-rules", version = "0.3.0", default-features = false }
 xml-rs = "0.8"
 toml = { version = "0.8" , features = ["preserve_order"] }
