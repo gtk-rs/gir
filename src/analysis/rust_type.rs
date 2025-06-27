@@ -68,7 +68,17 @@ impl RustType {
                 type_name.as_str()
             );
 
-            if env.type_status(&type_id.full_name(&env.library)).ignored() {
+            // if env.namespaces[type_id.ns_id].higher_crate_name == "vulkan" {
+            //     dbg!(&type_name);
+            //     dbg!(&type_id.full_name(&env.library));
+            //     // dbg!(&env.config.objects);
+            //     // panic!();
+            // }
+            if env.type_status(&type_id.full_name(&env.library)).ignored()
+                // TODO
+            && env.namespaces[type_id.ns_id].higher_crate_name != "vulkan"
+            {
+                // dbg!(&type_name);
                 return Err(TypeError::Ignored(type_name));
             }
         }
@@ -271,7 +281,7 @@ impl<'env> RustTypeBuilder<'env> {
                     UInt => ok("u32"), // maybe dependent on target system
 
                     Short => ok_and_use("libc::c_short"), // depends of target system
-                    UShort => ok_and_use("libc::c_ushort"), // depends o f target system
+                    UShort => ok_and_use("libc::c_ushort"), // depends of target system
                     Long => ok_and_use("libc::c_long"),   // depends of target system
                     ULong => ok_and_use("libc::c_ulong"), // depends of target system
 
