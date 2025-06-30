@@ -21,7 +21,7 @@ pub fn generate(env: &Env) {
 
     let path = env.config.auto_path.join(file_name_sys("lib"));
 
-    info!("Generating file {:?}", path);
+    info!("Generating file {path:?}");
     save_to_file(&path, env.config.make_backup, |w| generate_lib(w, env));
 }
 

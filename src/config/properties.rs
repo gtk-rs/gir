@@ -22,10 +22,7 @@ pub struct Property {
 impl Parse for Property {
     fn parse(toml: &Value, object_name: &str) -> Option<Self> {
         let Some(ident) = Ident::parse(toml, object_name, "property") else {
-            error!(
-                "No 'name' or 'pattern' given for property for object {}",
-                object_name
-            );
+            error!("No 'name' or 'pattern' given for property for object {object_name}");
             return None;
         };
 
@@ -72,7 +69,7 @@ impl Parse for Property {
             .map(ToOwned::to_owned);
         let generate = toml.lookup("generate").and_then(|v| {
             PropertyGenerateFlags::parse_flags(v, "generate")
-                .map_err(|e| error!("{} for object {}", e, object_name))
+                .map_err(|e| error!("{e} for object {object_name}"))
                 .ok()
         });
         let bypass_auto_rename = toml

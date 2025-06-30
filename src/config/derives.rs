@@ -14,7 +14,7 @@ impl Parse for Derive {
         let names = match toml.lookup("name").and_then(Value::as_str) {
             Some(names) => names,
             None => {
-                error!("No 'name' given for derive for object {}", object_name);
+                error!("No 'name' given for derive for object {object_name}");
                 return None;
             }
         };

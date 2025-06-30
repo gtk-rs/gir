@@ -42,7 +42,7 @@ pub fn ffi_type(env: &Env, tid: TypeId, c_type: &str) -> Result {
                     | Type::Interface(Interface {
                         c_type: expected, ..
                     }) if is_gpointer(c_type) => {
-                        info!("[c:type `gpointer` instead of `*mut {}`, fixing]", expected);
+                        info!("[c:type `gpointer` instead of `*mut {expected}`, fixing]");
                         ffi_inner(env, tid, expected).map_any(|rust_type| {
                             rust_type.alter_type(|typ_| format!("*mut {typ_}"))
                         })
@@ -62,7 +62,7 @@ pub fn ffi_type(env: &Env, tid: TypeId, c_type: &str) -> Result {
         ffi_inner(env, tid, &inner)
             .map_any(|rust_type| rust_type.alter_type(|typ_| format!("{ptr} {typ_}")))
     };
-    trace!("ffi_type({:?}, {}) -> {:?}", tid, c_type, res);
+    trace!("ffi_type({tid:?}, {c_type}) -> {res:?}");
     res
 }
 

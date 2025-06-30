@@ -32,10 +32,7 @@ pub struct VirtualMethod {
 impl Parse for VirtualMethod {
     fn parse(toml: &Value, object_name: &str) -> Option<Self> {
         let Some(ident) = Ident::parse(toml, object_name, "virtual_method") else {
-            error!(
-                "No 'name' or 'pattern' given for virtual_method for object {}",
-                object_name
-            );
+            error!("No 'name' or 'pattern' given for virtual_method for object {object_name}");
             return None;
         };
         toml.check_unwanted(

@@ -35,7 +35,7 @@ pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
                         c_type: ref expected,
                         ..
                     }) if c_type == "gpointer" => {
-                        info!("[c:type `gpointer` instead of `*mut {}`, fixing]", expected);
+                        info!("[c:type `gpointer` instead of `*mut {expected}`, fixing]");
                         ffi_inner(env, tid, expected.clone()).map_any(|rust_type| {
                             rust_type.alter_type(|typ_| format!("*mut {typ_}"))
                         })
@@ -55,7 +55,7 @@ pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
         ffi_inner(env, tid, inner)
             .map_any(|rust_type| rust_type.alter_type(|typ_| format!("{ptr} {typ_}")))
     };
-    trace!("ffi_type({:?}, {}) -> {:?}", tid, c_type, res);
+    trace!("ffi_type({tid:?}, {c_type}) -> {res:?}");
     res
 }
 
@@ -129,7 +129,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
                         declared_c_type,
                         typ.get_name()
                     );
-                    warn!("{}", msg);
+                    warn!("{msg}");
                     return Err(TypeError::Mismatch(msg));
                 }
             } else {
@@ -172,7 +172,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
                             glib_name,
                             env.library.type_(tid).get_name()
                         );
-                        warn!("{}", msg);
+                        warn!("{msg}");
                         Err(TypeError::Mismatch(msg))
                     }
                 } else {
@@ -184,7 +184,7 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
                     env.library.type_(tid).get_name(),
                     inner
                 );
-                warn!("{}", msg);
+                warn!("{msg}");
                 Err(TypeError::Mismatch(msg))
             }
         }

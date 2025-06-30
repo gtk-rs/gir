@@ -29,14 +29,16 @@ pub fn generate(
     in_trait: bool,
     indent: usize,
 ) -> Result<()> {
-    let (self_bound, fn_self_bound) = in_trait
-        .then(|| {
+    let (self_bound, fn_self_bound) = if in_trait {
+        {
             (
                 format!("{}: IsA<{}>, ", TYPE_PARAMETERS_START, analysis.type_name),
                 Some(TYPE_PARAMETERS_START.to_string()),
             )
-        })
-        .unwrap_or_default();
+        }
+    } else {
+        Default::default()
+    };
 
     let prepend = tabs(indent);
     let params_str = trampoline_parameters(env, analysis);

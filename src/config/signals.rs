@@ -47,10 +47,7 @@ pub struct Parameter {
 impl Parse for Parameter {
     fn parse(toml: &Value, object_name: &str) -> Option<Self> {
         let Some(ident) = Ident::parse(toml, object_name, "signal parameter") else {
-            error!(
-                "No 'name' or 'pattern' given for parameter for object {}",
-                object_name
-            );
+            error!("No 'name' or 'pattern' given for parameter for object {object_name}");
             return None;
         };
         toml.check_unwanted(
@@ -68,7 +65,7 @@ impl Parse for Parameter {
             .and_then(|s| {
                 TransformationType::from_str(s)
                     .map_err(|err| {
-                        error!("{0}", err);
+                        error!("{err}");
                         err
                     })
                     .ok()
@@ -117,10 +114,7 @@ impl Signal {
         concurrency: library::Concurrency,
     ) -> Option<Self> {
         let Some(ident) = Ident::parse(toml, object_name, "signal") else {
-            error!(
-                "No 'name' or 'pattern' given for signal for object {}",
-                object_name
-            );
+            error!("No 'name' or 'pattern' given for signal for object {object_name}");
             return None;
         };
         toml.check_unwanted(
