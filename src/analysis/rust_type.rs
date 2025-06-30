@@ -539,7 +539,7 @@ impl<'env> RustTypeBuilder<'env> {
                 }
                 Ok(if *self.nullable {
                     if self.scope.is_call() {
-                        format!("Option<&mut dyn ({ret})>")
+                        format!("Option<&mut dyn {ret}>")
                     } else {
                         format!("Option<Box_<dyn {ret} + 'static>>")
                     }
