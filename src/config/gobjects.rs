@@ -173,7 +173,7 @@ pub fn parse_conversion_type(toml: Option<&Value>, object_name: &str) -> Option<
         Value::Table(table) => {
             let conversion_type = table.get("variant").and_then(Value::as_str);
             if conversion_type.is_none() {
-                error!("Missing `variant` for {}.conversion_type", object_name);
+                error!("Missing `variant` for {object_name}.conversion_type");
                 return None;
             }
 
@@ -189,7 +189,7 @@ pub fn parse_conversion_type(toml: Option<&Value>, object_name: &str) -> Option<
         }
         Value::String(conversion_type) => (conversion_type.as_str(), None, None),
         _ => {
-            error!("Unexpected toml item for {}.conversion_type", object_name);
+            error!("Unexpected toml item for {object_name}.conversion_type");
             return None;
         }
     };
@@ -197,7 +197,7 @@ pub fn parse_conversion_type(toml: Option<&Value>, object_name: &str) -> Option<
     let get_err_type = || -> Arc<str> {
         err_type.map_or_else(
             || {
-                error!("Missing `err_type` for {}.conversion_type", object_name);
+                error!("Missing `err_type` for {object_name}.conversion_type");
                 Arc::from("MissingErrorType")
             },
             Arc::from,
@@ -216,10 +216,7 @@ pub fn parse_conversion_type(toml: Option<&Value>, object_name: &str) -> Option<
         "borrow" => Some(Borrow),
         "unknown" => Some(Unknown),
         unexpected => {
-            error!(
-                "Unexpected {} for {}.conversion_type",
-                unexpected, object_name
-            );
+            error!("Unexpected {unexpected} for {object_name}.conversion_type");
             None
         }
     }
@@ -380,10 +377,7 @@ fn parse_object(
         .and_then(Value::as_integer)
         .and_then(|v| {
             if v.count_ones() != 1 || v > i64::from(u32::MAX) || v < 0 {
-                warn!(
-                    "`align` configuration must be a power of two of type u32, found {}",
-                    v
-                );
+                warn!("`align` configuration must be a power of two of type u32, found {v}");
                 None
             } else {
                 Some(v as u32)
@@ -426,7 +420,7 @@ fn parse_object(
         .map(|v| v.parse())
         .transpose();
     if let Err(ref err) = visibility {
-        error!("{}", err);
+        error!("{err}");
     }
     let visibility = visibility.ok().flatten().unwrap_or_default();
     if boxed_inline
@@ -453,7 +447,7 @@ fn parse_object(
     }
 
     if status != GStatus::Manual && ref_mode.is_some() {
-        warn!("ref_mode configuration used for non-manual object {}", name);
+        warn!("ref_mode configuration used for non-manual object {name}");
     }
 
     if status != GStatus::Manual
@@ -462,8 +456,7 @@ fn parse_object(
             .is_none_or(ConversionType::can_use_to_generate)
     {
         warn!(
-            "unexpected conversion_type {:?} configuration used for non-manual object {}",
-            conversion_type, name
+            "unexpected conversion_type {conversion_type:?} configuration used for non-manual object {name}"
         );
     }
 
@@ -473,10 +466,7 @@ fn parse_object(
         .unwrap_or(true);
 
     if generate_trait.is_some() {
-        warn!(
-            "`trait` configuration is deprecated and replaced by `final_type` for object {}",
-            name
-        );
+        warn!("`trait` configuration is deprecated and replaced by `final_type` for object {name}");
     }
 
     GObject {
@@ -575,14 +565,11 @@ pub fn resolve_type_ids(objects: &mut GObjects, library: &Library) {
     for (name, object) in objects.iter_mut() {
         let type_id = library.find_type(0, name);
         if type_id.is_none() && name != &global_functions_name && object.status != GStatus::Ignore {
-            warn!("Configured object `{}` missing from the library", name);
+            warn!("Configured object `{name}` missing from the library");
         } else if object.generate_builder {
             if let Some(type_id) = type_id {
                 if library.type_(type_id).is_abstract() {
-                    warn!(
-                        "Cannot generate builder for `{}` because it's a base class",
-                        name
-                    );
+                    warn!("Cannot generate builder for `{name}` because it's a base class");
                     // We set this to `false` to avoid having the "not_bound" mode saying that this
                     // builder should be generated.
                     object.generate_builder = false;

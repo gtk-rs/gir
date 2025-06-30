@@ -397,7 +397,7 @@ impl Library {
         for tid in unrepresentable {
             match self.type_mut(tid) {
                 Type::Union(Union { name, fields, .. }) => {
-                    info!("Type `{}` is not representable.", name);
+                    info!("Type `{name}` is not representable.");
                     fields.clear();
                 }
                 _ => unreachable!("Expected a union"),

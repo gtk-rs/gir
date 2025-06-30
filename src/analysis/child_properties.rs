@@ -53,7 +53,7 @@ pub fn analyze(
     if config.child_type.is_some() && child_type.is_none() {
         let owner_name = RustType::try_new(env, type_tid).into_string();
         let child_type: &str = config.child_type.as_ref().unwrap();
-        error!("Bad child type `{}` for `{}`", child_type, owner_name);
+        error!("Bad child type `{child_type}` for `{owner_name}`");
         return properties;
     }
 

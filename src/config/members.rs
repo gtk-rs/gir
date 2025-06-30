@@ -17,10 +17,7 @@ pub struct Member {
 impl Parse for Member {
     fn parse(toml: &Value, object_name: &str) -> Option<Self> {
         let Some(ident) = Ident::parse(toml, object_name, "member") else {
-            error!(
-                "No 'name' or 'pattern' given for member for object {}",
-                object_name
-            );
+            error!("No 'name' or 'pattern' given for member for object {object_name}");
             return None;
         };
 

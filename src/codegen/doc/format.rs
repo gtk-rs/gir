@@ -206,7 +206,7 @@ fn replace_c_types(
         let name = &caps[3];
         find_method_or_function_by_ctype(None, name, env, in_type).unwrap_or_else(|| {
             if !IGNORE_C_WARNING_FUNCS.contains(&name) {
-                info!("No function found for `{}()`", name);
+                info!("No function found for `{name}()`");
             }
             format!("`{}{}()`", caps.get(2).map_or("", |m| m.as_str()), name)
         })
@@ -222,7 +222,7 @@ fn replace_c_types(
                 if let Some(member_path) = caps.get(3).map(|m| m.as_str()) {
                     let method_name = member_path.trim_start_matches('.');
                     find_member(symbol_name, method_name, env, in_type).unwrap_or_else(|| {
-                        info!("`#{}` not found as method", symbol_name);
+                        info!("`#{symbol_name}` not found as method");
                         format!("`{symbol_name}{member_path}`")
                     })
                 } else if let Some(type_) = find_type(symbol_name, env) {
@@ -231,12 +231,11 @@ fn replace_c_types(
                     find_constant_or_variant(symbol_name, env, in_type)
                 {
                     warn!(
-                        "`{}` matches a constant/variant and should use `%` prefix instead of `#`",
-                        symbol_name
+                        "`{symbol_name}` matches a constant/variant and should use `%` prefix instead of `#`"
                     );
                     constant_or_variant
                 } else {
-                    info!("Type `#{}` not found", symbol_name);
+                    info!("Type `#{symbol_name}` not found");
                     format!("`{symbol_name}`")
                 }
             }
@@ -245,8 +244,7 @@ fn replace_c_types(
                 // symbol truly belongs to `in_type`!
                 if let Some(type_) = find_type(symbol_name, env) {
                     warn!(
-                        "`{}` matches a type and should use `#` prefix instead of `%`",
-                        symbol_name
+                        "`{symbol_name}` matches a type and should use `#` prefix instead of `%`"
                     );
                     type_
                 } else if let Some(constant_or_variant) =
@@ -280,7 +278,7 @@ fn find_constant_or_variant_wrapper(
     in_type: Option<(&TypeId, Option<LocationInObject>)>,
 ) -> String {
     find_constant_or_variant(symbol_name, env, in_type).unwrap_or_else(|| {
-        info!("Constant or variant `%{}` not found", symbol_name);
+        info!("Constant or variant `%{symbol_name}` not found");
         format!("`{symbol_name}`")
     })
 }
@@ -465,7 +463,7 @@ pub(crate) fn find_method_or_function(
             let visible_parent = object
                 .and_then(|o| o.trait_name.clone())
                 .unwrap_or_else(|| format!("{}Ext", record_info.name));
-            let parent = format!("subclass::prelude::{}", visible_parent);
+            let parent = format!("subclass::prelude::{visible_parent}");
             let is_self = in_type == Some((&record_info.type_id, None));
             Some(fn_info.doc_link(Some(&parent), Some(&visible_parent), is_self))
         } else {

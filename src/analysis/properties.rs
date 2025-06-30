@@ -160,16 +160,10 @@ fn analyze_property(
     };
     let mut notifiable = !prop.construct_only;
     if generate_set && generate.contains(PropertyGenerateFlags::GET) && !readable {
-        warn!(
-            "Attempt to generate getter for notreadable property \"{}.{}\"",
-            type_name, name
-        );
+        warn!("Attempt to generate getter for notreadable property \"{type_name}.{name}\"");
     }
     if generate_set && generate.contains(PropertyGenerateFlags::SET) && !writable {
-        warn!(
-            "Attempt to generate setter for nonwritable property \"{}.{}\"",
-            type_name, name
-        );
+        warn!("Attempt to generate setter for nonwritable property \"{type_name}.{name}\"");
     }
     readable &= generate.contains(PropertyGenerateFlags::GET);
     writable &= generate.contains(PropertyGenerateFlags::SET);
@@ -300,8 +294,7 @@ fn analyze_property(
             if !*nullable {
                 // TODO: support non-nullable setter if found any
                 warn!(
-                    "Non nullable setter for property generated as nullable \"{}.{}\"",
-                    type_name, name
+                    "Non nullable setter for property generated as nullable \"{type_name}.{name}\""
                 );
             }
         }

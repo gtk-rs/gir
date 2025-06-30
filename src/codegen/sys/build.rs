@@ -15,7 +15,7 @@ pub fn generate(env: &Env) {
     let path = env.config.target_path.join("build.rs");
 
     if !split_build_rs || !path.exists() {
-        info!("Generating file {:?}", path);
+        info!("Generating file {path:?}");
         save_to_file(&path, env.config.make_backup, |w| {
             generate_build_script(w, env, split_build_rs)
         });
@@ -23,7 +23,7 @@ pub fn generate(env: &Env) {
 
     if split_build_rs {
         let path = env.config.target_path.join("build_version.rs");
-        info!("Generating file {:?}", path);
+        info!("Generating file {path:?}");
         save_to_file(&path, env.config.make_backup, |w| {
             generate_build_version(w, env)
         });

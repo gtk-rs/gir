@@ -29,10 +29,7 @@ pub type CallbackParameters = Vec<CallbackParameter>;
 impl Parse for CallbackParameter {
     fn parse(toml: &Value, object_name: &str) -> Option<Self> {
         let Some(ident) = Ident::parse(toml, object_name, "callback parameter") else {
-            error!(
-                "No 'name' or 'pattern' given for parameter for object {}",
-                object_name
-            );
+            error!("No 'name' or 'pattern' given for parameter for object {object_name}");
             return None;
         };
         toml.check_unwanted(&["nullable"], &format!("callback parameter {object_name}"));
@@ -70,10 +67,7 @@ pub struct Parameter {
 impl Parse for Parameter {
     fn parse(toml: &Value, object_name: &str) -> Option<Self> {
         let Some(ident) = Ident::parse(toml, object_name, "function parameter") else {
-            error!(
-                "No 'name' or 'pattern' given for parameter for object {}",
-                object_name
-            );
+            error!("No 'name' or 'pattern' given for parameter for object {object_name}");
             return None;
         };
         toml.check_unwanted(
@@ -120,10 +114,7 @@ impl Parse for Parameter {
             Some(val) => match StringType::from_str(val) {
                 Ok(val) => Some(val),
                 Err(error_str) => {
-                    error!(
-                        "Error: {} for parameter for object {}",
-                        error_str, object_name
-                    );
+                    error!("Error: {error_str} for parameter for object {object_name}");
                     None
                 }
             },
@@ -219,7 +210,7 @@ impl Return {
             Some(v) => match StringType::from_str(v) {
                 Ok(v) => Some(v),
                 Err(error_str) => {
-                    error!("Error: {} for return", error_str);
+                    error!("Error: {error_str} for return");
                     None
                 }
             },
@@ -231,8 +222,7 @@ impl Return {
         if string_type.is_some() && type_name.is_some() {
             error!(
                 "\"string_type\" and \"type\" parameters can't be passed at the same time for \
-                 object {}, only \"type\" will be applied in this case",
-                object_name
+                 object {object_name}, only \"type\" will be applied in this case"
             );
         }
 
@@ -254,8 +244,7 @@ pub fn check_rename(rename: &Option<String>, object_name: &str, function_name: &
         for c in &["\t", "\n", " "] {
             if rename.contains(c) {
                 error!(
-                    "Invalid 'rename' value given to {}::{}: forbidden character '{:?}'",
-                    object_name, function_name, c
+                    "Invalid 'rename' value given to {object_name}::{function_name}: forbidden character '{c:?}'"
                 );
                 return false;
             }
@@ -290,10 +279,7 @@ pub struct Function {
 impl Parse for Function {
     fn parse(toml: &Value, object_name: &str) -> Option<Self> {
         let Some(ident) = Ident::parse(toml, object_name, "function") else {
-            error!(
-                "No 'name' or 'pattern' given for function for object {}",
-                object_name
-            );
+            error!("No 'name' or 'pattern' given for function for object {object_name}");
             return None;
         };
         toml.check_unwanted(
@@ -400,7 +386,7 @@ impl Parse for Function {
             .map(|s| s.parse::<SafetyAssertionMode>())
             .transpose();
         if let Err(ref err) = assertion {
-            error!("{}", err);
+            error!("{err}");
         }
         let assertion = assertion.ok().flatten();
         let visibility = toml
@@ -409,7 +395,7 @@ impl Parse for Function {
             .map(std::str::FromStr::from_str)
             .transpose();
         if let Err(ref err) = visibility {
-            error!("{}", err);
+            error!("{err}");
         }
         let visibility = visibility.ok().flatten();
         let generate_doc = toml

@@ -21,7 +21,7 @@ impl Parse for ChildProperty {
         let name = if let Some(name) = name {
             name
         } else {
-            error!("No child property name for `{}`", object_name);
+            error!("No child property name for `{object_name}`");
             return None;
         };
 
@@ -37,10 +37,7 @@ impl Parse for ChildProperty {
         let type_name = if let Some(type_name) = type_name {
             type_name
         } else {
-            error!(
-                "No type for child property `{}` for `{}`",
-                name, object_name
-            );
+            error!("No type for child property `{name}` for `{object_name}`");
             return None;
         };
         let doc_hidden = toml
@@ -100,10 +97,10 @@ impl Parse for ChildProperties {
             })
         } else {
             if child_name.is_some() {
-                error!("`{}` has child_name but no child_prop's", object_name);
+                error!("`{object_name}` has child_name but no child_prop's");
             }
             if child_type.is_some() {
-                error!("`{}` has child_type but no child_prop's", object_name);
+                error!("`{object_name}` has child_type but no child_prop's");
             }
             None
         }

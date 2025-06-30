@@ -178,7 +178,7 @@ pub fn use_function_return_for_result(
         .find_map(|f| f.ret.use_return_for_result.as_ref());
     if let Some(use_return_for_result) = use_return_for_result {
         if typ == Default::default() {
-            error!("Function \"{}\": use_return_for_result set to true, but function has no return value", func_name);
+            error!("Function \"{func_name}\": use_return_for_result set to true, but function has no return value");
             return false;
         }
         return *use_return_for_result;

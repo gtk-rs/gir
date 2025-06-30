@@ -143,7 +143,7 @@ impl Info {
             LocationInObject::ClassExt | LocationInObject::ClassExtManual => {
                 let trait_name = format!("{}Ext", self.trait_name);
                 (
-                    format!("subclass::prelude::{}", trait_name).into(),
+                    format!("subclass::prelude::{trait_name}").into(),
                     trait_name.into(),
                 )
             }

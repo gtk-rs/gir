@@ -40,10 +40,7 @@ impl Ident {
                 .map(Box::new)
                 .map(Self::Pattern)
                 .map_err(|e| {
-                    error!(
-                        "Bad pattern `{}` in {} for `{}`: {}",
-                        s, what, object_name, e
-                    );
+                    error!("Bad pattern `{s}` in {what} for `{object_name}`: {e}");
                     e
                 })
                 .ok(),
@@ -51,8 +48,7 @@ impl Ident {
                 Some(name) => {
                     if name.contains(['.', '+', '*'].as_ref()) {
                         error!(
-                            "Should be `pattern` instead of `name` in {} for `{}`",
-                            what, object_name
+                            "Should be `pattern` instead of `name` in {what} for `{object_name}`"
                         );
                         None
                     } else {

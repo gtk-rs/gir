@@ -127,9 +127,7 @@ pub fn generate_default_impl<
             Some(m) => m,
             None => {
                 log::error!(
-                    "type `{}` doesn't have a member named `{}`. Not generating default impl.",
-                    type_name,
-                    default_value,
+                    "type `{type_name}` doesn't have a member named `{default_value}`. Not generating default impl.",
                 );
                 return Ok(());
             }
@@ -138,9 +136,7 @@ pub fn generate_default_impl<
             Some(n) => n,
             None => {
                 log::error!(
-                    "member `{}` on type `{}` isn't generated so no default impl.",
-                    default_value,
-                    type_name,
+                    "member `{default_value}` on type `{type_name}` isn't generated so no default impl.",
                 );
                 return Ok(());
             }
