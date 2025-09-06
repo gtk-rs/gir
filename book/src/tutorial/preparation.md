@@ -29,7 +29,7 @@ Of course we also need to download and install [gir].
 ```sh
 git submodule add https://github.com/gtk-rs/gir
 git config -f .gitmodules submodule.gir.update none
-git submodule set-branch --branch main -- ./gir
+git submodule set-branch --branch main -- gir
 cd gir
 cargo install --path .
 cd ..
