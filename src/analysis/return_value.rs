@@ -120,19 +120,32 @@ pub fn analyze(
 
     let parameter = parameter.as_ref().map(|lib_par| {
         let par = analysis::Parameter::from_return_value(env, lib_par, configured_functions);
-        if let Ok(rust_type) = RustType::builder(env, typ)
-            .direction(par.lib_par.direction)
-            .try_from_glib(&par.try_from_glib)
-            .try_build()
+        if par.lib_par.is_array
+            && !par.lib_par.zero_terminated.unwrap_or(true)
+            && par.lib_par.array_length.is_none()
         {
-            used_types.extend(rust_type.into_used_types());
-        }
+            // The array length for the return value of this function can not be inferred
+            // from any argument. How the length should be inferred is usually specified
+            // in the doc of the function, so there's nothing we can do automatically.
+            // Currently the functions matching this condition are explicitly marked
+            // `manual = true` in the matching Gir.toml.
+            // FIXME: `FixedArray`s could be handled automatically
+            commented = true;
+        } else {
+            if let Ok(rust_type) = RustType::builder(env, typ)
+                .direction(par.lib_par.direction)
+                .try_from_glib(&par.try_from_glib)
+                .try_build()
+            {
+                used_types.extend(rust_type.into_used_types());
+            }
 
-        commented = RustType::builder(env, typ)
-            .direction(func.ret.direction)
-            .try_from_glib(&par.try_from_glib)
-            .try_build_param()
-            .is_err();
+            commented = RustType::builder(env, typ)
+                .direction(func.ret.direction)
+                .try_from_glib(&par.try_from_glib)
+                .try_build_param()
+                .is_err();
+        }
 
         par
     });

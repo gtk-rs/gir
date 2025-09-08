@@ -62,10 +62,21 @@ impl TranslateFromGlib for Mode {
                     | library::Type::SList(..)
                     | library::Type::PtrArray(..)
                     | library::Type::CArray(..) => {
-                        if array_length.is_some() {
-                            (format!("FromGlibContainer::{}", trans.0), trans.1)
+                        let (pre1, pre2) = if *self.nullable {
+                            ("Maybe", "maybe_")
                         } else {
-                            (format!("FromGlibPtrContainer::{}", trans.0), trans.1)
+                            ("", "")
+                        };
+                        if array_length.is_some() {
+                            (
+                                format!("{pre1}FromGlibContainer::{pre2}{}", trans.0),
+                                trans.1,
+                            )
+                        } else {
+                            (
+                                format!("{pre1}FromGlibPtrContainer::{pre2}{}", trans.0),
+                                trans.1,
+                            )
                         }
                     }
                     _ => trans,

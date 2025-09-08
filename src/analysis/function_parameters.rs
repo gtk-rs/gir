@@ -18,6 +18,7 @@ use crate::{
 pub struct Parameter {
     pub lib_par: library::Parameter,
     pub try_from_glib: TryFromGlib,
+    pub nullable: Nullable,
 }
 
 impl Parameter {
@@ -29,6 +30,11 @@ impl Parameter {
         Parameter {
             lib_par: lib_par.clone(),
             try_from_glib: TryFromGlib::from_parameter(env, lib_par.typ, configured_parameters),
+            nullable: configured_parameters
+                .iter()
+                .filter_map(|p| p.nullable)
+                .next()
+                .unwrap_or(lib_par.nullable),
         }
     }
 
@@ -40,6 +46,11 @@ impl Parameter {
         Parameter {
             lib_par: lib_par.clone(),
             try_from_glib: TryFromGlib::from_return_value(env, lib_par.typ, configured_functions),
+            nullable: configured_functions
+                .iter()
+                .filter_map(|f| f.ret.nullable)
+                .next()
+                .unwrap_or(lib_par.nullable),
         }
     }
 }
