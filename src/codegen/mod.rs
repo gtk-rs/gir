@@ -150,8 +150,7 @@ pub fn generate_default_impl<
         cfg_condition(w, cfg_cond, false, 0)?;
         writeln!(
             w,
-            "\n\
-             impl Default for {type_name} {{\n\
+            "impl Default for {type_name} {{\n\
              \tfn default() -> Self {{\n\
              \t\tSelf::{member_name}\n\
              \t}}\n\
