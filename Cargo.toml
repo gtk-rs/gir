@@ -20,7 +20,7 @@ env_logger = { version = "0.11", default-features = false }
 log = "0.4"
 regex = "1.11"
 hprof = "0.1"
-rustdoc-stripper = { git = "https://github.com/GuillaumeGomez/rustdoc-stripper" }
+rustdoc-stripper = "0.1.19"
 
 [profile.release]
 codegen-units = 4

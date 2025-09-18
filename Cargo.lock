@@ -185,7 +185,8 @@ checksum = "2b15c43186be67a4fd63bee50d0303afffcef381492ebe2c5d87f324e1b8815c"
 [[package]]
 name = "rustdoc-stripper"
 version = "0.1.19"
-source = "git+https://github.com/GuillaumeGomez/rustdoc-stripper#1170265c0f2a3728c086c717aa0603ccaad18a81"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7ab2432ada69d3b404987a137436b0e475c6776f7a0c86ee00b356c0348ef40d"
 
 [[package]]
 name = "serde"
