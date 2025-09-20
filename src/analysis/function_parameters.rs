@@ -18,6 +18,7 @@ use crate::{
 pub struct Parameter {
     pub lib_par: library::Parameter,
     pub try_from_glib: TryFromGlib,
+    pub nullable: Nullable,
 }
 
 impl Parameter {
@@ -29,6 +30,11 @@ impl Parameter {
         Parameter {
             lib_par: lib_par.clone(),
             try_from_glib: TryFromGlib::from_parameter(env, lib_par.typ, configured_parameters),
+            nullable: configured_parameters
+                .iter()
+                .filter_map(|p| p.nullable)
+                .next()
+                .unwrap_or(lib_par.nullable),
         }
     }
 
@@ -40,6 +46,11 @@ impl Parameter {
         Parameter {
             lib_par: lib_par.clone(),
             try_from_glib: TryFromGlib::from_return_value(env, lib_par.typ, configured_functions),
+            nullable: configured_functions
+                .iter()
+                .filter_map(|f| f.ret.nullable)
+                .next()
+                .unwrap_or(lib_par.nullable),
         }
     }
 }
@@ -107,6 +118,7 @@ pub enum TransformationType {
         array_name: String,
         array_length_name: String,
         array_length_type: String,
+        nullable: library::Nullable,
     },
     IntoRaw(String),
     ToSome(String),
@@ -176,7 +188,13 @@ impl Parameters {
         let transformation = Transformation {
             ind_c,
             ind_rust: None,
-            transformation_type: get_length_type(env, "", &c_par.name, c_par.typ),
+            transformation_type: get_length_type(
+                env,
+                "",
+                &c_par.name,
+                c_par.typ,
+                library::Nullable(false),
+            ),
         };
         self.transformations.push(transformation);
     }
@@ -301,7 +319,13 @@ pub fn analyze(
             let transformation = Transformation {
                 ind_c,
                 ind_rust: None,
-                transformation_type: get_length_type(env, &array_name, &par.name, typ),
+                transformation_type: get_length_type(
+                    env,
+                    &array_name,
+                    &par.name,
+                    typ,
+                    array_par.nullable,
+                ),
             };
             parameters.transformations.push(transformation);
         }
@@ -448,12 +472,14 @@ fn get_length_type(
     array_name: &str,
     length_name: &str,
     length_typ: TypeId,
+    nullable: library::Nullable,
 ) -> TransformationType {
     let array_length_type = RustType::try_new(env, length_typ).into_string();
     TransformationType::Length {
         array_name: array_name.to_string(),
         array_length_name: length_name.to_string(),
         array_length_type,
+        nullable,
     }
 }
 

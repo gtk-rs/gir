@@ -31,6 +31,7 @@ pub struct XmlParser<'a> {
     error_emitter: Rc<ErrorEmitter>,
 }
 
+#[derive(Debug)]
 struct ErrorEmitter {
     /// Path to currently parsed document.
     path: Option<PathBuf>,
@@ -61,6 +62,7 @@ impl ErrorEmitter {
 pub struct Document;
 
 /// A wrapper for `XmlEvent::StartElement` which doesn't have its own type.
+#[derive(Debug)]
 pub struct Element {
     name: OwnedName,
     attributes: Vec<OwnedAttribute>,
