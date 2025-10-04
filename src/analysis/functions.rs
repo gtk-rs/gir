@@ -385,8 +385,10 @@ fn analyze_callbacks(
                     configured_functions,
                 );
                 if let Some(to_glib_extra) = to_glib_extra {
+                    let pos_adjusted_for_removed_params =
+                        pos - to_remove.len() - cross_user_data_check.len();
                     if par.c_type != "GDestroyNotify" {
-                        to_glib_extras.insert(pos, to_glib_extra);
+                        to_glib_extras.insert(pos_adjusted_for_removed_params, to_glib_extra);
                     }
                 }
                 callback_info
