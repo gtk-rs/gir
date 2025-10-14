@@ -12,6 +12,7 @@ use crate::{
         general::StatusedTypeId,
         imports::{ImportConditions, Imports},
         namespaces,
+        out_parameters::{Mode, ThrowFunctionReturnStrategy},
         special_functions::TraitInfo,
     },
     config::{derives::Derive, Config},
@@ -1034,6 +1035,8 @@ pub fn declare_default_from_new(
             && f.name == "new"
             // Cannot generate Default implementation for Option<>
             && f.ret.parameter.as_ref().is_some_and(|x| !*x.lib_par.nullable)
+            // Cannot generate Default implementation for Result<>
+            && f.outs.mode != Mode::Throws(ThrowFunctionReturnStrategy::ReturnResult)
     }) {
         if func.parameters.rust_parameters.is_empty() {
             writeln!(w)?;
