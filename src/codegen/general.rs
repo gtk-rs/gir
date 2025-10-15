@@ -402,10 +402,10 @@ fn define_boxed_type_internal(
     };
     writeln!(
         w,
-        "\t\tcopy => |ptr| {}::{}({}),",
+        "\t\tcopy => |ptr| unsafe {{ {}::{}({}) }},",
         sys_crate_name, copy_fn.glib_name, mut_ov
     )?;
-    writeln!(w, "\t\tfree => |ptr| {sys_crate_name}::{free_fn}(ptr),")?;
+    writeln!(w, "\t\tfree => |ptr| unsafe {{ {sys_crate_name}::{free_fn}(ptr) }},")?;
 
     if let (
         Some(init_function_expression),
@@ -614,8 +614,8 @@ fn define_shared_type_internal(
     )?;
     writeln!(w)?;
     writeln!(w, "\tmatch fn {{")?;
-    writeln!(w, "\t\tref => |ptr| {sys_crate_name}::{ref_fn}(ptr),")?;
-    writeln!(w, "\t\tunref => |ptr| {sys_crate_name}::{unref_fn}(ptr),")?;
+    writeln!(w, "\t\tref => |ptr| unsafe {{ {sys_crate_name}::{ref_fn}(ptr) }},")?;
+    writeln!(w, "\t\tunref => |ptr| unsafe {{ {sys_crate_name}::{unref_fn}(ptr) }},")?;
     if let Some(get_type_fn) = get_type_fn {
         writeln!(w, "\t\ttype_ => || {sys_crate_name}::{get_type_fn}(),")?;
     }
