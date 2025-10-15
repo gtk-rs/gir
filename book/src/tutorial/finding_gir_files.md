@@ -41,7 +41,7 @@ While being in the project folder `git-tutorial`, we add the [gir-files repo](ht
 ```sh
 git submodule add https://github.com/gtk-rs/gir-files
 git config -f .gitmodules submodule.gir-files.update none
-git submodule set-branch --branch main -- ./gir-files
+git submodule set-branch --branch main -- gir-files
 ```
 We also change the setting so that the submodule is not automatically checked out, otherwise anyone using your library from git will have the useless submodule checked out.
 Run `git submodule update --checkout` if you want to update the submodule.
