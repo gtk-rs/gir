@@ -215,7 +215,7 @@ It is related to GTK, so in order to get its .gir files, we use the recommended 
 While being in the project folder <code>git-tutorial</code>, we add the <a href="https://github.com/gtk-rs/gir-files">gir-files repo</a> as a submodule and set the branch of the submodule to main.</p>
 <pre><code class="language-sh">git submodule add https://github.com/gtk-rs/gir-files
 git config -f .gitmodules submodule.gir-files.update none
-git submodule set-branch --branch main -- ./gir-files
+git submodule set-branch --branch main -- gir-files
 </code></pre>
 <p>We also change the setting so that the submodule is not automatically checked out, otherwise anyone using your library from git will have the useless submodule checked out.
 Run <code>git submodule update --checkout</code> if you want to update the submodule.
