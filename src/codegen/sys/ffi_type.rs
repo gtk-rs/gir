@@ -205,14 +205,12 @@ fn fix_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
             | Type::List(..)
             | Type::SList(..)
             | Type::HashTable(..) => {
-                if env.namespaces.glib_ns_id == namespaces::MAIN {
+                if env.namespaces.glib_ns_id == Some(namespaces::MAIN) {
                     Ok(name.into())
+                } else if let Some(glib_ns_id) = env.namespaces.glib_ns_id {
+                    Ok(format!("{}::{}", &env.namespaces[glib_ns_id].crate_name, name).into())
                 } else {
-                    Ok(format!(
-                        "{}::{}",
-                        &env.namespaces[env.namespaces.glib_ns_id].crate_name, name
-                    )
-                    .into())
+                    Ok(name.into())
                 }
             }
             _ => Ok(name.into()),

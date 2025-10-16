@@ -12,10 +12,12 @@ impl Library {
             return;
         }
 
+        let Some(glib_ns_id) = self.find_namespace("GLib") else {
+            return;
+        };
+
         let tid_int = self.find_type(0, "*.gint").expect("No basic type *.gint");
-        let glib_ns_id = self
-            .find_namespace("GLib")
-            .expect("Missing `GLib` namespace in add_glib_priority!");
+
         let tid_priority = self.add_type(
             glib_ns_id,
             "Priority",
