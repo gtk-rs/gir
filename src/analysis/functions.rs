@@ -858,8 +858,9 @@ fn analyze_function(
 
     if r#async && status.need_generate() && !commented {
         imports.add("std::boxed::Box as Box_");
-        imports.add("std::pin::Pin");
-
+        if in_trait {
+            imports.add("std::pin::Pin");
+        }
         if let Some(ref trampoline) = trampoline {
             for out in &trampoline.output_params {
                 if let Ok(rust_type) = RustType::builder(env, out.lib_par.typ)
