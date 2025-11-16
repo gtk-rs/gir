@@ -174,19 +174,10 @@ fn fill_in(root: &mut Table, env: &Env) {
         let docs_rs_metadata = upsert_table(docs_rs_metadata, "docs");
         let docs_rs_metadata = upsert_table(docs_rs_metadata, "rs");
 
-        // Set the rustc and rustdoc args to be able to build the docs on docs.rs without the libraries
-        docs_rs_metadata.entry("rustc-args").or_insert_with(|| {
-            Value::Array(vec![
-                Value::String("--cfg".to_string()),
-                Value::String("docsrs".to_string()),
-            ])
-        });
         docs_rs_metadata.entry("rustdoc-args").or_insert_with(|| {
-            Value::Array(vec![
-                Value::String("--cfg".to_string()),
-                Value::String("docsrs".to_string()),
-                Value::String("--generate-link-to-definition".to_string()),
-            ])
+            Value::Array(vec![Value::String(
+                "--generate-link-to-definition".to_string(),
+            )])
         });
 
         // Generate docs for all features unless a list of features to be activated on docs.rs was specified

@@ -12,14 +12,7 @@ Add the following lines to the file:
 ```toml
 [package.metadata.docs.rs]
 all-features = true
-# For build.rs scripts
-rustc-args = ["--cfg", "docsrs"]
-# For rustdoc
-rustdoc-args = ["--cfg", "docsrs"]
 ```
-This automatically activates the `docsrs` attribute if you chose to publish the bindings and docs.rs tries to build the documentation.
-With the `docsrs` attribute, the crate skips linking the C libraries and allows docs.rs to build the documentation without having the underlying libraries installed.
-Even if you don't plan to publish it, this line is not going to hurt.
 
 We also need to add `libc`, `bitflags`, `glib` and `glib-sys` and all other dependencies we used in the sys crate as dependencies.
 Because we are creating a wrapper for the sys crate, which we generated in the previous chapter, we also need to add the sys crate to the list of dependencies.
