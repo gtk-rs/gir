@@ -88,7 +88,7 @@ impl IsIncomplete for &[Field] {
             if field.is_incomplete(lib) {
                 return true;
             }
-            // Two consequitive bitfields are unrepresentable in Rust,
+            // Two consecutive bitfields are unrepresentable in Rust,
             // so from our perspective they are incomplete.
             if is_bitfield && field.bits.is_some() {
                 return true;
