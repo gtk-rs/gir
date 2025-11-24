@@ -174,74 +174,65 @@
 <a href=#174 id=174 data-nosnippet>174</a>        <span class="kw">let </span>docs_rs_metadata = upsert_table(docs_rs_metadata, <span class="string">"docs"</span>);
 <a href=#175 id=175 data-nosnippet>175</a>        <span class="kw">let </span>docs_rs_metadata = upsert_table(docs_rs_metadata, <span class="string">"rs"</span>);
 <a href=#176 id=176 data-nosnippet>176</a>
-<a href=#177 id=177 data-nosnippet>177</a>        <span class="comment">// Set the rustc and rustdoc args to be able to build the docs on docs.rs without the libraries
-<a href=#178 id=178 data-nosnippet>178</a>        </span>docs_rs_metadata.entry(<span class="string">"rustc-args"</span>).or_insert_with(|| {
-<a href=#179 id=179 data-nosnippet>179</a>            Value::Array(<span class="macro">vec!</span>[
-<a href=#180 id=180 data-nosnippet>180</a>                Value::String(<span class="string">"--cfg"</span>.to_string()),
-<a href=#181 id=181 data-nosnippet>181</a>                Value::String(<span class="string">"docsrs"</span>.to_string()),
-<a href=#182 id=182 data-nosnippet>182</a>            ])
-<a href=#183 id=183 data-nosnippet>183</a>        });
-<a href=#184 id=184 data-nosnippet>184</a>        docs_rs_metadata.entry(<span class="string">"rustdoc-args"</span>).or_insert_with(|| {
-<a href=#185 id=185 data-nosnippet>185</a>            Value::Array(<span class="macro">vec!</span>[
-<a href=#186 id=186 data-nosnippet>186</a>                Value::String(<span class="string">"--cfg"</span>.to_string()),
-<a href=#187 id=187 data-nosnippet>187</a>                Value::String(<span class="string">"docsrs"</span>.to_string()),
-<a href=#188 id=188 data-nosnippet>188</a>                Value::String(<span class="string">"--generate-link-to-definition"</span>.to_string()),
-<a href=#189 id=189 data-nosnippet>189</a>            ])
-<a href=#190 id=190 data-nosnippet>190</a>        });
-<a href=#191 id=191 data-nosnippet>191</a>
-<a href=#192 id=192 data-nosnippet>192</a>        <span class="comment">// Generate docs for all features unless a list of features to be activated on docs.rs was specified
-<a href=#193 id=193 data-nosnippet>193</a>        </span><span class="kw">if let </span>toml::map::Entry::Vacant(<span class="kw">_</span>) = docs_rs_metadata.entry(<span class="string">"features"</span>) {
-<a href=#194 id=194 data-nosnippet>194</a>            docs_rs_metadata.insert(<span class="string">"all-features"</span>.to_string(), Value::Boolean(<span class="bool-val">true</span>));
-<a href=#195 id=195 data-nosnippet>195</a>        }
-<a href=#196 id=196 data-nosnippet>196</a>    }
-<a href=#197 id=197 data-nosnippet>197</a>}
-<a href=#198 id=198 data-nosnippet>198</a>
-<a href=#199 id=199 data-nosnippet>199</a><span class="kw">fn </span>get_feature_dependencies(
-<a href=#200 id=200 data-nosnippet>200</a>    version: Version,
-<a href=#201 id=201 data-nosnippet>201</a>    prev_version: <span class="prelude-ty">Option</span>&lt;Version&gt;,
-<a href=#202 id=202 data-nosnippet>202</a>    feature_dependencies: <span class="kw-2">&amp;</span>HashMap&lt;Version, Vec&lt;String&gt;&gt;,
-<a href=#203 id=203 data-nosnippet>203</a>) -&gt; Vec&lt;String&gt; {
-<a href=#204 id=204 data-nosnippet>204</a>    <span class="kw">let </span><span class="kw-2">mut </span>vec = Vec::with_capacity(<span class="number">10</span>);
-<a href=#205 id=205 data-nosnippet>205</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(v) = prev_version {
-<a href=#206 id=206 data-nosnippet>206</a>        vec.push(v.to_feature());
-<a href=#207 id=207 data-nosnippet>207</a>    }
-<a href=#208 id=208 data-nosnippet>208</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(dependencies) = feature_dependencies.get(<span class="kw-2">&amp;</span>version) {
-<a href=#209 id=209 data-nosnippet>209</a>        vec.extend_from_slice(dependencies);
-<a href=#210 id=210 data-nosnippet>210</a>    }
-<a href=#211 id=211 data-nosnippet>211</a>    vec
-<a href=#212 id=212 data-nosnippet>212</a>}
-<a href=#213 id=213 data-nosnippet>213</a>
-<a href=#214 id=214 data-nosnippet>214</a><span class="doccomment">/// Returns the name of crate being currently generated.
-<a href=#215 id=215 data-nosnippet>215</a></span><span class="kw">fn </span>get_crate_name(config: <span class="kw-2">&amp;</span>Config, root: <span class="kw-2">&amp;</span>Table) -&gt; String {
-<a href=#216 id=216 data-nosnippet>216</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(Value::Table(lib)) = root.get(<span class="string">"lib"</span>) {
-<a href=#217 id=217 data-nosnippet>217</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(Value::String(lib_name)) = lib.get(<span class="string">"name"</span>) {
-<a href=#218 id=218 data-nosnippet>218</a>            <span class="comment">// Converting don't needed as library target names cannot contain hyphens
-<a href=#219 id=219 data-nosnippet>219</a>            </span><span class="kw">return </span>lib_name.clone();
-<a href=#220 id=220 data-nosnippet>220</a>        }
-<a href=#221 id=221 data-nosnippet>221</a>    }
-<a href=#222 id=222 data-nosnippet>222</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(Value::Table(package)) = root.get(<span class="string">"package"</span>) {
-<a href=#223 id=223 data-nosnippet>223</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(Value::String(package_name)) = package.get(<span class="string">"name"</span>) {
-<a href=#224 id=224 data-nosnippet>224</a>            <span class="kw">return </span>nameutil::crate_name(package_name);
-<a href=#225 id=225 data-nosnippet>225</a>        }
-<a href=#226 id=226 data-nosnippet>226</a>    }
-<a href=#227 id=227 data-nosnippet>227</a>    <span class="macro">format!</span>(<span class="string">"{}_sys"</span>, nameutil::crate_name(<span class="kw-2">&amp;</span>config.library_name))
-<a href=#228 id=228 data-nosnippet>228</a>}
-<a href=#229 id=229 data-nosnippet>229</a>
-<a href=#230 id=230 data-nosnippet>230</a><span class="kw">fn </span>set_string&lt;S: Into&lt;String&gt;&gt;(table: <span class="kw-2">&amp;mut </span>Table, name: <span class="kw-2">&amp;</span>str, new_value: S) {
-<a href=#231 id=231 data-nosnippet>231</a>    table.insert(name.into(), Value::String(new_value.into()));
-<a href=#232 id=232 data-nosnippet>232</a>}
-<a href=#233 id=233 data-nosnippet>233</a>
-<a href=#234 id=234 data-nosnippet>234</a><span class="kw">fn </span>unset(table: <span class="kw-2">&amp;mut </span>Table, name: <span class="kw-2">&amp;</span>str) {
-<a href=#235 id=235 data-nosnippet>235</a>    table.remove(name);
-<a href=#236 id=236 data-nosnippet>236</a>}
-<a href=#237 id=237 data-nosnippet>237</a>
-<a href=#238 id=238 data-nosnippet>238</a><span class="kw">fn </span>upsert_table&lt;S: Into&lt;String&gt;&gt;(parent: <span class="kw-2">&amp;mut </span>Table, name: S) -&gt; <span class="kw-2">&amp;mut </span>Table {
-<a href=#239 id=239 data-nosnippet>239</a>    <span class="kw">if let </span>Value::Table(table) = parent
-<a href=#240 id=240 data-nosnippet>240</a>        .entry(name.into())
-<a href=#241 id=241 data-nosnippet>241</a>        .or_insert_with(|| Value::Table(toml::map::Map::new()))
-<a href=#242 id=242 data-nosnippet>242</a>    {
-<a href=#243 id=243 data-nosnippet>243</a>        table
-<a href=#244 id=244 data-nosnippet>244</a>    } <span class="kw">else </span>{
-<a href=#245 id=245 data-nosnippet>245</a>        <span class="macro">unreachable!</span>()
-<a href=#246 id=246 data-nosnippet>246</a>    }
-<a href=#247 id=247 data-nosnippet>247</a>}</code></pre></div></section></main></body></html>
+<a href=#177 id=177 data-nosnippet>177</a>        docs_rs_metadata.entry(<span class="string">"rustdoc-args"</span>).or_insert_with(|| {
+<a href=#178 id=178 data-nosnippet>178</a>            Value::Array(<span class="macro">vec!</span>[Value::String(
+<a href=#179 id=179 data-nosnippet>179</a>                <span class="string">"--generate-link-to-definition"</span>.to_string(),
+<a href=#180 id=180 data-nosnippet>180</a>            )])
+<a href=#181 id=181 data-nosnippet>181</a>        });
+<a href=#182 id=182 data-nosnippet>182</a>
+<a href=#183 id=183 data-nosnippet>183</a>        <span class="comment">// Generate docs for all features unless a list of features to be activated on docs.rs was specified
+<a href=#184 id=184 data-nosnippet>184</a>        </span><span class="kw">if let </span>toml::map::Entry::Vacant(<span class="kw">_</span>) = docs_rs_metadata.entry(<span class="string">"features"</span>) {
+<a href=#185 id=185 data-nosnippet>185</a>            docs_rs_metadata.insert(<span class="string">"all-features"</span>.to_string(), Value::Boolean(<span class="bool-val">true</span>));
+<a href=#186 id=186 data-nosnippet>186</a>        }
+<a href=#187 id=187 data-nosnippet>187</a>    }
+<a href=#188 id=188 data-nosnippet>188</a>}
+<a href=#189 id=189 data-nosnippet>189</a>
+<a href=#190 id=190 data-nosnippet>190</a><span class="kw">fn </span>get_feature_dependencies(
+<a href=#191 id=191 data-nosnippet>191</a>    version: Version,
+<a href=#192 id=192 data-nosnippet>192</a>    prev_version: <span class="prelude-ty">Option</span>&lt;Version&gt;,
+<a href=#193 id=193 data-nosnippet>193</a>    feature_dependencies: <span class="kw-2">&amp;</span>HashMap&lt;Version, Vec&lt;String&gt;&gt;,
+<a href=#194 id=194 data-nosnippet>194</a>) -&gt; Vec&lt;String&gt; {
+<a href=#195 id=195 data-nosnippet>195</a>    <span class="kw">let </span><span class="kw-2">mut </span>vec = Vec::with_capacity(<span class="number">10</span>);
+<a href=#196 id=196 data-nosnippet>196</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(v) = prev_version {
+<a href=#197 id=197 data-nosnippet>197</a>        vec.push(v.to_feature());
+<a href=#198 id=198 data-nosnippet>198</a>    }
+<a href=#199 id=199 data-nosnippet>199</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(dependencies) = feature_dependencies.get(<span class="kw-2">&amp;</span>version) {
+<a href=#200 id=200 data-nosnippet>200</a>        vec.extend_from_slice(dependencies);
+<a href=#201 id=201 data-nosnippet>201</a>    }
+<a href=#202 id=202 data-nosnippet>202</a>    vec
+<a href=#203 id=203 data-nosnippet>203</a>}
+<a href=#204 id=204 data-nosnippet>204</a>
+<a href=#205 id=205 data-nosnippet>205</a><span class="doccomment">/// Returns the name of crate being currently generated.
+<a href=#206 id=206 data-nosnippet>206</a></span><span class="kw">fn </span>get_crate_name(config: <span class="kw-2">&amp;</span>Config, root: <span class="kw-2">&amp;</span>Table) -&gt; String {
+<a href=#207 id=207 data-nosnippet>207</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(Value::Table(lib)) = root.get(<span class="string">"lib"</span>) {
+<a href=#208 id=208 data-nosnippet>208</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(Value::String(lib_name)) = lib.get(<span class="string">"name"</span>) {
+<a href=#209 id=209 data-nosnippet>209</a>            <span class="comment">// Converting don't needed as library target names cannot contain hyphens
+<a href=#210 id=210 data-nosnippet>210</a>            </span><span class="kw">return </span>lib_name.clone();
+<a href=#211 id=211 data-nosnippet>211</a>        }
+<a href=#212 id=212 data-nosnippet>212</a>    }
+<a href=#213 id=213 data-nosnippet>213</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(Value::Table(package)) = root.get(<span class="string">"package"</span>) {
+<a href=#214 id=214 data-nosnippet>214</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(Value::String(package_name)) = package.get(<span class="string">"name"</span>) {
+<a href=#215 id=215 data-nosnippet>215</a>            <span class="kw">return </span>nameutil::crate_name(package_name);
+<a href=#216 id=216 data-nosnippet>216</a>        }
+<a href=#217 id=217 data-nosnippet>217</a>    }
+<a href=#218 id=218 data-nosnippet>218</a>    <span class="macro">format!</span>(<span class="string">"{}_sys"</span>, nameutil::crate_name(<span class="kw-2">&amp;</span>config.library_name))
+<a href=#219 id=219 data-nosnippet>219</a>}
+<a href=#220 id=220 data-nosnippet>220</a>
+<a href=#221 id=221 data-nosnippet>221</a><span class="kw">fn </span>set_string&lt;S: Into&lt;String&gt;&gt;(table: <span class="kw-2">&amp;mut </span>Table, name: <span class="kw-2">&amp;</span>str, new_value: S) {
+<a href=#222 id=222 data-nosnippet>222</a>    table.insert(name.into(), Value::String(new_value.into()));
+<a href=#223 id=223 data-nosnippet>223</a>}
+<a href=#224 id=224 data-nosnippet>224</a>
+<a href=#225 id=225 data-nosnippet>225</a><span class="kw">fn </span>unset(table: <span class="kw-2">&amp;mut </span>Table, name: <span class="kw-2">&amp;</span>str) {
+<a href=#226 id=226 data-nosnippet>226</a>    table.remove(name);
+<a href=#227 id=227 data-nosnippet>227</a>}
+<a href=#228 id=228 data-nosnippet>228</a>
+<a href=#229 id=229 data-nosnippet>229</a><span class="kw">fn </span>upsert_table&lt;S: Into&lt;String&gt;&gt;(parent: <span class="kw-2">&amp;mut </span>Table, name: S) -&gt; <span class="kw-2">&amp;mut </span>Table {
+<a href=#230 id=230 data-nosnippet>230</a>    <span class="kw">if let </span>Value::Table(table) = parent
+<a href=#231 id=231 data-nosnippet>231</a>        .entry(name.into())
+<a href=#232 id=232 data-nosnippet>232</a>        .or_insert_with(|| Value::Table(toml::map::Map::new()))
+<a href=#233 id=233 data-nosnippet>233</a>    {
+<a href=#234 id=234 data-nosnippet>234</a>        table
+<a href=#235 id=235 data-nosnippet>235</a>    } <span class="kw">else </span>{
+<a href=#236 id=236 data-nosnippet>236</a>        <span class="macro">unreachable!</span>()
+<a href=#237 id=237 data-nosnippet>237</a>    }
+<a href=#238 id=238 data-nosnippet>238</a>}</code></pre></div></section></main></body></html>
