@@ -203,10 +203,11 @@ impl PartialEq for {type_name} {{
     }}
 }}"
     )?;
+    writeln!(w)?;
+
     version_condition(w, env, None, version, false, 0)?;
     cfg_condition_no_doc(w, cfg_condition, false, 0)?;
 
-    writeln!(w)?;
     writeln!(
         w,
         "\
