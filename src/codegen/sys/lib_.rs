@@ -76,7 +76,7 @@ fn generate_lib(w: &mut dyn Write, env: &Env) -> Result<()> {
     }
 
     if !env.namespaces.main().shared_libs.is_empty() {
-        writeln!(w, "extern \"C\" {{")?;
+        writeln!(w, "unsafe extern \"C\" {{")?;
         functions::generate_enums_funcs(w, env, &enums)?;
         functions::generate_bitfields_funcs(w, env, &bitfields)?;
         functions::generate_unions_funcs(w, env, &unions)?;

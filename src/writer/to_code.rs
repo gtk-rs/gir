@@ -192,8 +192,8 @@ impl ToCode for Chunk {
                 if let Some(return_value) = return_value {
                     write!(s, " -> {return_value}").unwrap();
                 }
-                s.push_str(" {");
-                let mut code = format_block("", "}", &body.to_code(env));
+                s.push_str(" { unsafe {");
+                let mut code = format_block("", "}}", &body.to_code(env));
                 code.insert(0, s);
                 code
             }
