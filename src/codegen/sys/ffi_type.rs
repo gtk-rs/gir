@@ -59,10 +59,60 @@ pub fn ffi_type(env: &Env, tid: library::TypeId, c_type: &str) -> Result {
     res
 }
 
+fn ffi_basic(fund: &crate::library::Basic) -> Option<&'static str> {
+    use crate::library::Basic::*;
+
+    let res = match fund {
+        None => "c_void",
+        Boolean => "gboolean",
+        Int8 => "i8",
+        UInt8 => "u8",
+        Int16 => "i16",
+        UInt16 => "u16",
+        Int32 => "i32",
+        UInt32 => "u32",
+        Int64 => "i64",
+        UInt64 => "u64",
+        Char => "c_char",
+        UChar => "c_uchar",
+        Short => "c_short",
+        UShort => "c_ushort",
+        Int => "c_int",
+        UInt => "c_uint",
+        Long => "c_long",
+        ULong => "c_ulong",
+        Size => "size_t",
+        SSize => "ssize_t",
+        TimeT => "time_t",
+        OffT => "off_t",
+        DevT => "dev_t",
+        GidT => "gid_t",
+        PidT => "pid_t",
+        SockLenT => "socklen_t",
+        UidT => "uid_t",
+        Float => "c_float",
+        Double => "c_double",
+        UniChar => "u32",
+        Utf8 => "c_char",
+        Filename => "c_char",
+        OsString => "c_char",
+        Type => "GType",
+        IntPtr => "intptr_t",
+        UIntPtr => "uintptr_t",
+        Bool => "bool",
+        Pointer => "gpointer",
+        Unsupported => return Option::None,
+        VarArgs => panic!("Should not reach here"),
+    };
+
+    Some(res)
+}
+
 fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
-    let volatile = inner.starts_with("volatile ");
-    if volatile {
-        inner = inner["volatile ".len()..].into();
+    let mut volatile = false;
+    if let Some(non_volatile) = inner.strip_prefix("volatile ") {
+        volatile = true;
+        inner = non_volatile.into();
     }
 
     let typ = env.library.type_(tid);
@@ -70,53 +120,32 @@ fn ffi_inner(env: &Env, tid: library::TypeId, mut inner: String) -> Result {
         Type::Basic(fund) => {
             use crate::library::Basic::*;
             let inner = match fund {
-                None => "c_void",
-                Boolean => "gboolean",
-                Int8 => "i8",
-                UInt8 => "u8",
-                Int16 => "i16",
-                UInt16 => "u16",
-                Int32 => "i32",
-                UInt32 => "u32",
-                Int64 => "i64",
-                UInt64 => "u64",
-                Char => "c_char",
-                UChar => "c_uchar",
-                Short => "c_short",
-                UShort => "c_ushort",
-                Int => "c_int",
-                UInt => "c_uint",
-                Long => "c_long",
-                ULong => "c_ulong",
-                Size => "size_t",
-                SSize => "ssize_t",
-                TimeT => "time_t",
-                OffT => "off_t",
-                DevT => "dev_t",
-                GidT => "gid_t",
-                PidT => "pid_t",
-                SockLenT => "socklen_t",
-                UidT => "uid_t",
-                Float => "c_float",
-                Double => "c_double",
-                UniChar => "u32",
-                Utf8 => "c_char",
-                Filename => "c_char",
-                OsString => "c_char",
-                Type => "GType",
                 Pointer => {
                     match inner.as_str() {
                         "void" => "c_void",
+                        "gconstpointer" => "gconstpointer",
+                        "gpointer" => "gpointer",
                         // TODO: try use time:Tm
                         "tm" => return Err(TypeError::Unimplemented(inner)),
-                        _ => &*inner,
+                        _ => {
+                            if let Some(c_tid) = env.library.find_type(0, &inner) {
+                                if let Some(fund) = env
+                                    .library
+                                    .type_(c_tid)
+                                    .maybe_ref_as::<Basic>()
+                                    .and_then(ffi_basic)
+                                {
+                                    fund
+                                } else {
+                                    &*inner
+                                }
+                            } else {
+                                &*inner
+                            }
+                        }
                     }
                 }
-                IntPtr => "intptr_t",
-                UIntPtr => "uintptr_t",
-                Bool => "bool",
-                Unsupported => return Err(TypeError::Unimplemented(inner)),
-                VarArgs => panic!("Should not reach here"),
+                _ => ffi_basic(&fund).ok_or(TypeError::Unimplemented(inner))?,
             };
             Ok(inner.into())
         }
