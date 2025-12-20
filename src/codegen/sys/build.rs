@@ -42,10 +42,11 @@ fn generate_build_script(w: &mut dyn Write, env: &Env, split_build_rs: bool) -> 
         writeln!(w, "mod build_version;")?;
     }
 
-    write!(
-        w,
-        "{}",
-        r#"
+    if !env.config.static_lib {
+        write!(
+            w,
+            "{}",
+            r#"
 fn main() {
     if std::env::var("DOCS_RS").is_ok() {
         // prevent linking libraries to avoid documentation failure
@@ -58,7 +59,18 @@ fn main() {
     }
 }
 "#
-    )
+        )
+    } else {
+        write!(
+            w,
+            "{}",
+            r#"
+fn main() {
+
+}
+"#
+        )
+    }
 }
 
 fn generate_build_version(w: &mut dyn Write, env: &Env) -> Result<()> {
