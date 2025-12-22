@@ -92,7 +92,13 @@ pub fn generate(
 
     let unsafe_ = if analysis.unsafe_ { "unsafe " } else { "" };
     let declaration = declaration(env, analysis);
-    let suffix = if only_declaration { ";" } else { " {" };
+    let suffix = if only_declaration {
+        ";"
+    } else if analysis.unsafe_ {
+        " { unsafe {"
+    } else {
+        " {"
+    };
 
     writeln!(w)?;
     cfg_deprecated(w, env, None, analysis.deprecated_version, commented, indent)?;
@@ -152,6 +158,9 @@ pub fn generate(
         let body = body_chunk(env, analysis, parent_type_id).to_code(env);
         for s in body {
             writeln!(w, "{}{}", tabs(indent), s)?;
+        }
+        if analysis.unsafe_ {
+            writeln!(w, "}}")?;
         }
     }
 
