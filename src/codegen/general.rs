@@ -709,11 +709,18 @@ pub fn cfg_deprecated_string(
         if env.is_too_low_version(type_tid.map(|t| t.ns_id), Some(v)) {
             format!("{}{}#[deprecated = \"Since {}\"]", tabs(indent), comment, v)
         } else {
+            let namespace_name = type_tid.map(|t| t.ns_id).and_then(|ns| {
+                if ns == namespaces::MAIN {
+                    None
+                } else {
+                    Some(env.namespaces.index(ns).crate_name.clone())
+                }
+            });
             format!(
                 "{}{}#[cfg_attr({}, deprecated = \"Since {}\")]",
                 tabs(indent),
                 comment,
-                v.to_cfg(None),
+                v.to_cfg(namespace_name.as_deref()),
                 v,
             )
         }
