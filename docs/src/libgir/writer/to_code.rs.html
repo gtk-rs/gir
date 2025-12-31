@@ -192,8 +192,8 @@
 <a href=#192 id=192 data-nosnippet>192</a>                <span class="kw">if let </span><span class="prelude-val">Some</span>(return_value) = return_value {
 <a href=#193 id=193 data-nosnippet>193</a>                    <span class="macro">write!</span>(s, <span class="string">" -&gt; {return_value}"</span>).unwrap();
 <a href=#194 id=194 data-nosnippet>194</a>                }
-<a href=#195 id=195 data-nosnippet>195</a>                s.push_str(<span class="string">" {"</span>);
-<a href=#196 id=196 data-nosnippet>196</a>                <span class="kw">let </span><span class="kw-2">mut </span>code = format_block(<span class="string">""</span>, <span class="string">"}"</span>, <span class="kw-2">&amp;</span>body.to_code(env));
+<a href=#195 id=195 data-nosnippet>195</a>                s.push_str(<span class="string">" { unsafe {"</span>);
+<a href=#196 id=196 data-nosnippet>196</a>                <span class="kw">let </span><span class="kw-2">mut </span>code = format_block(<span class="string">""</span>, <span class="string">"}}"</span>, <span class="kw-2">&amp;</span>body.to_code(env));
 <a href=#197 id=197 data-nosnippet>197</a>                code.insert(<span class="number">0</span>, s);
 <a href=#198 id=198 data-nosnippet>198</a>                code
 <a href=#199 id=199 data-nosnippet>199</a>            }

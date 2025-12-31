@@ -76,7 +76,7 @@
 <a href=#76 id=76 data-nosnippet>76</a>    }
 <a href=#77 id=77 data-nosnippet>77</a>
 <a href=#78 id=78 data-nosnippet>78</a>    <span class="kw">if </span>!env.namespaces.main().shared_libs.is_empty() {
-<a href=#79 id=79 data-nosnippet>79</a>        <span class="macro">writeln!</span>(w, <span class="string">"extern \"C\" {{"</span>)<span class="question-mark">?</span>;
+<a href=#79 id=79 data-nosnippet>79</a>        <span class="macro">writeln!</span>(w, <span class="string">"unsafe extern \"C\" {{"</span>)<span class="question-mark">?</span>;
 <a href=#80 id=80 data-nosnippet>80</a>        functions::generate_enums_funcs(w, env, <span class="kw-2">&amp;</span>enums)<span class="question-mark">?</span>;
 <a href=#81 id=81 data-nosnippet>81</a>        functions::generate_bitfields_funcs(w, env, <span class="kw-2">&amp;</span>bitfields)<span class="question-mark">?</span>;
 <a href=#82 id=82 data-nosnippet>82</a>        functions::generate_unions_funcs(w, env, <span class="kw-2">&amp;</span>unions)<span class="question-mark">?</span>;
