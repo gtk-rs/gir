@@ -319,7 +319,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
 
     #[inline]
     unsafe fn from_value(value: &'a {gvalue}) -> Self {{
-        {assert}from_glib({glib}(value.to_glib_none().0))
+        {assert}unsafe {{ from_glib({glib}(value.to_glib_none().0)) }}
     }}
 }}",
             name = flags.name,
