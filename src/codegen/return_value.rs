@@ -66,7 +66,9 @@ impl ToReturnValue for analysis::return_value::Info {
                     format!(
                         "Result<{}, {}BoolError>",
                         &type_name[7..(type_name.len() - 1)],
-                        if env.namespaces.glib_ns_id == namespaces::MAIN {
+                        if env.namespaces.glib_ns_id.is_none()
+                            || env.namespaces.glib_ns_id == Some(namespaces::MAIN)
+                        {
                             ""
                         } else {
                             "glib::"
