@@ -731,7 +731,7 @@
 <a href=#731 id=731 data-nosnippet>731</a>            <span class="macro">format!</span>(<span class="string">"{}{}#[deprecated = \"Since {}\"]"</span>, tabs(indent), comment, v)
 <a href=#732 id=732 data-nosnippet>732</a>        } <span class="kw">else </span>{
 <a href=#733 id=733 data-nosnippet>733</a>            <span class="kw">let </span>namespace_name = type_tid.map(|t| t.ns_id).and_then(|ns| {
-<a href=#734 id=734 data-nosnippet>734</a>                <span class="kw">if </span>ns == namespaces::MAIN {
+<a href=#734 id=734 data-nosnippet>734</a>                <span class="kw">if </span>ns == namespaces::MAIN || ns == <span class="kw">crate</span>::library::INTERNAL_NAMESPACE {
 <a href=#735 id=735 data-nosnippet>735</a>                    <span class="prelude-val">None
 <a href=#736 id=736 data-nosnippet>736</a>                </span>} <span class="kw">else </span>{
 <a href=#737 id=737 data-nosnippet>737</a>                    <span class="prelude-val">Some</span>(env.namespaces.index(ns).crate_name.clone())
