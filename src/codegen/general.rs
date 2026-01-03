@@ -731,7 +731,7 @@ pub fn cfg_deprecated_string(
             format!("{}{}#[deprecated = \"Since {}\"]", tabs(indent), comment, v)
         } else {
             let namespace_name = type_tid.map(|t| t.ns_id).and_then(|ns| {
-                if ns == namespaces::MAIN {
+                if ns == namespaces::MAIN || ns == crate::library::INTERNAL_NAMESPACE {
                     None
                 } else {
                     Some(env.namespaces.index(ns).crate_name.clone())
