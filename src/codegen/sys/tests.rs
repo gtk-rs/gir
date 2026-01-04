@@ -1,6 +1,7 @@
 use std::{
     io::{self, prelude::*},
     path::Path,
+    str::FromStr,
 };
 
 use log::info;
@@ -118,13 +119,21 @@ fn prepare_cconsts(env: &Env) -> Vec<CConstant> {
                 return None;
             }
             let value = match constant {
-                c if c.c_type == "gboolean" && c.value == "true" => "1",
-                c if c.c_type == "gboolean" && c.value == "false" => "0",
-                c => &c.value,
+                c if c.c_type == "gboolean" && c.value == "true" => "1".to_owned(),
+                c if c.c_type == "gboolean" && c.value == "false" => "0".to_owned(),
+                c if c.c_type == "gdouble" => {
+                    let n = f64::from_str(&c.value).expect("Could not parse gdouble value as f64");
+                    format!("{n:.6}")
+                }
+                c if c.c_type == "gfloat" => {
+                    let n = f32::from_str(&c.value).expect("Could not parse gfloat value as f32");
+                    format!("{n:.6}")
+                }
+                c => c.value.clone(),
             };
             Some(CConstant {
                 name: constant.c_identifier.clone(),
-                value: value.to_owned(),
+                value,
                 status: GStatus::Generate, // Assume generate because we skip ignored ones above
             })
         })
@@ -270,8 +279,8 @@ fn generate_constant_c(
                     unsigned long: "%lu", \
                     long long: "%lld", \
                     unsigned long long: "%llu", \
-                    float: "%f", \
-                    double: "%f", \
+                    float: "%.6f", \
+                    double: "%.6f", \
                     long double: "%ld"), \
            CONSTANT_NAME); \
     printf("\n");
