@@ -461,15 +461,17 @@ pub fn body_chunk_futures(
         }
     }
 
+    let unsafe_block = if analysis.unsafe_ { "unsafe " } else { "" };
+
     if async_future.is_method {
         writeln!(
             body,
-            "Box_::pin({gio_future_name}::new(self, move |obj, cancellable, send| {{"
+            "Box_::pin({gio_future_name}::new(self, move |obj, cancellable, send| {unsafe_block}{{"
         )?;
     } else {
         writeln!(
             body,
-            "Box_::pin({gio_future_name}::new(&(), move |_obj, cancellable, send| {{"
+            "Box_::pin({gio_future_name}::new(&(), move |_obj, cancellable, send| {unsafe_block}{{"
         )?;
     }
 
