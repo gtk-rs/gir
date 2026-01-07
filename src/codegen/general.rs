@@ -234,14 +234,8 @@ pub fn define_fundamental_type(
         (ref_fn, unref_fn, ptr, ffi_crate_name)
     };
 
-    writeln!(
-        w,
-        "\t\tref => |ptr| unsafe {{ {ffi_crate_name}::{ref_fn}({ptr}) }},"
-    )?;
-    writeln!(
-        w,
-        "\t\tunref => |ptr| unsafe {{ {ffi_crate_name}::{unref_fn}({ptr}) }},"
-    )?;
+    writeln!(w, "\t\tref => |ptr| {ffi_crate_name}::{ref_fn}({ptr}),")?;
+    writeln!(w, "\t\tunref => |ptr| {ffi_crate_name}::{unref_fn}({ptr}),")?;
 
     writeln!(w, "\t}}")?;
     writeln!(w, "}}")?;
@@ -408,13 +402,10 @@ fn define_boxed_type_internal(
     };
     writeln!(
         w,
-        "\t\tcopy => |ptr| unsafe {{ {}::{}({}) }},",
+        "\t\tcopy => |ptr| {}::{}({}),",
         sys_crate_name, copy_fn.glib_name, mut_ov
     )?;
-    writeln!(
-        w,
-        "\t\tfree => |ptr| unsafe {{ {sys_crate_name}::{free_fn}(ptr) }},"
-    )?;
+    writeln!(w, "\t\tfree => |ptr| {sys_crate_name}::{free_fn}(ptr),")?;
 
     if let (
         Some(init_function_expression),
@@ -425,12 +416,9 @@ fn define_boxed_type_internal(
         copy_into_function_expression,
         clear_function_expression,
     ) {
-        writeln!(w, "\t\tinit => unsafe {{ {init_function_expression} }},",)?;
-        writeln!(
-            w,
-            "\t\tcopy_into => unsafe {{ {copy_into_function_expression} }},",
-        )?;
-        writeln!(w, "\t\tclear => unsafe {{ {clear_function_expression} }},",)?;
+        writeln!(w, "\t\tinit => {init_function_expression},",)?;
+        writeln!(w, "\t\tcopy_into => {copy_into_function_expression},",)?;
+        writeln!(w, "\t\tclear => {clear_function_expression},",)?;
     }
 
     if let Some(get_type_fn) = get_type_fn {
@@ -593,12 +581,9 @@ pub fn define_auto_boxed_type(
         copy_into_function_expression,
         clear_function_expression,
     ) {
-        writeln!(w, "\t\tinit => unsafe {{ {init_function_expression} }},",)?;
-        writeln!(
-            w,
-            "\t\tcopy_into => unsafe {{ {copy_into_function_expression} }},",
-        )?;
-        writeln!(w, "\t\tclear => unsafe {{ {clear_function_expression} }},",)?;
+        writeln!(w, "\t\tinit => {init_function_expression},",)?;
+        writeln!(w, "\t\tcopy_into => {copy_into_function_expression},",)?;
+        writeln!(w, "\t\tclear => {clear_function_expression},",)?;
     }
 
     writeln!(w, "\t\ttype_ => || {sys_crate_name}::{get_type_fn}(),")?;
@@ -629,14 +614,8 @@ fn define_shared_type_internal(
     )?;
     writeln!(w)?;
     writeln!(w, "\tmatch fn {{")?;
-    writeln!(
-        w,
-        "\t\tref => |ptr| unsafe {{ {sys_crate_name}::{ref_fn}(ptr) }},"
-    )?;
-    writeln!(
-        w,
-        "\t\tunref => |ptr| unsafe {{ {sys_crate_name}::{unref_fn}(ptr) }},"
-    )?;
+    writeln!(w, "\t\tref => |ptr| {sys_crate_name}::{ref_fn}(ptr),")?;
+    writeln!(w, "\t\tunref => |ptr| {sys_crate_name}::{unref_fn}(ptr),")?;
     if let Some(get_type_fn) = get_type_fn {
         writeln!(w, "\t\ttype_ => || {sys_crate_name}::{get_type_fn}(),")?;
     }
