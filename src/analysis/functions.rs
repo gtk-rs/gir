@@ -858,7 +858,6 @@ fn analyze_function(
 
     if r#async && status.need_generate() && !commented {
         imports.add("std::boxed::Box as Box_");
-        imports.add("std::pin::Pin");
 
         if let Some(ref trampoline) = trampoline {
             for out in &trampoline.output_params {

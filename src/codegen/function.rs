@@ -249,12 +249,12 @@ pub fn declaration_futures(env: &Env, analysis: &analysis::functions::Info) -> S
 
     let return_str = if let Some(ref error_parameters) = async_future.error_parameters {
         format!(
-            " -> Pin<Box_<dyn std::future::Future<Output = Result<{}, {}>> + 'static>>",
+            " -> impl std::future::Future<Output = Result<{}, {}>> + Unpin + 'static",
             async_future.success_parameters, error_parameters
         )
     } else {
         format!(
-            " -> Pin<Box_<dyn std::future::Future<Output = {}> + 'static>>",
+            " -> impl std::future::Future<Output = {}> + Unpin + 'static",
             async_future.success_parameters
         )
     };
@@ -461,15 +461,17 @@ pub fn body_chunk_futures(
         }
     }
 
+    let unsafe_block = if analysis.unsafe_ { "unsafe " } else { "" };
+
     if async_future.is_method {
         writeln!(
             body,
-            "Box_::pin({gio_future_name}::new(self, move |obj, cancellable, send| {{"
+            "{gio_future_name}::new(self, move |obj, cancellable, send| {unsafe_block}{{"
         )?;
     } else {
         writeln!(
             body,
-            "Box_::pin({gio_future_name}::new(&(), move |_obj, cancellable, send| {{"
+            "{gio_future_name}::new(&(), move |_obj, cancellable, send| {unsafe_block}{{"
         )?;
     }
 
@@ -508,7 +510,7 @@ pub fn body_chunk_futures(
     writeln!(body, "\t\t\tsend.resolve(res);")?;
     writeln!(body, "\t\t}},")?;
     writeln!(body, "\t);")?;
-    writeln!(body, "}}))")?;
+    writeln!(body, "}})")?;
 
     Ok(body)
 }
