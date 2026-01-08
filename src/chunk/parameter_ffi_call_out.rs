@@ -1,6 +1,6 @@
 use crate::{
     analysis::{self, try_from_glib::TryFromGlib},
-    library,
+    library::{self, Nullable},
 };
 
 #[derive(Clone, Debug)]
@@ -12,6 +12,7 @@ pub struct Parameter {
     pub is_error: bool,
     pub is_uninitialized: bool,
     pub try_from_glib: TryFromGlib,
+    pub nullable: Nullable,
 }
 
 impl Parameter {
@@ -24,6 +25,7 @@ impl Parameter {
             is_error: orig.is_error,
             is_uninitialized,
             try_from_glib: orig.try_from_glib.clone(),
+            nullable: orig.nullable,
         }
     }
 }
@@ -38,6 +40,7 @@ impl From<&analysis::Parameter> for Parameter {
             is_error: orig.lib_par.is_error,
             is_uninitialized: false,
             try_from_glib: orig.try_from_glib.clone(),
+            nullable: orig.nullable,
         }
     }
 }

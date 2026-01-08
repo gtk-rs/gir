@@ -3,7 +3,7 @@ use std::{
     collections::{BTreeMap, BTreeSet, HashMap, HashSet},
     fmt,
     iter::Iterator,
-    ops::{Deref, DerefMut},
+    ops::{BitAnd, Deref, DerefMut},
     str::FromStr,
 };
 
@@ -12,8 +12,9 @@ use crate::{
     nameutil::split_namespace_name, traits::*, version::Version,
 };
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub enum Transfer {
+    #[default]
     None,
     Container,
     Full,
@@ -118,7 +119,7 @@ impl FromStr for ParameterScope {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
 pub struct Nullable(pub bool);
 
 impl Deref for Nullable {
@@ -131,6 +132,14 @@ impl Deref for Nullable {
 impl DerefMut for Nullable {
     fn deref_mut(&mut self) -> &mut bool {
         &mut self.0
+    }
+}
+
+impl BitAnd<bool> for Nullable {
+    type Output = Nullable;
+
+    fn bitand(self, rhs: bool) -> Nullable {
+        Nullable(*self & rhs)
     }
 }
 
@@ -512,6 +521,7 @@ pub struct Property {
     pub typ: TypeId,
     pub c_type: Option<String>,
     pub transfer: Transfer,
+    pub is_array: bool,
     pub version: Option<Version>,
     pub deprecated_version: Option<Version>,
     pub doc: Option<String>,
@@ -520,7 +530,7 @@ pub struct Property {
     pub setter: Option<String>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Parameter {
     pub name: String,
     pub typ: TypeId,
@@ -530,7 +540,9 @@ pub struct Parameter {
     pub transfer: Transfer,
     pub caller_allocates: bool,
     pub nullable: Nullable,
+    pub is_array: bool,
     pub array_length: Option<u32>,
+    pub zero_terminated: Option<bool>,
     pub is_error: bool,
     pub doc: Option<String>,
     pub scope: ParameterScope,
