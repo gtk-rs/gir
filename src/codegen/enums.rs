@@ -312,7 +312,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             .collect::<Vec<_>>()
             .join(", ");
         writeln!(w, "debug_assert!([{all_members}].contains(&value));")?;
-        writeln!(w, "std::mem::transmute(value)",)?;
+        writeln!(w, "unsafe {{ std::mem::transmute(value) }}",)?;
     } else {
         writeln!(w, "match value {{")?;
         for member in &members {
