@@ -42,14 +42,7 @@ fn generate_prop_func(
     writeln!(w)?;
 
     let decl = declaration(env, prop);
-    cfg_deprecated(
-        w,
-        env,
-        Some(prop.typ),
-        prop.deprecated_version,
-        commented,
-        indent,
-    )?;
+    cfg_deprecated(w, env, None, prop.deprecated_version, commented, indent)?;
     cfg_condition(w, prop.cfg_condition.as_ref(), commented, indent)?;
     version_condition(w, env, None, prop.version, commented, indent)?;
     let add_doc_alias = if let Some(func_name_alias) = prop.func_name_alias.as_ref() {
