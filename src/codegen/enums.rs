@@ -82,6 +82,7 @@ fn generate_enum(
     struct Member<'a> {
         name: String,
         c_name: String,
+        nick: String,
         version: Option<Version>,
         deprecated_version: Option<Version>,
         cfg_condition: Option<&'a String>,
@@ -109,6 +110,7 @@ fn generate_enum(
         members.push(Member {
             name: enum_member_name(&member.name),
             c_name: member.c_identifier.clone(),
+            nick: member.nick.as_ref().unwrap_or(&member.name).to_owned(),
             version,
             deprecated_version,
             cfg_condition,
@@ -446,7 +448,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
                 type ParamSpec = {param_spec_enum};
                 type SetValue = Self;
                 type BuilderFn = fn(&str, Self) -> {param_spec_builder}<Self>;
-    
+
                 fn param_spec_builder() -> Self::BuilderFn {{
                     Self::ParamSpec::builder_with_default
                 }}
@@ -556,6 +558,51 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
             Some((version, cfg_condition, e_member.name.as_str()))
         },
     )?;
+
+    // Generate FromStr trait implementation.
+    version_condition(w, env, None, enum_.version, false, 0)?;
+    cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
+    allow_deprecated(w, any_deprecated_version, false, 0)?;
+    writeln!(
+        w,
+        "impl std::str::FromStr for {name} {{
+    type Err = {boolerror};
+
+    fn from_str(s: &str) -> Result<Self, <Self as std::str::FromStr>::Err> {{
+        match s {{",
+        name = enum_.name,
+        boolerror = use_glib_type(env, "error::BoolError"),
+    )?;
+
+    for member in &members {
+        version_condition_no_doc(w, env, None, member.version, false, 3)?;
+        cfg_condition_no_doc(w, member.cfg_condition.as_ref(), false, 3)?;
+        writeln!(w, "\t\t\t\"{}\" => Ok(Self::{}),", member.nick, member.name)?;
+    }
+    writeln!(
+        w,
+        "\t\t\t_ => Err({}(\"'{{}}' is not a valid value for {}\", s)),",
+        use_glib_type(env, "bool_error!"),
+        enum_.name
+    )?;
+    writeln!(w, "\t\t}}\n\t}}\n}}\n")?;
+
+    // Generate From<&str> trait implementation, piggy-backing on FromStr
+    version_condition(w, env, None, enum_.version, false, 0)?;
+    cfg_condition_no_doc(w, config.cfg_condition.as_ref(), false, 0)?;
+    allow_deprecated(w, any_deprecated_version, false, 0)?;
+    writeln!(
+        w,
+        "impl std::convert::TryFrom<&str> for {name} {{
+    type Error = <Self as std::str::FromStr>::Err;
+
+    fn try_from(s: &str) -> Result<Self, <Self as std::convert::TryFrom<&str>>::Error> {{
+        <Self as std::str::FromStr>::from_str(s)
+    }}
+}}",
+        name = enum_.name
+    )?;
+    writeln!(w)?;
 
     Ok(())
 }
