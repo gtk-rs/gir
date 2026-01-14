@@ -96,7 +96,7 @@ fn declaration(env: &Env, prop: &Property) -> String {
         let dir = library::ParameterDirection::Return;
         let ret_type = RustType::builder(env, prop.typ)
             .direction(dir)
-            .nullable(prop.nullable)
+            .nullable(prop.nullable & !prop.is_array)
             .ref_mode(prop.get_out_ref_mode)
             .try_build_param()
             .into_string();

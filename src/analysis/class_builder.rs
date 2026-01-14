@@ -141,6 +141,7 @@ fn analyze_property(
         func_name: String::new(),
         func_name_alias: None,
         nullable,
+        is_array: prop.is_array,
         get_out_ref_mode,
         set_in_ref_mode,
         set_bound: None,
