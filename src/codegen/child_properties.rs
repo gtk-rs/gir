@@ -11,7 +11,7 @@ use crate::{
     library,
     nameutil::use_gtk_type,
     traits::IntoString,
-    writer::{primitives::tabs, ToCode},
+    writer::{ToCode, primitives::tabs},
 };
 
 pub fn generate(

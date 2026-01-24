@@ -1,5 +1,5 @@
 use std::{
-    io::{prelude::*, Result},
+    io::{Result, prelude::*},
     path::Path,
 };
 

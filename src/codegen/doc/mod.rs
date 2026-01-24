@@ -7,7 +7,7 @@ use std::{
 
 use log::{error, info};
 use regex::{Captures, Regex};
-use stripper_lib::{write_file_name, write_item_doc, Type as SType, TypeStruct};
+use stripper_lib::{Type as SType, TypeStruct, write_file_name, write_item_doc};
 
 use self::format::reformat_doc;
 use crate::{
@@ -145,19 +145,18 @@ fn generate_doc(w: &mut dyn Write, env: &Env) -> Result<()> {
                     Box::new(move |w, e| create_enum_doc(w, e, enum_, tid)),
                 ));
             }
-        } else if let LType::Bitfield(bitfield) = type_ {
-            if !env
+        } else if let LType::Bitfield(bitfield) = type_
+            && !env
                 .config
                 .objects
                 .get(&tid.full_name(&env.library))
                 .is_none_or(|obj| obj.status.ignored())
-                && !env.is_totally_deprecated(None, bitfield.deprecated_version)
-            {
-                generators.push((
-                    bitfield.name.as_str(),
-                    Box::new(move |w, e| create_bitfield_doc(w, e, bitfield, tid)),
-                ));
-            }
+            && !env.is_totally_deprecated(None, bitfield.deprecated_version)
+        {
+            generators.push((
+                bitfield.name.as_str(),
+                Box::new(move |w, e| create_bitfield_doc(w, e, bitfield, tid)),
+            ));
         }
     }
 
@@ -778,10 +777,10 @@ fn create_bitfield_doc(
     let config = env.config.objects.get(&tid.full_name(&env.library));
 
     write_item_doc(w, &ty, |w| {
-        if config.is_none_or(|c| c.generate_doc) {
-            if let Some(ref doc) = bitfield.doc {
-                writeln!(w, "{}", reformat_doc(doc, env, Some((&tid, None))))?;
-            }
+        if config.is_none_or(|c| c.generate_doc)
+            && let Some(ref doc) = bitfield.doc
+        {
+            writeln!(w, "{}", reformat_doc(doc, env, Some((&tid, None))))?;
         }
         if let Some(ver) = bitfield.deprecated_version {
             writeln!(w, "\n# Deprecated since {ver}\n")?;
@@ -833,10 +832,10 @@ fn param_name() -> &'static Regex {
 
 fn fix_param_names<'a>(doc: &'a str, self_name: &Option<String>) -> Cow<'a, str> {
     param_name().replace_all(doc, |caps: &Captures<'_>| {
-        if let Some(self_name) = self_name {
-            if &caps[1] == self_name {
-                return "@self".into();
-            }
+        if let Some(self_name) = self_name
+            && &caps[1] == self_name
+        {
+            return "@self".into();
         }
         format!("@{}", nameutil::mangle_keywords(&caps[1]))
     })
@@ -1091,10 +1090,10 @@ pub fn get_type_manual_traits_for_implements(
         .chain(info.supertypes.iter().map(|stid| &stid.type_id))
     {
         let full_name = type_id.full_name(&env.library);
-        if let Some(obj) = &env.config.objects.get(&full_name) {
-            if !obj.manual_traits.is_empty() {
-                manual_trait_iters.push(obj.manual_traits.iter());
-            }
+        if let Some(obj) = &env.config.objects.get(&full_name)
+            && !obj.manual_traits.is_empty()
+        {
+            manual_trait_iters.push(obj.manual_traits.iter());
         }
     }
 

@@ -38,11 +38,10 @@ impl Deref for Info {
 impl Info {
     // TODO: add test in tests/ for panic
     pub fn type_<'a>(&self, library: &'a library::Library) -> &'a library::Record {
-        let type_ = library
+        (library
             .type_(self.type_id)
             .maybe_ref()
-            .unwrap_or_else(|| panic!("{} is not a record.", self.full_name));
-        type_
+            .unwrap_or_else(|| panic!("{} is not a record.", self.full_name))) as _
     }
 }
 

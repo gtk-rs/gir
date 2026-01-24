@@ -4,7 +4,7 @@ use crate::{
     analysis::{
         bounds::Bounds,
         imports::Imports,
-        properties::{get_property_ref_modes, Property},
+        properties::{Property, get_property_ref_modes},
         rust_type::RustType,
     },
     config::{self, GObject},
@@ -119,10 +119,10 @@ fn analyze_property(
     }
     let imports = &mut imports.with_defaults(prop_version, &cfg_condition);
     let rust_type_res = RustType::try_new(env, prop.typ);
-    if let Ok(ref rust_type) = rust_type_res {
-        if !rust_type.as_str().contains("GString") {
-            imports.add_used_types(rust_type.used_types());
-        }
+    if let Ok(ref rust_type) = rust_type_res
+        && !rust_type.as_str().contains("GString")
+    {
+        imports.add_used_types(rust_type.used_types());
     }
 
     let (get_out_ref_mode, set_in_ref_mode, nullable) = get_property_ref_modes(env, prop);

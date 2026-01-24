@@ -122,7 +122,7 @@ fn run_check(check_gir_file: &str) -> Result<(), String> {
 
 fn main() -> Result<(), String> {
     if std::env::var_os("RUST_LOG").is_none() {
-        std::env::set_var("RUST_LOG", "gir=warn,libgir=warn");
+        unsafe { std::env::set_var("RUST_LOG", "gir=warn,libgir=warn") };
     }
     env_logger::init();
 

@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fs::File, io::prelude::*};
 
 use log::info;
-use toml::{self, value::Table, Value};
+use toml::{self, Value, value::Table};
 
 use super::collect_versions;
 use crate::{config::Config, env::Env, file_saver::save_to_file, nameutil, version::Version};
@@ -155,7 +155,7 @@ fn fill_in(root: &mut Table, env: &Env) {
 
             collect_versions(env)
                 .iter()
-                .filter(|(&v, _)| v > env.config.min_cfg_version)
+                .filter(|&(&v, _)| v > env.config.min_cfg_version)
                 .for_each(|(v, lib_version)| {
                     let version_section = upsert_table(meta, v.to_feature());
                     // Allow system-deps version for this feature level to be overridden by hand
@@ -204,16 +204,16 @@ fn get_feature_dependencies(
 
 /// Returns the name of crate being currently generated.
 fn get_crate_name(config: &Config, root: &Table) -> String {
-    if let Some(Value::Table(lib)) = root.get("lib") {
-        if let Some(Value::String(lib_name)) = lib.get("name") {
-            // Converting don't needed as library target names cannot contain hyphens
-            return lib_name.clone();
-        }
+    if let Some(Value::Table(lib)) = root.get("lib")
+        && let Some(Value::String(lib_name)) = lib.get("name")
+    {
+        // Converting don't needed as library target names cannot contain hyphens
+        return lib_name.clone();
     }
-    if let Some(Value::Table(package)) = root.get("package") {
-        if let Some(Value::String(package_name)) = package.get("name") {
-            return nameutil::crate_name(package_name);
-        }
+    if let Some(Value::Table(package)) = root.get("package")
+        && let Some(Value::String(package_name)) = package.get("name")
+    {
+        return nameutil::crate_name(package_name);
     }
     format!("{}_sys", nameutil::crate_name(&config.library_name))
 }

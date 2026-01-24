@@ -1121,18 +1121,17 @@ impl Library {
                     } else {
                         println!("[NOT GENERATED] {full_name}");
                     }
-                } else if let Type::Class(Class { properties, .. }) = x {
-                    if !env
+                } else if let Type::Class(Class { properties, .. }) = x
+                    && !env
                         .config
                         .objects
                         .get(&full_name)
                         .is_some_and(|obj| obj.generate_builder)
-                        && properties
-                            .iter()
-                            .any(|prop| prop.construct_only || prop.construct || prop.writable)
-                    {
-                        println!("[NOT GENERATED BUILDER] {full_name}Builder");
-                    }
+                    && properties
+                        .iter()
+                        .any(|prop| prop.construct_only || prop.construct || prop.writable)
+                {
+                    println!("[NOT GENERATED BUILDER] {full_name}Builder");
                 }
             }
             if let (Some(tid), Some(gobject_id)) = (

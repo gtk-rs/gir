@@ -686,9 +686,7 @@ impl<'env> RustTypeBuilder<'env> {
                 }
                 _ => Err(TypeError::Unimplemented(into_inner(rust_type))),
             },
-            Function(ref func) if func.name == "AsyncReadyCallback" => {
-                Ok("AsyncReadyCallback".into())
-            }
+            Function(func) if func.name == "AsyncReadyCallback" => Ok("AsyncReadyCallback".into()),
             Function(_) => rust_type,
             Custom(..) => rust_type.map(|rust_type| rust_type.format_parameter(self.direction)),
             _ => Err(TypeError::Unimplemented(type_.get_name())),

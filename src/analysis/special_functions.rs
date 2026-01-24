@@ -101,7 +101,10 @@ fn is_stringify(func: &mut FuncInfo, parent_type: &LibType, obj: &GObject) -> bo
 
         if func.name == "to_string" {
             // Rename to to_str to make sure it doesn't clash with ToString::to_string
-            assert!(func.new_name.is_none(), "A `to_string` function can't be renamed manually. It's automatically renamed to `to_str`");
+            assert!(
+                func.new_name.is_none(),
+                "A `to_string` function can't be renamed manually. It's automatically renamed to `to_str`"
+            );
             func.new_name = Some("to_str".to_owned());
 
             // As to not change old code behaviour, assume non-nullability outside
@@ -213,20 +216,21 @@ pub fn extract(functions: &mut [FuncInfo], parent_type: &LibType, obj: &GObject)
         }
     }
 
-    if has_copy && !has_free {
-        if let Some((glib_name, pos)) = destroy {
-            let ty_ = Type::from_str("destroy").unwrap();
-            let func = &mut functions[pos];
-            update_func(func, ty_);
-            specials.traits.insert(
-                ty_,
-                TraitInfo {
-                    glib_name,
-                    version: func.version,
-                    first_parameter_mut: true,
-                },
-            );
-        }
+    if has_copy
+        && !has_free
+        && let Some((glib_name, pos)) = destroy
+    {
+        let ty_ = Type::from_str("destroy").unwrap();
+        let func = &mut functions[pos];
+        update_func(func, ty_);
+        specials.traits.insert(
+            ty_,
+            TraitInfo {
+                glib_name,
+                version: func.version,
+                first_parameter_mut: true,
+            },
+        );
     }
 
     specials

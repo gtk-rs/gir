@@ -10,7 +10,7 @@ use crate::{
         signatures::{Signature, Signatures},
         trampolines,
     },
-    config::{self, gobjects::GStatus, GObject, PropertyGenerateFlags},
+    config::{self, GObject, PropertyGenerateFlags, gobjects::GStatus},
     env::Env,
     library, nameutil,
     traits::*,

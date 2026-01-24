@@ -104,18 +104,18 @@ pub fn analyze(
 
     let mut base_tid = None;
 
-    if func.kind == library::FunctionKind::Constructor {
-        if let Some(par) = parameter {
-            let nullable_override = configured_functions.iter().find_map(|f| f.ret.nullable);
-            if par.typ != type_tid {
-                base_tid = Some(par.typ);
-            }
-            parameter = Some(library::Parameter {
-                typ: type_tid,
-                nullable: nullable_override.unwrap_or(func.ret.nullable),
-                ..par
-            });
+    if func.kind == library::FunctionKind::Constructor
+        && let Some(par) = parameter
+    {
+        let nullable_override = configured_functions.iter().find_map(|f| f.ret.nullable);
+        if par.typ != type_tid {
+            base_tid = Some(par.typ);
         }
+        parameter = Some(library::Parameter {
+            typ: type_tid,
+            nullable: nullable_override.unwrap_or(func.ret.nullable),
+            ..par
+        });
     }
 
     let parameter = parameter.as_ref().map(|lib_par| {

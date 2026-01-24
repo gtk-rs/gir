@@ -12,7 +12,7 @@ use crate::{
     config::gobjects::GStatus,
     env::Env,
     file_saver::save_to_file,
-    library::{self, Bitfield, Enumeration, Namespace, Type, MAIN_NAMESPACE},
+    library::{self, Bitfield, Enumeration, MAIN_NAMESPACE, Namespace, Type},
 };
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -532,8 +532,11 @@ const RUST_LAYOUTS: &[(&str, Layout)] = &["#
     )?;
     for ctype in ctypes {
         general::cfg_condition(w, ctype.cfg_condition.as_ref(), false, 1)?;
-        writeln!(w, "    (\"{ctype}\", Layout {{size: size_of::<{ctype}>(), alignment: align_of::<{ctype}>()}}),",
-                 ctype=ctype.name)?;
+        writeln!(
+            w,
+            "    (\"{ctype}\", Layout {{size: size_of::<{ctype}>(), alignment: align_of::<{ctype}>()}}),",
+            ctype = ctype.name
+        )?;
     }
     writeln!(
         w,

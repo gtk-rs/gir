@@ -1,7 +1,7 @@
 use std::{
     borrow::Cow,
     cmp::Ordering,
-    collections::{btree_map::BTreeMap, HashSet},
+    collections::{HashSet, btree_map::BTreeMap},
     ops::{Deref, DerefMut},
     vec::IntoIter,
 };

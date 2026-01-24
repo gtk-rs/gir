@@ -30,8 +30,8 @@ use crate::{
     config::{self, gobjects::GStatus},
     env::Env,
     library::{
-        self, Function, FunctionKind, ParameterDirection, ParameterScope, Transfer, Type,
-        MAIN_NAMESPACE,
+        self, Function, FunctionKind, MAIN_NAMESPACE, ParameterDirection, ParameterScope, Transfer,
+        Type,
     },
     nameutil,
     traits::*,
@@ -197,16 +197,15 @@ pub fn analyze<F: Borrow<library::Function>>(
         let name = nameutil::mangle_keywords(&*func.name).into_owned();
         let signature_params = Signature::new(func);
         let mut not_version = None;
-        if func.kind == library::FunctionKind::Method {
-            if let Some(deps) = deps {
-                let (has, version) = signature_params.has_in_deps(env, &name, deps);
-                if has {
-                    if let Some(v) = version {
-                        if v > env.config.min_cfg_version {
-                            not_version = version;
-                        }
-                    }
-                }
+        if func.kind == library::FunctionKind::Method
+            && let Some(deps) = deps
+        {
+            let (has, version) = signature_params.has_in_deps(env, &name, deps);
+            if has
+                && let Some(v) = version
+                && v > env.config.min_cfg_version
+            {
+                not_version = version;
             }
         }
         if let Some(signatures) = signatures.as_mut() {
@@ -525,7 +524,7 @@ fn analyze_callbacks(
             .into_iter()
             .collect::<Vec<_>>();
         s.sort(); // We need to sort the array, otherwise the indexes won't be working
-                  // anymore.
+        // anymore.
         for pos in s.iter().rev() {
             params.remove(**pos);
         }
@@ -697,13 +696,12 @@ fn analyze_function(
     );
     parameters.analyze_return(env, &ret.parameter);
 
-    if let Some(ref f) = ret.parameter {
-        if let Type::Function(_) = env.library.type_(f.lib_par.typ) {
-            if env.config.work_mode.is_normal() {
-                warn!("Function \"{}\" returns callback", func.name);
-                commented = true;
-            }
-        }
+    if let Some(ref f) = ret.parameter
+        && let Type::Function(_) = env.library.type_(f.lib_par.typ)
+        && env.config.work_mode.is_normal()
+    {
+        warn!("Function \"{}\" returns callback", func.name);
+        commented = true;
     }
 
     fixup_special_functions(
@@ -755,10 +753,9 @@ fn analyze_function(
                     .direction(par.direction)
                     .try_from_glib(&par.try_from_glib)
                     .try_build()
+                    && (!rust_type.as_str().ends_with("GString") || par.c_type == "gchar***")
                 {
-                    if !rust_type.as_str().ends_with("GString") || par.c_type == "gchar***" {
-                        used_types.extend(rust_type.into_used_types());
-                    }
+                    used_types.extend(rust_type.into_used_types());
                 }
                 let (to_glib_extra, callback_info) = bounds.add_for_parameter(
                     env,
@@ -869,13 +866,12 @@ fn analyze_function(
                     used_types.extend(rust_type.into_used_types());
                 }
             }
-            if let Some(ref out) = trampoline.ffi_ret {
-                if let Ok(rust_type) = RustType::builder(env, out.lib_par.typ)
+            if let Some(ref out) = trampoline.ffi_ret
+                && let Ok(rust_type) = RustType::builder(env, out.lib_par.typ)
                     .direction(ParameterDirection::Return)
                     .try_build()
-                {
-                    used_types.extend(rust_type.into_used_types());
-                }
+            {
+                used_types.extend(rust_type.into_used_types());
             }
         }
     }
@@ -1093,11 +1089,13 @@ fn analyze_callback(
         if par.c_type != "GDestroyNotify" {
             if let Some(user_data) = par.user_data_index {
                 if user_data >= c_parameters.len() {
-                    warn_main!(type_tid,
-                               "function `{}` has an invalid user data index of {} when there are {} parameters",
-                               func_name,
-                               user_data,
-                               c_parameters.len());
+                    warn_main!(
+                        type_tid,
+                        "function `{}` has an invalid user data index of {} when there are {} parameters",
+                        func_name,
+                        user_data,
+                        c_parameters.len()
+                    );
                     return None;
                 } else if !is_gpointer(&c_parameters[user_data].0.c_type) {
                     *commented = true;
@@ -1188,12 +1186,10 @@ fn analyze_callback(
         if let Ok(rust_type) = RustType::builder(env, func.ret.typ)
             .direction(ParameterDirection::Return)
             .try_build()
+            && !rust_type.as_str().ends_with("GString")
+            && !rust_type.as_str().ends_with("GAsyncResult")
         {
-            if !rust_type.as_str().ends_with("GString")
-                && !rust_type.as_str().ends_with("GAsyncResult")
-            {
-                imports_to_add.extend(rust_type.into_used_types());
-            }
+            imports_to_add.extend(rust_type.into_used_types());
         }
         let user_data_index = par.user_data_index.unwrap_or(0);
         if par.c_type != "GDestroyNotify" && c_parameters.len() <= user_data_index {
@@ -1271,10 +1267,10 @@ fn analyze_callback(
 pub fn find_function<'a>(env: &'a Env, c_identifier: &str) -> Option<&'a Function> {
     let find = |functions: &'a [Function]| -> Option<&'a Function> {
         for function in functions {
-            if let Some(ref func_c_identifier) = function.c_identifier {
-                if func_c_identifier == c_identifier {
-                    return Some(function);
-                }
+            if let Some(ref func_c_identifier) = function.c_identifier
+                && func_c_identifier == c_identifier
+            {
+                return Some(function);
             }
         }
         None
@@ -1290,10 +1286,10 @@ pub fn find_function<'a>(env: &'a Env, c_identifier: &str) -> Option<&'a Functio
                 if let Some(f) = find(&class.functions) {
                     return Some(f);
                 }
-            } else if let Some(Type::Interface(interface)) = typ {
-                if let Some(f) = find(&interface.functions) {
-                    return Some(f);
-                }
+            } else if let Some(Type::Interface(interface)) = typ
+                && let Some(f) = find(&interface.functions)
+            {
+                return Some(f);
             }
         }
     }

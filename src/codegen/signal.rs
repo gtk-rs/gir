@@ -9,7 +9,7 @@ use crate::{
     analysis,
     chunk::Chunk,
     env::Env,
-    writer::{primitives::tabs, ToCode},
+    writer::{ToCode, primitives::tabs},
 };
 
 pub fn generate(
@@ -51,10 +51,8 @@ pub fn generate(
     )?;
 
     if !only_declaration {
-        if !commented {
-            if let Ok(ref trampoline) = analysis.trampoline {
-                trampoline::generate(w, env, trampoline, in_trait, 2)?;
-            }
+        if !commented && let Ok(ref trampoline) = analysis.trampoline {
+            trampoline::generate(w, env, trampoline, in_trait, 2)?;
         }
         match function_type {
             Some(_) => {

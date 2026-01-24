@@ -30,32 +30,30 @@ pub fn analyze(
             status,
         });
 
-        if !status.ignored() && super_tid.ns_id == namespaces::MAIN && !add_parent_types_import {
-            if let Ok(rust_type) = RustType::try_new(env, super_tid) {
-                let full_name = super_tid.full_name(&env.library);
-                if let Some(parent_version) = env
-                    .analysis
-                    .objects
-                    .get(&full_name)
-                    .and_then(|info| info.version)
-                {
-                    if Some(parent_version) > version && parent_version > env.config.min_cfg_version
-                    {
-                        for import in rust_type.into_used_types() {
-                            imports.add_with_version(
-                                &format!("crate::{import}"),
-                                Some(parent_version),
-                            );
-                        }
-                    } else {
-                        for import in rust_type.into_used_types() {
-                            imports.add(&format!("crate::{import}"));
-                        }
+        if !status.ignored()
+            && super_tid.ns_id == namespaces::MAIN
+            && !add_parent_types_import
+            && let Ok(rust_type) = RustType::try_new(env, super_tid)
+        {
+            let full_name = super_tid.full_name(&env.library);
+            if let Some(parent_version) = env
+                .analysis
+                .objects
+                .get(&full_name)
+                .and_then(|info| info.version)
+            {
+                if Some(parent_version) > version && parent_version > env.config.min_cfg_version {
+                    for import in rust_type.into_used_types() {
+                        imports.add_with_version(&format!("crate::{import}"), Some(parent_version));
                     }
                 } else {
                     for import in rust_type.into_used_types() {
                         imports.add(&format!("crate::{import}"));
                     }
+                }
+            } else {
+                for import in rust_type.into_used_types() {
+                    imports.add(&format!("crate::{import}"));
                 }
             }
         }

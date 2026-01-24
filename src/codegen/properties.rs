@@ -10,7 +10,7 @@ use crate::{
     env::Env,
     library,
     traits::IntoString,
-    writer::{primitives::tabs, ToCode},
+    writer::{ToCode, primitives::tabs},
 };
 
 pub fn generate(

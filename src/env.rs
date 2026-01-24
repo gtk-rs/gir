@@ -2,7 +2,7 @@ use std::cell::RefCell;
 
 use crate::{
     analysis::{self, namespaces::NsId},
-    config::{gobjects::GStatus, Config},
+    config::{Config, gobjects::GStatus},
     library::*,
     nameutil::use_glib_type,
     version::Version,

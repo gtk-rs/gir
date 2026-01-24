@@ -25,7 +25,7 @@ use crate::{
         error::TomlHelper,
         parsable::{Parsable, Parse},
     },
-    library::{self, Library, TypeId, MAIN_NAMESPACE},
+    library::{self, Library, MAIN_NAMESPACE, TypeId},
     version::Version,
 };
 
@@ -566,15 +566,14 @@ pub fn resolve_type_ids(objects: &mut GObjects, library: &Library) {
         let type_id = library.find_type(0, name);
         if type_id.is_none() && name != &global_functions_name && object.status != GStatus::Ignore {
             warn!("Configured object `{name}` missing from the library");
-        } else if object.generate_builder {
-            if let Some(type_id) = type_id {
-                if library.type_(type_id).is_abstract() {
-                    warn!("Cannot generate builder for `{name}` because it's a base class");
-                    // We set this to `false` to avoid having the "not_bound" mode saying that this
-                    // builder should be generated.
-                    object.generate_builder = false;
-                }
-            }
+        } else if object.generate_builder
+            && let Some(type_id) = type_id
+            && library.type_(type_id).is_abstract()
+        {
+            warn!("Cannot generate builder for `{name}` because it's a base class");
+            // We set this to `false` to avoid having the "not_bound" mode saying that this
+            // builder should be generated.
+            object.generate_builder = false;
         }
         object.type_id = type_id;
     }

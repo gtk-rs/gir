@@ -222,14 +222,14 @@ fn closure_errors(env: &Env, signal: &library::Signal) -> Vec<String> {
             ));
         }
     }
-    if signal.ret.typ != Default::default() {
-        if let Some(error) = type_error(env, &signal.ret) {
-            errors.push(format!(
-                "{} return value {}",
-                error,
-                signal.ret.typ.full_name(&env.library)
-            ));
-        }
+    if signal.ret.typ != Default::default()
+        && let Some(error) = type_error(env, &signal.ret)
+    {
+        errors.push(format!(
+            "{} return value {}",
+            error,
+            signal.ret.typ.full_name(&env.library)
+        ));
     }
     errors
 }

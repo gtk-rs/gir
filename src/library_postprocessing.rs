@@ -5,9 +5,9 @@ use log::{error, info};
 use crate::{
     analysis::types::IsIncomplete,
     config::{
+        Config, WorkMode,
         gobjects::{GObject, GStatus},
         matchable::Matchable,
-        Config, WorkMode,
     },
     library::*,
     nameutil,
@@ -159,10 +159,10 @@ impl Library {
         if !is_empty_c_type(c_type) {
             return false;
         }
-        if let std::collections::hash_map::Entry::Vacant(entry) = c_types.entry(tid) {
-            if let Some(detected_c_type) = self.c_type_by_type_id(tid) {
-                entry.insert(detected_c_type);
-            }
+        if let std::collections::hash_map::Entry::Vacant(entry) = c_types.entry(tid)
+            && let Some(detected_c_type) = self.c_type_by_type_id(tid)
+        {
+            entry.insert(detected_c_type);
         }
         true
     }
@@ -195,12 +195,11 @@ impl Library {
             for type_ in &ns.types {
                 let type_ = type_.as_ref().unwrap(); // Always contains something
 
-                if let Type::Record(record) = type_ {
-                    if let Some(ref struct_for) = record.gtype_struct_for {
-                        if let Some(struct_for_tid) = self.find_type(ns_id as u16, struct_for) {
-                            structs_and_types.push((record.c_type.clone(), struct_for_tid));
-                        }
-                    }
+                if let Type::Record(record) = type_
+                    && let Some(ref struct_for) = record.gtype_struct_for
+                    && let Some(struct_for_tid) = self.find_type(ns_id as u16, struct_for)
+                {
+                    structs_and_types.push((record.c_type.clone(), struct_for_tid));
                 }
             }
         }
@@ -261,16 +260,15 @@ impl Library {
                     if let Type::Record(r) = type_struct_type {
                         if r.gtype_struct_for.as_ref() != Some(name) {
                             if let Some(ref gtype_struct_for) = r.gtype_struct_for {
-                                panic!("\"{}\" has glib:type-struct=\"{}\" but the corresponding record \"{}\" has glib:is-gtype-struct-for={:?}",
-                                       name,
-                                       type_struct,
-                                       r.name,
-                                       gtype_struct_for);
+                                panic!(
+                                    "\"{}\" has glib:type-struct=\"{}\" but the corresponding record \"{}\" has glib:is-gtype-struct-for={:?}",
+                                    name, type_struct, r.name, gtype_struct_for
+                                );
                             } else {
-                                panic!("\"{}\" has glib:type-struct=\"{}\" but the corresponding record \"{}\" has no glib:is-gtype-struct-for attribute",
-                                       name,
-                                       type_struct,
-                                       r.name);
+                                panic!(
+                                    "\"{}\" has glib:type-struct=\"{}\" but the corresponding record \"{}\" has no glib:is-gtype-struct-for attribute",
+                                    name, type_struct, r.name
+                                );
                             }
                         }
                     } else {
@@ -279,7 +277,9 @@ impl Library {
                         );
                     }
                 } else if let Some(c) = c_class_type {
-                    panic!("\"{name}\" has no glib:type-struct but there is an element with glib:is-gtype-struct-for=\"{c}\"");
+                    panic!(
+                        "\"{name}\" has no glib:type-struct but there is an element with glib:is-gtype-struct-for=\"{c}\""
+                    );
                 }
                 // else both type_struct and c_class_type are None,
                 // and that's fine because they don't reference each
@@ -407,10 +407,10 @@ impl Library {
 
     fn has_subtypes(&self, parent_tid: TypeId) -> bool {
         for (tid, _) in self.types() {
-            if let Type::Class(class) = self.type_(tid) {
-                if class.parent == Some(parent_tid) {
-                    return true;
-                }
+            if let Type::Class(class) = self.type_(tid)
+                && class.parent == Some(parent_tid)
+            {
+                return true;
             }
         }
 
@@ -503,30 +503,61 @@ impl Library {
                     id: id as u32,
                 };
 
-                if let Type::Enumeration(enum_) = type_ {
-                    if let Some(ErrorDomain::Quark(ref domain)) = enum_.error_domain {
-                        let domain = domain.replace('-', "_");
+                if let Type::Enumeration(enum_) = type_
+                    && let Some(ErrorDomain::Quark(ref domain)) = enum_.error_domain
+                {
+                    let domain = domain.replace('-', "_");
 
-                        let mut function_candidates = vec![domain.clone()];
-                        if !domain.ends_with("_quark") {
-                            function_candidates.push(format!("{domain}_quark"));
+                    let mut function_candidates = vec![domain.clone()];
+                    if !domain.ends_with("_quark") {
+                        function_candidates.push(format!("{domain}_quark"));
+                    }
+                    if !domain.ends_with("_error_quark") {
+                        if domain.ends_with("_quark") {
+                            function_candidates
+                                .push(format!("{}_error_quark", &domain[..(domain.len() - 6)]));
+                        } else {
+                            function_candidates.push(format!("{domain}_error_quark"));
                         }
-                        if !domain.ends_with("_error_quark") {
-                            if domain.ends_with("_quark") {
-                                function_candidates
-                                    .push(format!("{}_error_quark", &domain[..(domain.len() - 6)]));
-                            } else {
-                                function_candidates.push(format!("{domain}_error_quark"));
-                            }
-                        }
-                        if let Some(domain) = domain.strip_suffix("_error_quark") {
-                            function_candidates.push(domain.to_owned());
-                        }
-                        if let Some(domain) = domain.strip_suffix("_quark") {
-                            function_candidates.push(domain.to_owned());
-                        }
+                    }
+                    if let Some(domain) = domain.strip_suffix("_error_quark") {
+                        function_candidates.push(domain.to_owned());
+                    }
+                    if let Some(domain) = domain.strip_suffix("_quark") {
+                        function_candidates.push(domain.to_owned());
+                    }
 
-                        if let Some(func) = ns.functions.iter().find(|f| {
+                    if let Some(func) = ns.functions.iter().find(|f| {
+                        function_candidates
+                            .iter()
+                            .any(|c| f.c_identifier.as_ref() == Some(c))
+                    }) {
+                        error_domains.push((
+                            ns_id,
+                            enum_tid,
+                            None,
+                            func.c_identifier.as_ref().unwrap().clone(),
+                        ));
+                        continue 'next_enum;
+                    }
+
+                    // Quadratic in number of types...
+                    for (id, type_) in ns.types.iter().enumerate() {
+                        let type_ = type_.as_ref().unwrap(); // Always contains something
+                        let domain_tid = TypeId {
+                            ns_id: ns_id as u16,
+                            id: id as u32,
+                        };
+
+                        let functions = match type_ {
+                            Type::Enumeration(Enumeration { functions, .. })
+                            | Type::Class(Class { functions, .. })
+                            | Type::Record(Record { functions, .. })
+                            | Type::Interface(Interface { functions, .. }) => functions,
+                            _ => continue,
+                        };
+
+                        if let Some(func) = functions.iter().find(|f| {
                             function_candidates
                                 .iter()
                                 .any(|c| f.c_identifier.as_ref() == Some(c))
@@ -534,41 +565,10 @@ impl Library {
                             error_domains.push((
                                 ns_id,
                                 enum_tid,
-                                None,
+                                Some(domain_tid),
                                 func.c_identifier.as_ref().unwrap().clone(),
                             ));
                             continue 'next_enum;
-                        }
-
-                        // Quadratic in number of types...
-                        for (id, type_) in ns.types.iter().enumerate() {
-                            let type_ = type_.as_ref().unwrap(); // Always contains something
-                            let domain_tid = TypeId {
-                                ns_id: ns_id as u16,
-                                id: id as u32,
-                            };
-
-                            let functions = match type_ {
-                                Type::Enumeration(Enumeration { functions, .. })
-                                | Type::Class(Class { functions, .. })
-                                | Type::Record(Record { functions, .. })
-                                | Type::Interface(Interface { functions, .. }) => functions,
-                                _ => continue,
-                            };
-
-                            if let Some(func) = functions.iter().find(|f| {
-                                function_candidates
-                                    .iter()
-                                    .any(|c| f.c_identifier.as_ref() == Some(c))
-                            }) {
-                                error_domains.push((
-                                    ns_id,
-                                    enum_tid,
-                                    Some(domain_tid),
-                                    func.c_identifier.as_ref().unwrap().clone(),
-                                ));
-                                continue 'next_enum;
-                            }
                         }
                     }
                 }
