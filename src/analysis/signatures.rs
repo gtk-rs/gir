@@ -27,12 +27,11 @@ impl Signature {
     ) -> (bool, Option<Version>) {
         for tid in deps {
             let full_name = tid.full_name(&env.library);
-            if let Some(info) = env.analysis.objects.get(&full_name) {
-                if let Some(signature) = info.signatures.get(name) {
-                    if self.eq(signature) {
-                        return (true, signature.2);
-                    }
-                }
+            if let Some(info) = env.analysis.objects.get(&full_name)
+                && let Some(signature) = info.signatures.get(name)
+                && self.eq(signature)
+            {
+                return (true, signature.2);
             }
         }
         (false, None)
@@ -52,12 +51,11 @@ impl Signature {
         let this = Signature::from_property(is_get, typ);
         for tid in deps {
             let full_name = tid.full_name(&env.library);
-            if let Some(info) = env.analysis.objects.get(&full_name) {
-                if let Some(signature) = info.signatures.get(name) {
-                    if this.property_eq(signature, is_get) {
-                        return (true, signature.2);
-                    }
-                }
+            if let Some(info) = env.analysis.objects.get(&full_name)
+                && let Some(signature) = info.signatures.get(name)
+                && this.property_eq(signature, is_get)
+            {
+                return (true, signature.2);
             }
         }
         (false, None)

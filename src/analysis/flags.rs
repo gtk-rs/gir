@@ -15,11 +15,10 @@ pub struct Info {
 
 impl Info {
     pub fn type_<'a>(&self, library: &'a library::Library) -> &'a library::Bitfield {
-        let type_ = library
+        (library
             .type_(self.type_id)
             .maybe_ref()
-            .unwrap_or_else(|| panic!("{} is not an flags.", self.full_name));
-        type_
+            .unwrap_or_else(|| panic!("{} is not an flags.", self.full_name))) as _
     }
 }
 

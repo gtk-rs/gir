@@ -50,12 +50,12 @@ pub fn analyze(
         .child_type
         .as_ref()
         .and_then(|name| env.library.find_type(0, name));
-    if child_type.is_none() {
-        if let Some(config_child_type) = &config.child_type {
-            let owner_name = RustType::try_new(env, type_tid).into_string();
-            error!("Bad child type `{config_child_type}` for `{owner_name}`");
-            return properties;
-        }
+    if child_type.is_none()
+        && let Some(config_child_type) = &config.child_type
+    {
+        let owner_name = RustType::try_new(env, type_tid).into_string();
+        error!("Bad child type `{config_child_type}` for `{owner_name}`");
+        return properties;
     }
 
     for prop in &config.properties {
@@ -104,13 +104,13 @@ fn analyze_property(
         }
 
         let get_out_ref_mode = RefMode::of(env, typ, library::ParameterDirection::Return);
-        if !is_getter_renamed {
-            if let Ok(new_name) = getter_rules::try_rename_getter_suffix(
+        if !is_getter_renamed
+            && let Ok(new_name) = getter_rules::try_rename_getter_suffix(
                 &getter_name,
                 typ == library::TypeId::tid_bool(),
-            ) {
-                getter_name = new_name.unwrap();
-            }
+            )
+        {
+            getter_name = new_name.unwrap();
         }
 
         let mut set_in_ref_mode = RefMode::of(env, typ, library::ParameterDirection::In);

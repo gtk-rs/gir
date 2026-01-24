@@ -204,16 +204,16 @@ fn get_feature_dependencies(
 
 /// Returns the name of crate being currently generated.
 fn get_crate_name(config: &Config, root: &Table) -> String {
-    if let Some(Value::Table(lib)) = root.get("lib") {
-        if let Some(Value::String(lib_name)) = lib.get("name") {
-            // Converting don't needed as library target names cannot contain hyphens
-            return lib_name.clone();
-        }
+    if let Some(Value::Table(lib)) = root.get("lib")
+        && let Some(Value::String(lib_name)) = lib.get("name")
+    {
+        // Converting don't needed as library target names cannot contain hyphens
+        return lib_name.clone();
     }
-    if let Some(Value::Table(package)) = root.get("package") {
-        if let Some(Value::String(package_name)) = package.get("name") {
-            return nameutil::crate_name(package_name);
-        }
+    if let Some(Value::Table(package)) = root.get("package")
+        && let Some(Value::String(package_name)) = package.get("name")
+    {
+        return nameutil::crate_name(package_name);
     }
     format!("{}_sys", nameutil::crate_name(&config.library_name))
 }

@@ -964,16 +964,15 @@ impl Builder {
                 ref array_length_name,
                 ..
             } = trans.transformation_type
+                && let In = self.parameters[trans.ind_c]
             {
-                if let In = self.parameters[trans.ind_c] {
-                    let value = Chunk::Custom(format!("{array_name}.len() as _"));
-                    chunks.push(Chunk::Let {
-                        name: array_length_name.clone(),
-                        is_mut: false,
-                        value: Box::new(value),
-                        type_: None,
-                    });
-                }
+                let value = Chunk::Custom(format!("{array_name}.len() as _"));
+                chunks.push(Chunk::Let {
+                    name: array_length_name.clone(),
+                    is_mut: false,
+                    value: Box::new(value),
+                    type_: None,
+                });
             }
         }
     }

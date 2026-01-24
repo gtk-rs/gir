@@ -216,20 +216,21 @@ pub fn extract(functions: &mut [FuncInfo], parent_type: &LibType, obj: &GObject)
         }
     }
 
-    if has_copy && !has_free {
-        if let Some((glib_name, pos)) = destroy {
-            let ty_ = Type::from_str("destroy").unwrap();
-            let func = &mut functions[pos];
-            update_func(func, ty_);
-            specials.traits.insert(
-                ty_,
-                TraitInfo {
-                    glib_name,
-                    version: func.version,
-                    first_parameter_mut: true,
-                },
-            );
-        }
+    if has_copy
+        && !has_free
+        && let Some((glib_name, pos)) = destroy
+    {
+        let ty_ = Type::from_str("destroy").unwrap();
+        let func = &mut functions[pos];
+        update_func(func, ty_);
+        specials.traits.insert(
+            ty_,
+            TraitInfo {
+                glib_name,
+                version: func.version,
+                first_parameter_mut: true,
+            },
+        );
     }
 
     specials

@@ -73,14 +73,14 @@ fn code_blocks_transformation(
 }
 
 fn get_language<'a>(entry: &'a str, out: &mut String) -> &'a str {
-    if let (_, Some(after)) = try_split(entry, LANGUAGE_SEP_BEGIN) {
-        if let (before, Some(after)) = try_split(after, LANGUAGE_SEP_END) {
-            if !["text", "rust"].contains(&before) {
-                write!(out, "\n\n**⚠️ The following code is in {before} ⚠️**").unwrap();
-            }
-            write!(out, "\n\n```{before}").unwrap();
-            return after;
+    if let (_, Some(after)) = try_split(entry, LANGUAGE_SEP_BEGIN)
+        && let (before, Some(after)) = try_split(after, LANGUAGE_SEP_END)
+    {
+        if !["text", "rust"].contains(&before) {
+            write!(out, "\n\n**⚠️ The following code is in {before} ⚠️**").unwrap();
         }
+        write!(out, "\n\n```{before}").unwrap();
+        return after;
     }
     out.push_str("\n```text");
     entry

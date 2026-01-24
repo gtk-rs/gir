@@ -227,10 +227,10 @@ fn analyze_enums(env: &mut Env) {
             continue;
         };
 
-        if let Type::Enumeration(_) = env.library.type_(tid) {
-            if let Some(info) = enums::new(env, obj, &mut imports) {
-                env.analysis.enumerations.push(info);
-            }
+        if let Type::Enumeration(_) = env.library.type_(tid)
+            && let Some(info) = enums::new(env, obj, &mut imports)
+        {
+            env.analysis.enumerations.push(info);
         }
     }
 
@@ -248,10 +248,10 @@ fn analyze_flags(env: &mut Env) {
             continue;
         };
 
-        if let Type::Bitfield(_) = env.library.type_(tid) {
-            if let Some(info) = flags::new(env, obj, &mut imports) {
-                env.analysis.flags.push(info);
-            }
+        if let Type::Bitfield(_) = env.library.type_(tid)
+            && let Some(info) = flags::new(env, obj, &mut imports)
+        {
+            env.analysis.flags.push(info);
         }
     }
 

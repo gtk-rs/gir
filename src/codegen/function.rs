@@ -72,10 +72,10 @@ pub fn generate(
         return Ok(());
     }
 
-    if let Some(special_functions) = special_functions {
-        if special_functions::generate(w, env, analysis, special_functions, scope_version)? {
-            return Ok(());
-        }
+    if let Some(special_functions) = special_functions
+        && special_functions::generate(w, env, analysis, special_functions, scope_version)?
+    {
+        return Ok(());
     }
 
     if analysis.hidden {
@@ -118,10 +118,10 @@ pub fn generate(
         if get_property != analysis.codegen_name() {
             doc_alias(w, get_property, comment_prefix, indent)?;
         }
-    } else if let Some(set_property) = &analysis.set_property {
-        if set_property != analysis.codegen_name() {
-            doc_alias(w, set_property, comment_prefix, indent)?;
-        }
+    } else if let Some(set_property) = &analysis.set_property
+        && set_property != analysis.codegen_name()
+    {
+        doc_alias(w, set_property, comment_prefix, indent)?;
     }
     // Don't add a guard for public or copy/equal functions
     let dead_code_cfg = if !analysis.visibility.is_public() && !analysis.is_special() {

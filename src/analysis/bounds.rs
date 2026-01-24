@@ -191,15 +191,15 @@ impl Bounds {
                     self.add_parameter(&par.name, &type_string, bound_type, r#async);
                 }
             }
-        } else if par.instance_parameter {
-            if let Some(bound_type) = Bounds::type_for(env, par.typ) {
-                ret = Some(Bounds::get_to_glib_extra(
-                    &bound_type,
-                    *par.nullable,
-                    true,
-                    par.move_,
-                ));
-            }
+        } else if par.instance_parameter
+            && let Some(bound_type) = Bounds::type_for(env, par.typ)
+        {
+            ret = Some(Bounds::get_to_glib_extra(
+                &bound_type,
+                *par.nullable,
+                true,
+                par.move_,
+            ));
         }
 
         (ret, callback_info)
