@@ -1104,7 +1104,7 @@ impl Builder {
         use self::OutMemMode::*;
         match mem_mode {
             Uninitialized => Chunk::Uninitialized,
-            UninitializedNamed(ref name) => Chunk::UninitializedNamed { name: name.clone() },
+            UninitializedNamed(name) => Chunk::UninitializedNamed { name: name.clone() },
             NullPtr => Chunk::NullPtr,
             NullMutPtr => Chunk::NullMutPtr,
         }
