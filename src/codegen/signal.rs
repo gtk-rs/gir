@@ -9,7 +9,7 @@ use crate::{
     analysis,
     chunk::Chunk,
     env::Env,
-    writer::{primitives::tabs, ToCode},
+    writer::{ToCode, primitives::tabs},
 };
 
 pub fn generate(

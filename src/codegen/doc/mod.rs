@@ -7,7 +7,7 @@ use std::{
 
 use log::{error, info};
 use regex::{Captures, Regex};
-use stripper_lib::{write_file_name, write_item_doc, Type as SType, TypeStruct};
+use stripper_lib::{Type as SType, TypeStruct, write_file_name, write_item_doc};
 
 use self::format::reformat_doc;
 use crate::{

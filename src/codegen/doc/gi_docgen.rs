@@ -8,14 +8,14 @@ use regex::{Captures, Regex};
 
 use super::format::find_method_or_function;
 use crate::{
+    Env,
     analysis::object::LocationInObject,
     codegen::doc::format::{
         gen_alias_doc_link, gen_callback_doc_link, gen_const_doc_link, gen_object_fn_doc_link,
         gen_property_doc_link, gen_signal_doc_link, gen_symbol_doc_link, gen_vfunc_doc_link,
     },
-    library::{TypeId, MAIN_NAMESPACE},
+    library::{MAIN_NAMESPACE, TypeId},
     nameutil::mangle_keywords,
-    Env,
 };
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord)]

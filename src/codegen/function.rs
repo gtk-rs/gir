@@ -13,17 +13,17 @@ use super::{
         not_version_condition, version_condition,
     },
     parameter::ToParameter,
-    return_value::{out_parameter_types, out_parameters_as_return, ToReturnValue},
+    return_value::{ToReturnValue, out_parameter_types, out_parameters_as_return},
     special_functions,
 };
 use crate::{
     analysis::{self, bounds::Bounds, try_from_glib::TryFromGlib},
-    chunk::{ffi_function_todo, Chunk},
+    chunk::{Chunk, ffi_function_todo},
     env::Env,
     library::{self, TypeId},
     nameutil::use_glib_type,
     version::Version,
-    writer::{primitives::tabs, ToCode},
+    writer::{ToCode, primitives::tabs},
 };
 
 // We follow the rules of the `return_self_not_must_use` clippy lint:

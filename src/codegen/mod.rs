@@ -7,7 +7,7 @@ use std::{
 use general::{cfg_condition, version_condition};
 
 use crate::{
-    config::{gobjects::GObject, WorkMode},
+    config::{WorkMode, gobjects::GObject},
     env::Env,
     file_saver::*,
     library::Member,

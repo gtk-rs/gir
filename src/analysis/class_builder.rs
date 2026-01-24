@@ -4,7 +4,7 @@ use crate::{
     analysis::{
         bounds::Bounds,
         imports::Imports,
-        properties::{get_property_ref_modes, Property},
+        properties::{Property, get_property_ref_modes},
         rust_type::RustType,
     },
     config::{self, GObject},

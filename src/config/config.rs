@@ -9,8 +9,9 @@ use std::{
 use log::warn;
 
 use super::{
-    external_libraries::{read_external_libraries, ExternalLibrary},
-    gobjects, WorkMode,
+    WorkMode,
+    external_libraries::{ExternalLibrary, read_external_libraries},
+    gobjects,
 };
 use crate::{
     analysis::namespaces::{self, Namespace, NsId},
@@ -159,7 +160,7 @@ impl Config {
                     "Error while reading \"{}\": {}",
                     config_file.display(),
                     e
-                ))
+                ));
             }
         };
 
@@ -178,7 +179,7 @@ impl Config {
                             "Invalid toml file \"{}\": {}",
                             config_file.display(),
                             e
-                        ))
+                        ));
                     }
                 };
                 WorkMode::from_str(s)?
@@ -211,7 +212,7 @@ impl Config {
                     .to_owned(),
             ),
             (Some(""), Some(_)) | (Some(_), Some("")) | (None, Some(_)) | (Some(_), None) => {
-                return Err("Library and version can not be specified separately".to_owned())
+                return Err("Library and version can not be specified separately".to_owned());
             }
             (Some(a), Some(b)) => (a.to_owned(), b.to_owned()),
         };

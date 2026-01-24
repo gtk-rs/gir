@@ -30,8 +30,8 @@ use crate::{
     config::{self, gobjects::GStatus},
     env::Env,
     library::{
-        self, Function, FunctionKind, ParameterDirection, ParameterScope, Transfer, Type,
-        MAIN_NAMESPACE,
+        self, Function, FunctionKind, MAIN_NAMESPACE, ParameterDirection, ParameterScope, Transfer,
+        Type,
     },
     nameutil,
     traits::*,
@@ -525,7 +525,7 @@ fn analyze_callbacks(
             .into_iter()
             .collect::<Vec<_>>();
         s.sort(); // We need to sort the array, otherwise the indexes won't be working
-                  // anymore.
+        // anymore.
         for pos in s.iter().rev() {
             params.remove(**pos);
         }
@@ -1093,11 +1093,13 @@ fn analyze_callback(
         if par.c_type != "GDestroyNotify" {
             if let Some(user_data) = par.user_data_index {
                 if user_data >= c_parameters.len() {
-                    warn_main!(type_tid,
-                               "function `{}` has an invalid user data index of {} when there are {} parameters",
-                               func_name,
-                               user_data,
-                               c_parameters.len());
+                    warn_main!(
+                        type_tid,
+                        "function `{}` has an invalid user data index of {} when there are {} parameters",
+                        func_name,
+                        user_data,
+                        c_parameters.len()
+                    );
                     return None;
                 } else if !is_gpointer(&c_parameters[user_data].0.c_type) {
                     *commented = true;

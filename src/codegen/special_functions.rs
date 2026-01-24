@@ -2,9 +2,9 @@ use std::io::{Result, Write};
 
 use super::general::version_condition;
 use crate::{
+    Env,
     analysis::{self, special_functions::FunctionType},
     version::Version,
-    Env,
 };
 
 pub(super) fn generate(

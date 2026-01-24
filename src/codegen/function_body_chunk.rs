@@ -1,4 +1,4 @@
-use std::collections::{hash_map::Entry, BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap, hash_map::Entry};
 
 use crate::{
     analysis::{
@@ -7,7 +7,7 @@ use crate::{
         function_parameters::{
             CParameter as AnalysisCParameter, Transformation, TransformationType,
         },
-        functions::{find_index_to_ignore, AsyncTrampoline},
+        functions::{AsyncTrampoline, find_index_to_ignore},
         out_parameters::{Mode, ThrowFunctionReturnStrategy},
         return_value,
         rust_type::RustType,
@@ -15,7 +15,7 @@ use crate::{
         trampoline_parameters,
         trampolines::Trampoline,
     },
-    chunk::{parameter_ffi_call_out, Chunk, Param, TupleMode},
+    chunk::{Chunk, Param, TupleMode, parameter_ffi_call_out},
     env::Env,
     library::{self, ParameterDirection, TypeId},
     nameutil::{is_gstring, use_gio_type, use_glib_if_needed, use_glib_type},
@@ -847,8 +847,8 @@ impl Builder {
                 "ret"
             } else {
                 "result" // Needed as in case of an error param we would have
-                         // let result = if error.is_null() { Ok()} else {
-                         // Err()};
+                // let result = if error.is_null() { Ok()} else {
+                // Err()};
             };
 
             body.push(Chunk::Let {

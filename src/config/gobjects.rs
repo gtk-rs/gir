@@ -25,7 +25,7 @@ use crate::{
         error::TomlHelper,
         parsable::{Parsable, Parse},
     },
-    library::{self, Library, TypeId, MAIN_NAMESPACE},
+    library::{self, Library, MAIN_NAMESPACE, TypeId},
     version::Version,
 };
 

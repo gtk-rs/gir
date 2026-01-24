@@ -50,7 +50,7 @@ impl SafetyAssertionMode {
                 Class(..) | Interface(..)
                     if !*c_par.nullable && c_par.typ.ns_id == library::MAIN_NAMESPACE =>
                 {
-                    return Self::Skip
+                    return Self::Skip;
                 }
                 _ => (),
             }

@@ -4,11 +4,12 @@ use std::{fmt::Write, sync::OnceLock};
 use log::{info, warn};
 use regex::{Captures, Regex};
 
-use super::{gi_docgen, LocationInObject};
+use super::{LocationInObject, gi_docgen};
 use crate::{
+    Env,
     analysis::functions::Info,
     library::{FunctionKind, TypeId},
-    nameutil, Env,
+    nameutil,
 };
 
 const LANGUAGE_SEP_BEGIN: &str = "<!-- language=\"";

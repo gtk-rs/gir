@@ -1,6 +1,6 @@
 use std::{
     collections::HashSet,
-    io::{prelude::*, Result},
+    io::{Result, prelude::*},
     path::Path,
 };
 

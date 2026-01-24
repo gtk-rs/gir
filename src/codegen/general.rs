@@ -15,7 +15,7 @@ use crate::{
         out_parameters::{Mode, ThrowFunctionReturnStrategy},
         special_functions::TraitInfo,
     },
-    config::{derives::Derive, Config},
+    config::{Config, derives::Derive},
     env::Env,
     gir_version::VERSION,
     library::TypeId,

@@ -5,7 +5,7 @@ use toml::Value;
 
 use super::{
     error::TomlHelper,
-    functions::{check_rename, Parameters, Return},
+    functions::{Parameters, Return, check_rename},
     gobjects::GStatus,
     ident::Ident,
     parsable::{Parsable, Parse},

@@ -1,8 +1,8 @@
 use crate::{
-    config::Config,
-    library::{self, Function, Parameter, Type, MAIN_NAMESPACE},
-    version::Version,
     Library,
+    config::Config,
+    library::{self, Function, MAIN_NAMESPACE, Parameter, Type},
+    version::Version,
 };
 
 pub fn apply_config(library: &mut Library, cfg: &Config) {
