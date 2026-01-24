@@ -120,11 +120,14 @@ fn run_check(check_gir_file: &str) -> Result<(), String> {
     library.read_file(&[parent], &mut vec![lib_name.to_owned()])
 }
 
+fn init_logger() {
+    let env = env_logger::Env::default().filter_or("GIR_LOG", "gir=warn,libgir=warn");
+
+    env_logger::init_from_env(env);
+}
+
 fn main() -> Result<(), String> {
-    if std::env::var_os("RUST_LOG").is_none() {
-        unsafe { std::env::set_var("RUST_LOG", "gir=warn,libgir=warn") };
-    }
-    env_logger::init();
+    init_logger();
 
     let mut cfg = match build_config() {
         Ok(RunKind::CheckGirFile(check_gir_file)) => return run_check(&check_gir_file),
