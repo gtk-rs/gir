@@ -104,18 +104,18 @@
 <a href=#104 id=104 data-nosnippet>104</a>
 <a href=#105 id=105 data-nosnippet>105</a>    <span class="kw">let </span><span class="kw-2">mut </span>base_tid = <span class="prelude-val">None</span>;
 <a href=#106 id=106 data-nosnippet>106</a>
-<a href=#107 id=107 data-nosnippet>107</a>    <span class="kw">if </span>func.kind == library::FunctionKind::Constructor {
-<a href=#108 id=108 data-nosnippet>108</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(par) = parameter {
-<a href=#109 id=109 data-nosnippet>109</a>            <span class="kw">let </span>nullable_override = configured_functions.iter().find_map(|f| f.ret.nullable);
-<a href=#110 id=110 data-nosnippet>110</a>            <span class="kw">if </span>par.<span class="macro">typ !</span>= type_tid {
-<a href=#111 id=111 data-nosnippet>111</a>                base_tid = <span class="prelude-val">Some</span>(par.typ);
-<a href=#112 id=112 data-nosnippet>112</a>            }
-<a href=#113 id=113 data-nosnippet>113</a>            parameter = <span class="prelude-val">Some</span>(library::Parameter {
-<a href=#114 id=114 data-nosnippet>114</a>                typ: type_tid,
-<a href=#115 id=115 data-nosnippet>115</a>                nullable: nullable_override.unwrap_or(func.ret.nullable),
-<a href=#116 id=116 data-nosnippet>116</a>                ..par
-<a href=#117 id=117 data-nosnippet>117</a>            });
-<a href=#118 id=118 data-nosnippet>118</a>        }
+<a href=#107 id=107 data-nosnippet>107</a>    <span class="kw">if </span>func.kind == library::FunctionKind::Constructor
+<a href=#108 id=108 data-nosnippet>108</a>        &amp;&amp; <span class="kw">let </span><span class="prelude-val">Some</span>(par) = parameter
+<a href=#109 id=109 data-nosnippet>109</a>    {
+<a href=#110 id=110 data-nosnippet>110</a>        <span class="kw">let </span>nullable_override = configured_functions.iter().find_map(|f| f.ret.nullable);
+<a href=#111 id=111 data-nosnippet>111</a>        <span class="kw">if </span>par.<span class="macro">typ !</span>= type_tid {
+<a href=#112 id=112 data-nosnippet>112</a>            base_tid = <span class="prelude-val">Some</span>(par.typ);
+<a href=#113 id=113 data-nosnippet>113</a>        }
+<a href=#114 id=114 data-nosnippet>114</a>        parameter = <span class="prelude-val">Some</span>(library::Parameter {
+<a href=#115 id=115 data-nosnippet>115</a>            typ: type_tid,
+<a href=#116 id=116 data-nosnippet>116</a>            nullable: nullable_override.unwrap_or(func.ret.nullable),
+<a href=#117 id=117 data-nosnippet>117</a>            ..par
+<a href=#118 id=118 data-nosnippet>118</a>        });
 <a href=#119 id=119 data-nosnippet>119</a>    }
 <a href=#120 id=120 data-nosnippet>120</a>
 <a href=#121 id=121 data-nosnippet>121</a>    <span class="kw">let </span>parameter = parameter.as_ref().map(|lib_par| {

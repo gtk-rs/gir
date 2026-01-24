@@ -122,7 +122,7 @@
 <a href=#122 id=122 data-nosnippet>122</a>
 <a href=#123 id=123 data-nosnippet>123</a><span class="kw">fn </span>main() -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
 <a href=#124 id=124 data-nosnippet>124</a>    <span class="kw">if </span>std::env::var_os(<span class="string">"RUST_LOG"</span>).is_none() {
-<a href=#125 id=125 data-nosnippet>125</a>        std::env::set_var(<span class="string">"RUST_LOG"</span>, <span class="string">"gir=warn,libgir=warn"</span>);
+<a href=#125 id=125 data-nosnippet>125</a>        <span class="kw">unsafe </span>{ std::env::set_var(<span class="string">"RUST_LOG"</span>, <span class="string">"gir=warn,libgir=warn"</span>) };
 <a href=#126 id=126 data-nosnippet>126</a>    }
 <a href=#127 id=127 data-nosnippet>127</a>    env_logger::init();
 <a href=#128 id=128 data-nosnippet>128</a>

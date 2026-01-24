@@ -4,7 +4,7 @@
 <a href=#4 id=4 data-nosnippet>4</a>    analysis::{
 <a href=#5 id=5 data-nosnippet>5</a>        bounds::Bounds,
 <a href=#6 id=6 data-nosnippet>6</a>        imports::Imports,
-<a href=#7 id=7 data-nosnippet>7</a>        properties::{get_property_ref_modes, Property},
+<a href=#7 id=7 data-nosnippet>7</a>        properties::{Property, get_property_ref_modes},
 <a href=#8 id=8 data-nosnippet>8</a>        rust_type::RustType,
 <a href=#9 id=9 data-nosnippet>9</a>    },
 <a href=#10 id=10 data-nosnippet>10</a>    config::{<span class="self">self</span>, GObject},
@@ -119,10 +119,10 @@
 <a href=#119 id=119 data-nosnippet>119</a>    }
 <a href=#120 id=120 data-nosnippet>120</a>    <span class="kw">let </span>imports = <span class="kw-2">&amp;mut </span>imports.with_defaults(prop_version, <span class="kw-2">&amp;</span>cfg_condition);
 <a href=#121 id=121 data-nosnippet>121</a>    <span class="kw">let </span>rust_type_res = RustType::try_new(env, prop.typ);
-<a href=#122 id=122 data-nosnippet>122</a>    <span class="kw">if let </span><span class="prelude-val">Ok</span>(<span class="kw-2">ref </span>rust_type) = rust_type_res {
-<a href=#123 id=123 data-nosnippet>123</a>        <span class="kw">if </span>!rust_type.as_str().contains(<span class="string">"GString"</span>) {
-<a href=#124 id=124 data-nosnippet>124</a>            imports.add_used_types(rust_type.used_types());
-<a href=#125 id=125 data-nosnippet>125</a>        }
+<a href=#122 id=122 data-nosnippet>122</a>    <span class="kw">if let </span><span class="prelude-val">Ok</span>(<span class="kw-2">ref </span>rust_type) = rust_type_res
+<a href=#123 id=123 data-nosnippet>123</a>        &amp;&amp; !rust_type.as_str().contains(<span class="string">"GString"</span>)
+<a href=#124 id=124 data-nosnippet>124</a>    {
+<a href=#125 id=125 data-nosnippet>125</a>        imports.add_used_types(rust_type.used_types());
 <a href=#126 id=126 data-nosnippet>126</a>    }
 <a href=#127 id=127 data-nosnippet>127</a>
 <a href=#128 id=128 data-nosnippet>128</a>    <span class="kw">let </span>(get_out_ref_mode, set_in_ref_mode, nullable) = get_property_ref_modes(env, prop);

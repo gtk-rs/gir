@@ -227,10 +227,10 @@
 <a href=#227 id=227 data-nosnippet>227</a>            <span class="kw">continue</span>;
 <a href=#228 id=228 data-nosnippet>228</a>        };
 <a href=#229 id=229 data-nosnippet>229</a>
-<a href=#230 id=230 data-nosnippet>230</a>        <span class="kw">if let </span>Type::Enumeration(<span class="kw">_</span>) = env.library.type_(tid) {
-<a href=#231 id=231 data-nosnippet>231</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(info) = enums::new(env, obj, <span class="kw-2">&amp;mut </span>imports) {
-<a href=#232 id=232 data-nosnippet>232</a>                env.analysis.enumerations.push(info);
-<a href=#233 id=233 data-nosnippet>233</a>            }
+<a href=#230 id=230 data-nosnippet>230</a>        <span class="kw">if let </span>Type::Enumeration(<span class="kw">_</span>) = env.library.type_(tid)
+<a href=#231 id=231 data-nosnippet>231</a>            &amp;&amp; <span class="kw">let </span><span class="prelude-val">Some</span>(info) = enums::new(env, obj, <span class="kw-2">&amp;mut </span>imports)
+<a href=#232 id=232 data-nosnippet>232</a>        {
+<a href=#233 id=233 data-nosnippet>233</a>            env.analysis.enumerations.push(info);
 <a href=#234 id=234 data-nosnippet>234</a>        }
 <a href=#235 id=235 data-nosnippet>235</a>    }
 <a href=#236 id=236 data-nosnippet>236</a>
@@ -248,10 +248,10 @@
 <a href=#248 id=248 data-nosnippet>248</a>            <span class="kw">continue</span>;
 <a href=#249 id=249 data-nosnippet>249</a>        };
 <a href=#250 id=250 data-nosnippet>250</a>
-<a href=#251 id=251 data-nosnippet>251</a>        <span class="kw">if let </span>Type::Bitfield(<span class="kw">_</span>) = env.library.type_(tid) {
-<a href=#252 id=252 data-nosnippet>252</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(info) = flags::new(env, obj, <span class="kw-2">&amp;mut </span>imports) {
-<a href=#253 id=253 data-nosnippet>253</a>                env.analysis.flags.push(info);
-<a href=#254 id=254 data-nosnippet>254</a>            }
+<a href=#251 id=251 data-nosnippet>251</a>        <span class="kw">if let </span>Type::Bitfield(<span class="kw">_</span>) = env.library.type_(tid)
+<a href=#252 id=252 data-nosnippet>252</a>            &amp;&amp; <span class="kw">let </span><span class="prelude-val">Some</span>(info) = flags::new(env, obj, <span class="kw-2">&amp;mut </span>imports)
+<a href=#253 id=253 data-nosnippet>253</a>        {
+<a href=#254 id=254 data-nosnippet>254</a>            env.analysis.flags.push(info);
 <a href=#255 id=255 data-nosnippet>255</a>        }
 <a href=#256 id=256 data-nosnippet>256</a>    }
 <a href=#257 id=257 data-nosnippet>257</a>

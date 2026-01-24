@@ -222,14 +222,14 @@
 <a href=#222 id=222 data-nosnippet>222</a>            ));
 <a href=#223 id=223 data-nosnippet>223</a>        }
 <a href=#224 id=224 data-nosnippet>224</a>    }
-<a href=#225 id=225 data-nosnippet>225</a>    <span class="kw">if </span>signal.ret.<span class="macro">typ !</span>= Default::default() {
-<a href=#226 id=226 data-nosnippet>226</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(error) = type_error(env, <span class="kw-2">&amp;</span>signal.ret) {
-<a href=#227 id=227 data-nosnippet>227</a>            errors.push(<span class="macro">format!</span>(
-<a href=#228 id=228 data-nosnippet>228</a>                <span class="string">"{} return value {}"</span>,
-<a href=#229 id=229 data-nosnippet>229</a>                error,
-<a href=#230 id=230 data-nosnippet>230</a>                signal.ret.typ.full_name(<span class="kw-2">&amp;</span>env.library)
-<a href=#231 id=231 data-nosnippet>231</a>            ));
-<a href=#232 id=232 data-nosnippet>232</a>        }
+<a href=#225 id=225 data-nosnippet>225</a>    <span class="kw">if </span>signal.ret.<span class="macro">typ !</span>= Default::default()
+<a href=#226 id=226 data-nosnippet>226</a>        &amp;&amp; <span class="kw">let </span><span class="prelude-val">Some</span>(error) = type_error(env, <span class="kw-2">&amp;</span>signal.ret)
+<a href=#227 id=227 data-nosnippet>227</a>    {
+<a href=#228 id=228 data-nosnippet>228</a>        errors.push(<span class="macro">format!</span>(
+<a href=#229 id=229 data-nosnippet>229</a>            <span class="string">"{} return value {}"</span>,
+<a href=#230 id=230 data-nosnippet>230</a>            error,
+<a href=#231 id=231 data-nosnippet>231</a>            signal.ret.typ.full_name(<span class="kw-2">&amp;</span>env.library)
+<a href=#232 id=232 data-nosnippet>232</a>        ));
 <a href=#233 id=233 data-nosnippet>233</a>    }
 <a href=#234 id=234 data-nosnippet>234</a>    errors
 <a href=#235 id=235 data-nosnippet>235</a>}

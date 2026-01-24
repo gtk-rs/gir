@@ -13,17 +13,17 @@
 <a href=#13 id=13 data-nosnippet>13</a>        not_version_condition, version_condition,
 <a href=#14 id=14 data-nosnippet>14</a>    },
 <a href=#15 id=15 data-nosnippet>15</a>    parameter::ToParameter,
-<a href=#16 id=16 data-nosnippet>16</a>    return_value::{out_parameter_types, out_parameters_as_return, ToReturnValue},
+<a href=#16 id=16 data-nosnippet>16</a>    return_value::{ToReturnValue, out_parameter_types, out_parameters_as_return},
 <a href=#17 id=17 data-nosnippet>17</a>    special_functions,
 <a href=#18 id=18 data-nosnippet>18</a>};
 <a href=#19 id=19 data-nosnippet>19</a><span class="kw">use crate</span>::{
 <a href=#20 id=20 data-nosnippet>20</a>    analysis::{<span class="self">self</span>, bounds::Bounds, try_from_glib::TryFromGlib},
-<a href=#21 id=21 data-nosnippet>21</a>    chunk::{ffi_function_todo, Chunk},
+<a href=#21 id=21 data-nosnippet>21</a>    chunk::{Chunk, ffi_function_todo},
 <a href=#22 id=22 data-nosnippet>22</a>    env::Env,
 <a href=#23 id=23 data-nosnippet>23</a>    library::{<span class="self">self</span>, TypeId},
 <a href=#24 id=24 data-nosnippet>24</a>    nameutil::use_glib_type,
 <a href=#25 id=25 data-nosnippet>25</a>    version::Version,
-<a href=#26 id=26 data-nosnippet>26</a>    writer::{primitives::tabs, ToCode},
+<a href=#26 id=26 data-nosnippet>26</a>    writer::{ToCode, primitives::tabs},
 <a href=#27 id=27 data-nosnippet>27</a>};
 <a href=#28 id=28 data-nosnippet>28</a>
 <a href=#29 id=29 data-nosnippet>29</a><span class="comment">// We follow the rules of the `return_self_not_must_use` clippy lint:
@@ -72,10 +72,10 @@
 <a href=#72 id=72 data-nosnippet>72</a>        <span class="kw">return </span><span class="prelude-val">Ok</span>(());
 <a href=#73 id=73 data-nosnippet>73</a>    }
 <a href=#74 id=74 data-nosnippet>74</a>
-<a href=#75 id=75 data-nosnippet>75</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(special_functions) = special_functions {
-<a href=#76 id=76 data-nosnippet>76</a>        <span class="kw">if </span>special_functions::generate(w, env, analysis, special_functions, scope_version)<span class="question-mark">? </span>{
-<a href=#77 id=77 data-nosnippet>77</a>            <span class="kw">return </span><span class="prelude-val">Ok</span>(());
-<a href=#78 id=78 data-nosnippet>78</a>        }
+<a href=#75 id=75 data-nosnippet>75</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(special_functions) = special_functions
+<a href=#76 id=76 data-nosnippet>76</a>        &amp;&amp; special_functions::generate(w, env, analysis, special_functions, scope_version)<span class="question-mark">?
+<a href=#77 id=77 data-nosnippet>77</a>    </span>{
+<a href=#78 id=78 data-nosnippet>78</a>        <span class="kw">return </span><span class="prelude-val">Ok</span>(());
 <a href=#79 id=79 data-nosnippet>79</a>    }
 <a href=#80 id=80 data-nosnippet>80</a>
 <a href=#81 id=81 data-nosnippet>81</a>    <span class="kw">if </span>analysis.hidden {
@@ -118,10 +118,10 @@
 <a href=#118 id=118 data-nosnippet>118</a>        <span class="kw">if </span><span class="macro">get_property !</span>= analysis.codegen_name() {
 <a href=#119 id=119 data-nosnippet>119</a>            doc_alias(w, get_property, comment_prefix, indent)<span class="question-mark">?</span>;
 <a href=#120 id=120 data-nosnippet>120</a>        }
-<a href=#121 id=121 data-nosnippet>121</a>    } <span class="kw">else if let </span><span class="prelude-val">Some</span>(set_property) = <span class="kw-2">&amp;</span>analysis.set_property {
-<a href=#122 id=122 data-nosnippet>122</a>        <span class="kw">if </span><span class="macro">set_property !</span>= analysis.codegen_name() {
-<a href=#123 id=123 data-nosnippet>123</a>            doc_alias(w, set_property, comment_prefix, indent)<span class="question-mark">?</span>;
-<a href=#124 id=124 data-nosnippet>124</a>        }
+<a href=#121 id=121 data-nosnippet>121</a>    } <span class="kw">else if let </span><span class="prelude-val">Some</span>(set_property) = <span class="kw-2">&amp;</span>analysis.set_property
+<a href=#122 id=122 data-nosnippet>122</a>        &amp;&amp; <span class="macro">set_property !</span>= analysis.codegen_name()
+<a href=#123 id=123 data-nosnippet>123</a>    {
+<a href=#124 id=124 data-nosnippet>124</a>        doc_alias(w, set_property, comment_prefix, indent)<span class="question-mark">?</span>;
 <a href=#125 id=125 data-nosnippet>125</a>    }
 <a href=#126 id=126 data-nosnippet>126</a>    <span class="comment">// Don't add a guard for public or copy/equal functions
 <a href=#127 id=127 data-nosnippet>127</a>    </span><span class="kw">let </span>dead_code_cfg = <span class="kw">if </span>!analysis.visibility.is_public() &amp;&amp; !analysis.is_special() {

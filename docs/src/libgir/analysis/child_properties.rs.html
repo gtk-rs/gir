@@ -50,12 +50,12 @@
 <a href=#50 id=50 data-nosnippet>50</a>        .child_type
 <a href=#51 id=51 data-nosnippet>51</a>        .as_ref()
 <a href=#52 id=52 data-nosnippet>52</a>        .and_then(|name| env.library.find_type(<span class="number">0</span>, name));
-<a href=#53 id=53 data-nosnippet>53</a>    <span class="kw">if </span>child_type.is_none() {
-<a href=#54 id=54 data-nosnippet>54</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(config_child_type) = <span class="kw-2">&amp;</span>config.child_type {
-<a href=#55 id=55 data-nosnippet>55</a>            <span class="kw">let </span>owner_name = RustType::try_new(env, type_tid).into_string();
-<a href=#56 id=56 data-nosnippet>56</a>            <span class="macro">error!</span>(<span class="string">"Bad child type `{config_child_type}` for `{owner_name}`"</span>);
-<a href=#57 id=57 data-nosnippet>57</a>            <span class="kw">return </span>properties;
-<a href=#58 id=58 data-nosnippet>58</a>        }
+<a href=#53 id=53 data-nosnippet>53</a>    <span class="kw">if </span>child_type.is_none()
+<a href=#54 id=54 data-nosnippet>54</a>        &amp;&amp; <span class="kw">let </span><span class="prelude-val">Some</span>(config_child_type) = <span class="kw-2">&amp;</span>config.child_type
+<a href=#55 id=55 data-nosnippet>55</a>    {
+<a href=#56 id=56 data-nosnippet>56</a>        <span class="kw">let </span>owner_name = RustType::try_new(env, type_tid).into_string();
+<a href=#57 id=57 data-nosnippet>57</a>        <span class="macro">error!</span>(<span class="string">"Bad child type `{config_child_type}` for `{owner_name}`"</span>);
+<a href=#58 id=58 data-nosnippet>58</a>        <span class="kw">return </span>properties;
 <a href=#59 id=59 data-nosnippet>59</a>    }
 <a href=#60 id=60 data-nosnippet>60</a>
 <a href=#61 id=61 data-nosnippet>61</a>    <span class="kw">for </span>prop <span class="kw">in </span><span class="kw-2">&amp;</span>config.properties {
@@ -104,13 +104,13 @@
 <a href=#104 id=104 data-nosnippet>104</a>        }
 <a href=#105 id=105 data-nosnippet>105</a>
 <a href=#106 id=106 data-nosnippet>106</a>        <span class="kw">let </span>get_out_ref_mode = RefMode::of(env, typ, library::ParameterDirection::Return);
-<a href=#107 id=107 data-nosnippet>107</a>        <span class="kw">if </span>!is_getter_renamed {
-<a href=#108 id=108 data-nosnippet>108</a>            <span class="kw">if let </span><span class="prelude-val">Ok</span>(new_name) = getter_rules::try_rename_getter_suffix(
+<a href=#107 id=107 data-nosnippet>107</a>        <span class="kw">if </span>!is_getter_renamed
+<a href=#108 id=108 data-nosnippet>108</a>            &amp;&amp; <span class="kw">let </span><span class="prelude-val">Ok</span>(new_name) = getter_rules::try_rename_getter_suffix(
 <a href=#109 id=109 data-nosnippet>109</a>                <span class="kw-2">&amp;</span>getter_name,
 <a href=#110 id=110 data-nosnippet>110</a>                typ == library::TypeId::tid_bool(),
-<a href=#111 id=111 data-nosnippet>111</a>            ) {
-<a href=#112 id=112 data-nosnippet>112</a>                getter_name = new_name.unwrap();
-<a href=#113 id=113 data-nosnippet>113</a>            }
+<a href=#111 id=111 data-nosnippet>111</a>            )
+<a href=#112 id=112 data-nosnippet>112</a>        {
+<a href=#113 id=113 data-nosnippet>113</a>            getter_name = new_name.unwrap();
 <a href=#114 id=114 data-nosnippet>114</a>        }
 <a href=#115 id=115 data-nosnippet>115</a>
 <a href=#116 id=116 data-nosnippet>116</a>        <span class="kw">let </span><span class="kw-2">mut </span>set_in_ref_mode = RefMode::of(env, typ, library::ParameterDirection::In);
