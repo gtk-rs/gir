@@ -225,7 +225,7 @@ mod tests {
     use super::{super::ident::Ident, *};
 
     fn toml(input: &str) -> ::toml::Value {
-        let value = input.parse::<::toml::Value>();
+        let value = toml::from_str(input);
         assert!(value.is_ok());
         value.unwrap()
     }

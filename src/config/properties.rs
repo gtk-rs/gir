@@ -124,7 +124,7 @@ mod tests {
     }
 
     fn toml(input: &str) -> ::toml::Value {
-        let value = input.parse();
+        let value = toml::from_str(input);
         assert!(value.is_ok());
         value.unwrap()
     }
