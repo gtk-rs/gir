@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["RunKind"],"fn":["build_config","main","print_usage","run_check"],"trait":["OptionStr"]};
+window.SIDEBAR_ITEMS = {"enum":["RunKind"],"fn":["build_config","init_logger","main","print_usage","run_check"],"trait":["OptionStr"]};
