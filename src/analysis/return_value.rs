@@ -69,7 +69,9 @@ pub fn analyze(
             );
             None
         } else {
-            let ns = if env.namespaces.glib_ns_id == namespaces::MAIN {
+            let ns = if env.namespaces.glib_ns_id.is_none()
+                || env.namespaces.glib_ns_id == Some(namespaces::MAIN)
+            {
                 "error"
             } else {
                 "glib"
@@ -91,7 +93,7 @@ pub fn analyze(
             );
             None
         } else {
-            let ns = if env.namespaces.glib_ns_id == namespaces::MAIN {
+            let ns = if env.namespaces.glib_ns_id.is_none() || env.namespaces.glib_ns_id == Some(namespaces::MAIN) {
                 "crate::BoolError"
             } else {
                 "glib"

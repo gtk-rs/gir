@@ -33,7 +33,7 @@ fn generate_lib(w: &mut dyn Write, env: &Env) -> Result<()> {
     include_custom_modules(w, env)?;
     statics::after_extern_crates(w)?;
 
-    if env.config.library_name != "GLib" {
+    if env.config.library_name != "GLib" && env.namespaces.glib_ns_id.is_some() {
         statics::use_glib(w)?;
     }
     match &*env.config.library_name {
