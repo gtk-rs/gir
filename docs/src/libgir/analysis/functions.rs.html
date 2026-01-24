@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/analysis/functions.rs`."><title>functions.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.92.0 (ded5c06cf 2025-12-08)" data-channel="1.92.0" data-search-js="search-d69d8955.js" data-stringdex-js="stringdex-c3e638e9.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-ce535bd0.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">libgir/analysis/</div>functions.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// TODO: better heuristic (https://bugzilla.gnome.org/show_bug.cgi?id=623635#c5)
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/analysis/functions.rs`."><title>functions.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-ca0dd0c4.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.93.0 (254b59607 2026-01-19)" data-channel="1.93.0" data-search-js="search-9e2438ea.js" data-stringdex-js="stringdex-a3946164.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-a410ff4d.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-263c88ec.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">libgir/analysis/</div>functions.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-4"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="comment">// TODO: better heuristic (https://bugzilla.gnome.org/show_bug.cgi?id=623635#c5)
 <a href=#2 id=2 data-nosnippet>2</a>// TODO: ProgressCallback types (not specific to async).
 <a href=#3 id=3 data-nosnippet>3</a>// TODO: add annotation for methods like g_file_replace_contents_bytes_async
 <a href=#4 id=4 data-nosnippet>4</a>// where the finish method has a different prefix.
@@ -387,7 +387,7 @@
 <a href=#387 id=387 data-nosnippet>387</a>                <span class="kw">if let </span><span class="prelude-val">Some</span>(to_glib_extra) = to_glib_extra {
 <a href=#388 id=388 data-nosnippet>388</a>                    <span class="kw">let </span>pos_adjusted_for_removed_params =
 <a href=#389 id=389 data-nosnippet>389</a>                        pos - to_remove.len() - cross_user_data_check.len();
-<a href=#390 id=390 data-nosnippet>390</a>                    <span class="kw">if </span>par.c_type != <span class="string">"GDestroyNotify" </span>{
+<a href=#390 id=390 data-nosnippet>390</a>                    <span class="kw">if </span>par.<span class="macro">c_type !</span>= <span class="string">"GDestroyNotify" </span>{
 <a href=#391 id=391 data-nosnippet>391</a>                        to_glib_extras.insert(pos_adjusted_for_removed_params, to_glib_extra);
 <a href=#392 id=392 data-nosnippet>392</a>                    }
 <a href=#393 id=393 data-nosnippet>393</a>                }
@@ -397,7 +397,7 @@
 <a href=#397 id=397 data-nosnippet>397</a>            </span>};
 <a href=#398 id=398 data-nosnippet>398</a>
 <a href=#399 id=399 data-nosnippet>399</a>            <span class="kw">if </span>rust_type.is_function() {
-<a href=#400 id=400 data-nosnippet>400</a>                <span class="kw">if </span>par.c_type != <span class="string">"GDestroyNotify" </span>{
+<a href=#400 id=400 data-nosnippet>400</a>                <span class="kw">if </span>par.<span class="macro">c_type !</span>= <span class="string">"GDestroyNotify" </span>{
 <a href=#401 id=401 data-nosnippet>401</a>                    <span class="kw">let </span>callback_parameters_config = configured_functions.iter().find_map(|f| {
 <a href=#402 id=402 data-nosnippet>402</a>                        f.parameters
 <a href=#403 id=403 data-nosnippet>403</a>                            .iter()
@@ -420,7 +420,7 @@
 <a href=#420 id=420 data-nosnippet>420</a>                            <span class="kw">let </span>user_data = cross_user_data_check
 <a href=#421 id=421 data-nosnippet>421</a>                                .entry(destroy_index)
 <a href=#422 id=422 data-nosnippet>422</a>                                .or_insert_with(|| callback.user_data_index);
-<a href=#423 id=423 data-nosnippet>423</a>                            <span class="kw">if </span><span class="kw-2">*</span>user_data != callback.user_data_index {
+<a href=#423 id=423 data-nosnippet>423</a>                            <span class="kw">if </span><span class="kw-2">*</span><span class="macro">user_data !</span>= callback.user_data_index {
 <a href=#424 id=424 data-nosnippet>424</a>                                <span class="macro">warn_main!</span>(
 <a href=#425 id=425 data-nosnippet>425</a>                                    type_tid,
 <a href=#426 id=426 data-nosnippet>426</a>                                    <span class="string">"`{}`: Different destructors cannot share the same user data"</span>,
@@ -1090,7 +1090,7 @@
 <a href=#1090 id=1090 data-nosnippet>1090</a>    <span class="kw">let </span><span class="kw-2">mut </span>imports_to_add = Vec::new();
 <a href=#1091 id=1091 data-nosnippet>1091</a>
 <a href=#1092 id=1092 data-nosnippet>1092</a>    <span class="kw">if let </span>Type::Function(func) = rust_type {
-<a href=#1093 id=1093 data-nosnippet>1093</a>        <span class="kw">if </span>par.c_type != <span class="string">"GDestroyNotify" </span>{
+<a href=#1093 id=1093 data-nosnippet>1093</a>        <span class="kw">if </span>par.<span class="macro">c_type !</span>= <span class="string">"GDestroyNotify" </span>{
 <a href=#1094 id=1094 data-nosnippet>1094</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(user_data) = par.user_data_index {
 <a href=#1095 id=1095 data-nosnippet>1095</a>                <span class="kw">if </span>user_data &gt;= c_parameters.len() {
 <a href=#1096 id=1096 data-nosnippet>1096</a>                    <span class="macro">warn_main!</span>(type_tid,
@@ -1131,7 +1131,7 @@
 <a href=#1131 id=1131 data-nosnippet>1131</a>                    );
 <a href=#1132 id=1132 data-nosnippet>1132</a>                    <span class="kw">return </span><span class="prelude-val">None</span>;
 <a href=#1133 id=1133 data-nosnippet>1133</a>                }
-<a href=#1134 id=1134 data-nosnippet>1134</a>                <span class="kw">if </span>c_parameters[destroy_index].<span class="number">0</span>.c_type != <span class="string">"GDestroyNotify" </span>{
+<a href=#1134 id=1134 data-nosnippet>1134</a>                <span class="kw">if </span>c_parameters[destroy_index].<span class="number">0</span>.<span class="macro">c_type !</span>= <span class="string">"GDestroyNotify" </span>{
 <a href=#1135 id=1135 data-nosnippet>1135</a>                    <span class="kw-2">*</span>commented = <span class="bool-val">true</span>;
 <a href=#1136 id=1136 data-nosnippet>1136</a>                    <span class="macro">warn_main!</span>(
 <a href=#1137 id=1137 data-nosnippet>1137</a>                        type_tid,
@@ -1146,7 +1146,7 @@
 <a href=#1146 id=1146 data-nosnippet>1146</a>
 <a href=#1147 id=1147 data-nosnippet>1147</a>        <span class="comment">// If we don't have a "user data" parameter, we can't get the closure so there's
 <a href=#1148 id=1148 data-nosnippet>1148</a>        // nothing we can do...
-<a href=#1149 id=1149 data-nosnippet>1149</a>        </span><span class="kw">if </span>par.c_type != <span class="string">"GDestroyNotify"
+<a href=#1149 id=1149 data-nosnippet>1149</a>        </span><span class="kw">if </span>par.<span class="macro">c_type !</span>= <span class="string">"GDestroyNotify"
 <a href=#1150 id=1150 data-nosnippet>1150</a>            </span>&amp;&amp; (func.parameters.is_empty() || !func.parameters.iter().any(|c| c.closure.is_some()))
 <a href=#1151 id=1151 data-nosnippet>1151</a>        {
 <a href=#1152 id=1152 data-nosnippet>1152</a>            <span class="kw-2">*</span>commented = <span class="bool-val">true</span>;
@@ -1166,7 +1166,7 @@
 <a href=#1166 id=1166 data-nosnippet>1166</a>            <span class="kw-2">&amp;</span>[],
 <a href=#1167 id=1167 data-nosnippet>1167</a>            callback_parameters_config,
 <a href=#1168 id=1168 data-nosnippet>1168</a>        );
-<a href=#1169 id=1169 data-nosnippet>1169</a>        <span class="kw">if </span>par.c_type != <span class="string">"GDestroyNotify" </span>&amp;&amp; !<span class="kw-2">*</span>commented {
+<a href=#1169 id=1169 data-nosnippet>1169</a>        <span class="kw">if </span>par.<span class="macro">c_type !</span>= <span class="string">"GDestroyNotify" </span>&amp;&amp; !<span class="kw-2">*</span>commented {
 <a href=#1170 id=1170 data-nosnippet>1170</a>            <span class="kw-2">*</span>commented |= func.parameters.iter().any(|p| {
 <a href=#1171 id=1171 data-nosnippet>1171</a>                <span class="kw">if </span>p.closure.is_none() {
 <a href=#1172 id=1172 data-nosnippet>1172</a>                    <span class="kw">crate</span>::analysis::trampolines::type_error(env, p).is_some()
@@ -1196,7 +1196,7 @@
 <a href=#1196 id=1196 data-nosnippet>1196</a>            }
 <a href=#1197 id=1197 data-nosnippet>1197</a>        }
 <a href=#1198 id=1198 data-nosnippet>1198</a>        <span class="kw">let </span>user_data_index = par.user_data_index.unwrap_or(<span class="number">0</span>);
-<a href=#1199 id=1199 data-nosnippet>1199</a>        <span class="kw">if </span>par.c_type != <span class="string">"GDestroyNotify" </span>&amp;&amp; c_parameters.len() &lt;= user_data_index {
+<a href=#1199 id=1199 data-nosnippet>1199</a>        <span class="kw">if </span>par.<span class="macro">c_type !</span>= <span class="string">"GDestroyNotify" </span>&amp;&amp; c_parameters.len() &lt;= user_data_index {
 <a href=#1200 id=1200 data-nosnippet>1200</a>            <span class="macro">warn_main!</span>(
 <a href=#1201 id=1201 data-nosnippet>1201</a>                type_tid,
 <a href=#1202 id=1202 data-nosnippet>1202</a>                <span class="string">"`{}`: Invalid user data index of `{}`"</span>,
@@ -1250,7 +1250,7 @@
 <a href=#1250 id=1250 data-nosnippet>1250</a>                    is_notify: <span class="bool-val">false</span>,
 <a href=#1251 id=1251 data-nosnippet>1251</a>                    scope: par.scope,
 <a href=#1252 id=1252 data-nosnippet>1252</a>                    <span class="comment">// If destroy callback, id doesn't matter.
-<a href=#1253 id=1253 data-nosnippet>1253</a>                    </span>user_data_index: <span class="kw">if </span>par.c_type != <span class="string">"GDestroyNotify" </span>{
+<a href=#1253 id=1253 data-nosnippet>1253</a>                    </span>user_data_index: <span class="kw">if </span>par.<span class="macro">c_type !</span>= <span class="string">"GDestroyNotify" </span>{
 <a href=#1254 id=1254 data-nosnippet>1254</a>                        c_parameters[user_data_index].<span class="number">1
 <a href=#1255 id=1255 data-nosnippet>1255</a>                    </span>} <span class="kw">else </span>{
 <a href=#1256 id=1256 data-nosnippet>1256</a>                        <span class="number">0
@@ -1332,4 +1332,5 @@
 <a href=#1332 id=1332 data-nosnippet>1332</a>        );
 <a href=#1333 id=1333 data-nosnippet>1333</a>        <span class="macro">assert_eq!</span>(<span class="string">"g_bus_get_finish"</span>, <span class="kw-2">&amp;</span>finish_function_name(<span class="string">"g_bus_get"</span>));
 <a href=#1334 id=1334 data-nosnippet>1334</a>    }
-<a href=#1335 id=1335 data-nosnippet>1335</a>}</code></pre></div></section></main></body></html>
+<a href=#1335 id=1335 data-nosnippet>1335</a>}
+</code></pre></div></section></main></body></html>
