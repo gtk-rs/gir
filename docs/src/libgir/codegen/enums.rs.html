@@ -365,7 +365,7 @@
 <a href=#365 id=365 data-nosnippet>365</a>                    w,
 <a href=#366 id=366 data-nosnippet>366</a>                    <span class="string">"        static QUARK: ::std::sync::OnceLock&lt;{0}ffi::GQuark&gt; = ::std::sync::OnceLock::new();
 <a href=#367 id=367 data-nosnippet>367</a>        let quark = *QUARK.get_or_init(|| unsafe {{
-<a href=#368 id=368 data-nosnippet>368</a>            {0}ffi::g_quark_from_static_string(c\"{1}\".as_ptr() as *const _)
+<a href=#368 id=368 data-nosnippet>368</a>            {0}ffi::g_quark_from_static_string(c\"{1}\".as_ptr())
 <a href=#369 id=369 data-nosnippet>369</a>        }});
 <a href=#370 id=370 data-nosnippet>370</a>        unsafe {{ from_glib(quark) }}"</span>,
 <a href=#371 id=371 data-nosnippet>371</a>                    use_glib_if_needed(env, <span class="string">""</span>),
@@ -446,7 +446,7 @@
 <a href=#446 id=446 data-nosnippet>446</a>                type ParamSpec = {param_spec_enum};
 <a href=#447 id=447 data-nosnippet>447</a>                type SetValue = Self;
 <a href=#448 id=448 data-nosnippet>448</a>                type BuilderFn = fn(&amp;str, Self) -&gt; {param_spec_builder}&lt;Self&gt;;
-<a href=#449 id=449 data-nosnippet>449</a>    
+<a href=#449 id=449 data-nosnippet>449</a>
 <a href=#450 id=450 data-nosnippet>450</a>                fn param_spec_builder() -&gt; Self::BuilderFn {{
 <a href=#451 id=451 data-nosnippet>451</a>                    Self::ParamSpec::builder_with_default
 <a href=#452 id=452 data-nosnippet>452</a>                }}
