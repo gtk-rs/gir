@@ -365,7 +365,7 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
                     w,
                     "        static QUARK: ::std::sync::OnceLock<{0}ffi::GQuark> = ::std::sync::OnceLock::new();
         let quark = *QUARK.get_or_init(|| unsafe {{
-            {0}ffi::g_quark_from_static_string(c\"{1}\".as_ptr() as *const _)
+            {0}ffi::g_quark_from_static_string(c\"{1}\".as_ptr())
         }});
         unsafe {{ from_glib(quark) }}",
                     use_glib_if_needed(env, ""),
