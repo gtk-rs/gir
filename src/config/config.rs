@@ -123,6 +123,7 @@ pub struct Config {
     /// to another doc source, for example when builds on docs.rs
     /// are limited due to license issues.
     pub external_docs_url: Option<String>,
+    pub static_lib: bool,
 }
 
 impl Config {
@@ -333,6 +334,11 @@ impl Config {
         let feature_dependencies = read_feature_dependencies(&toml)?;
         let external_docs_url = read_external_docs_url(&toml)?;
 
+        let static_lib = match toml.lookup("options.static_lib") {
+            Some(v) => v.as_result_bool("options.static_lib")?,
+            None => false,
+        };
+
         Ok(Self {
             work_mode,
             girs_dirs,
@@ -359,6 +365,7 @@ impl Config {
             lib_version_overrides,
             feature_dependencies,
             external_docs_url,
+            static_lib,
         })
     }
 
