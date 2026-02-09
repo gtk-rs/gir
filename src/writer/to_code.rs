@@ -160,12 +160,11 @@ impl ToCode for Chunk {
                         r#"let signal_name = detailed_signal_name.as_ref().map_or(c"{signal}", |n| std::ffi::CStr::from_bytes_with_nul_unchecked(n.as_bytes()));"#
                     ));
                     v.push(
-                        "connect_raw(self.as_ptr() as *mut _, signal_name.as_ptr() as *const _,"
-                            .to_string(),
+                        "connect_raw(self.as_ptr() as *mut _, signal_name.as_ptr(),".to_string(),
                     );
                 } else {
                     v.push(format!(
-                        "connect_raw(self.as_ptr() as *mut _, c\"{signal}\".as_ptr() as *const _,"
+                        "connect_raw(self.as_ptr() as *mut _, c\"{signal}\".as_ptr(),"
                     ));
                 }
                 let self_str = if in_trait { "Self, " } else { "" };
