@@ -856,7 +856,7 @@ pub fn not_version_condition_no_docsrs(
             }
         });
         let s = format!(
-            "{}{}#[cfg(not(any({})))]",
+            "{}{}#[cfg(not({}))]",
             tabs(indent),
             comment,
             v.to_cfg(namespace_name.as_deref())
