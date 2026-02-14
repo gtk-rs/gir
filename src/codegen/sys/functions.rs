@@ -306,19 +306,19 @@ pub fn function_signature(env: &Env, func: &library::Function, bare: bool) -> (b
 }
 
 fn function_return_value(env: &Env, func: &library::Function) -> (bool, String) {
-    if func.ret.typ == Default::default() {
+    if func.ret.typ() == Default::default() {
         return (false, String::new());
     }
-    let ffi_type = ffi_type(env, func.ret.typ, &func.ret.c_type);
+    let ffi_type = ffi_type(env, func.ret.typ(), &func.ret.c_type);
     let commented = ffi_type.is_err();
     (commented, format!(" -> {}", ffi_type.into_string()))
 }
 
 fn function_parameter(env: &Env, par: &library::Parameter, bare: bool) -> (bool, String) {
-    if let library::Type::Basic(library::Basic::VarArgs) = env.library.type_(par.typ) {
+    if let library::Type::Basic(library::Basic::VarArgs) = env.library.type_(par.typ()) {
         return (false, "...".into());
     }
-    let ffi_type = ffi_type(env, par.typ, &par.c_type);
+    let ffi_type = ffi_type(env, par.typ(), &par.c_type);
     let commented = ffi_type.is_err();
     let res = if bare {
         ffi_type.into_string()

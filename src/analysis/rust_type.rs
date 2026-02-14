@@ -460,14 +460,14 @@ impl<'env> RustTypeBuilder<'env> {
                         .find(|cp| cp.ident.is_match(&p.name))
                         .and_then(|c| c.nullable)
                         .unwrap_or(p.nullable);
-                    let p_res = RustType::builder(self.env, p.typ)
+                    let p_res = RustType::builder(self.env, p.typ())
                         .direction(p.direction)
                         .nullable(nullable)
                         .try_build();
                     match p_res {
                         Ok(p_rust_type) => {
-                            let is_basic = p.typ.is_basic_type(self.env);
-                            let y = RustType::try_new(self.env, p.typ)
+                            let is_basic = p.typ().is_basic_type(self.env);
+                            let y = RustType::try_new(self.env, p.typ())
                                 .unwrap_or_else(|_| RustType::default());
                             params.push(format!(
                                 "{}{}",
@@ -498,13 +498,13 @@ impl<'env> RustTypeBuilder<'env> {
                 } else {
                     "Fn"
                 };
-                let ret_res = RustType::builder(self.env, f.ret.typ)
+                let ret_res = RustType::builder(self.env, f.ret.typ())
                     .direction(f.ret.direction)
                     .nullable(f.ret.nullable)
                     .try_build();
                 let ret = match ret_res {
                     Ok(ret_rust_type) => {
-                        let y = RustType::try_new(self.env, f.ret.typ)
+                        let y = RustType::try_new(self.env, f.ret.typ())
                             .unwrap_or_else(|_| RustType::default());
                         format!(
                             "{}({}) -> {}{}",

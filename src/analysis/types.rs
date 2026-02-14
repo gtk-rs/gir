@@ -128,7 +128,7 @@ impl IsIncomplete for Function {
         // Checking p.typ.is_incomplete(lib) cause recursive check on GScannerMsgFunc
         self.parameters.iter().any(|p| {
             matches!(
-                lib.type_(p.typ),
+                lib.type_(p.typ()),
                 Type::Basic(Basic::Unsupported | Basic::VarArgs)
             )
         })

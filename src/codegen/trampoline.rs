@@ -147,7 +147,7 @@ fn func_parameter(env: &Env, par: &RustParameter, bounds: &Bounds) -> String {
 }
 
 fn func_returns(env: &Env, analysis: &Trampoline) -> String {
-    if analysis.ret.typ == Default::default() {
+    if analysis.ret.typ() == Default::default() {
         String::new()
     } else if analysis.inhibit {
         format!(" -> {inhibit}", inhibit = use_glib_type(env, "Propagation"))
@@ -186,10 +186,10 @@ fn trampoline_parameter(env: &Env, par: &CParameter) -> String {
 }
 
 fn trampoline_returns(env: &Env, analysis: &Trampoline) -> String {
-    if analysis.ret.typ == Default::default() {
+    if analysis.ret.typ() == Default::default() {
         String::new()
     } else {
-        let ffi_type = ffi_type(env, analysis.ret.typ, &analysis.ret.c_type);
+        let ffi_type = ffi_type(env, analysis.ret.typ(), &analysis.ret.c_type);
         format!(" -> {}", ffi_type.into_string())
     }
 }
@@ -223,7 +223,7 @@ fn transformation_vars(
 
 fn trampoline_call_func(env: &Env, analysis: &Trampoline, in_trait: bool) -> String {
     let params = trampoline_call_parameters(env, analysis, in_trait);
-    let ret = if analysis.ret.typ == Default::default() {
+    let ret = if analysis.ret.typ() == Default::default() {
         String::new()
     } else {
         analysis.ret.trampoline_to_glib(env)

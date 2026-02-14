@@ -154,12 +154,12 @@ pub fn analyze(
         let nullable = nullable_override.unwrap_or(par.nullable);
 
         let conversion_type = {
-            match env.library.type_(par.typ) {
+            match env.library.type_(par.typ()) {
                 library::Type::Basic(library::Basic::Utf8)
                 | library::Type::Record(..)
                 | library::Type::Interface(..)
                 | library::Type::Class(..) => ConversionType::Borrow,
-                _ => ConversionType::of(env, par.typ),
+                _ => ConversionType::of(env, par.typ()),
             }
         };
 
@@ -174,7 +174,7 @@ pub fn analyze(
 
         let mut transform = parameters.prepare_transformation(
             env,
-            par.typ,
+            par.typ(),
             name,
             par.c_type.clone(),
             par.direction,

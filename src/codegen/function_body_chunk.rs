@@ -643,7 +643,7 @@ impl Builder {
             return_value: if trampoline.ret.c_type != "void" {
                 let p = &trampoline.ret;
                 Some(
-                    crate::analysis::ffi_type::ffi_type(env, p.typ, &p.c_type)
+                    crate::analysis::ffi_type::ffi_type(env, p.typ(), &p.c_type)
                         .expect("failed to write c_type")
                         .into_string(),
                 )
@@ -728,10 +728,10 @@ impl Builder {
                 .iter()
                 .filter(|out| {
                     out.lib_par.direction == ParameterDirection::Out
-                        || out.lib_par.typ.full_name(&env.library) == "Gio.AsyncResult"
+                        || out.lib_par.typ().full_name(&env.library) == "Gio.AsyncResult"
                 })
                 .map(|out| {
-                    if out.lib_par.typ.full_name(&env.library) == "Gio.AsyncResult" {
+                    if out.lib_par.typ().full_name(&env.library) == "Gio.AsyncResult" {
                         found_async_result = true;
                         return Chunk::Name("res".to_string());
                     }
@@ -741,7 +741,7 @@ impl Builder {
                         par.is_uninitialized = true;
                         uninitialized_vars.push((
                             out.lib_par.name.clone(),
-                            self.check_if_need_glib_conversion(env, out.lib_par.typ),
+                            self.check_if_need_glib_conversion(env, out.lib_par.typ()),
                         ));
                     }
                     Chunk::FfiCallOutParameter { par }
@@ -767,7 +767,7 @@ impl Builder {
             .map(|(_, out)| {
                 let mem_mode = c_type_mem_mode_lib(
                     env,
-                    out.lib_par.typ,
+                    out.lib_par.typ(),
                     out.lib_par.caller_allocates,
                     out.lib_par.transfer,
                 );
@@ -789,7 +789,7 @@ impl Builder {
         if let Some(ref ffi_ret) = trampoline.ffi_ret {
             let mem_mode = c_type_mem_mode_lib(
                 env,
-                ffi_ret.lib_par.typ,
+                ffi_ret.lib_par.typ(),
                 ffi_ret.lib_par.caller_allocates,
                 ffi_ret.lib_par.transfer,
             );
@@ -1308,15 +1308,17 @@ fn c_type_mem_mode(env: &Env, parameter: &AnalysisCParameter) -> OutMemMode {
 }
 
 fn type_mem_mode(env: &Env, parameter: &library::Parameter) -> Chunk {
-    match ConversionType::of(env, parameter.typ) {
+    match ConversionType::of(env, parameter.typ()) {
         ConversionType::Pointer => {
             if parameter.caller_allocates {
                 Chunk::UninitializedNamed {
-                    name: RustType::try_new(env, parameter.typ).unwrap().into_string(),
+                    name: RustType::try_new(env, parameter.typ())
+                        .unwrap()
+                        .into_string(),
                 }
             } else {
                 use crate::library::Type::*;
-                let type_ = env.library.type_(parameter.typ);
+                let type_ = env.library.type_(parameter.typ());
                 match type_ {
                     Basic(
                         library::Basic::Utf8 | library::Basic::OsString | library::Basic::Filename,

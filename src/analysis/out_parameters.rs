@@ -62,9 +62,9 @@ pub fn analyze(
         let return_strategy =
             decide_throw_function_return_strategy(env, func_ret, &func.name, configured_functions);
         info.mode = Mode::Throws(return_strategy);
-    } else if func.ret.typ == TypeId::tid_none() {
+    } else if func.ret.typ() == TypeId::tid_none() {
         info.mode = Mode::Normal;
-    } else if func.ret.typ == TypeId::tid_bool() || func.ret.typ == TypeId::tid_c_bool() {
+    } else if func.ret.typ() == TypeId::tid_bool() || func.ret.typ() == TypeId::tid_c_bool() {
         if nullable_override == Some(false) {
             info.mode = Mode::Combined;
         } else {
@@ -92,7 +92,7 @@ pub fn analyze(
                 .iter()
                 .find(|c_par| c_par.name == lib_par.name)
             {
-                out.lib_par.typ = c_par.typ;
+                out.lib_par.set_typ(c_par.typ);
                 out.lib_par.nullable = c_par.nullable;
             }
 
@@ -112,7 +112,7 @@ pub fn analyze(
 
         // TODO: fully switch to use analyzed returns (it add too many Return<Option<>>)
         if let Some(ref par) = func_ret.parameter {
-            ret.lib_par.typ = par.lib_par.typ;
+            ret.lib_par.set_typ(par.lib_par.typ());
         }
         if let Some(val) = nullable_override {
             ret.lib_par.nullable = val;
@@ -125,15 +125,15 @@ pub fn analyze(
 
 pub fn can_as_return(env: &Env, par: &library::Parameter) -> bool {
     use super::conversion_type::ConversionType::*;
-    match ConversionType::of(env, par.typ) {
+    match ConversionType::of(env, par.typ()) {
         Direct | Scalar | Option | Result { .. } => true,
         Pointer => {
             // Disallow Basic arrays without length
-            if is_carray_with_direct_elements(env, par.typ) && par.array_length.is_none() {
+            if is_carray_with_direct_elements(env, par.typ()) && par.array_length.is_none() {
                 return false;
             }
 
-            RustType::builder(env, par.typ)
+            RustType::builder(env, par.typ())
                 .direction(ParameterDirection::Out)
                 .scope(par.scope)
                 .try_build_param()
@@ -153,7 +153,7 @@ fn decide_throw_function_return_strategy(
     let typ = ret
         .parameter
         .as_ref()
-        .map(|par| par.lib_par.typ)
+        .map(|par| par.lib_par.typ())
         .unwrap_or_default();
     if env.type_(typ).eq(&Type::Basic(Basic::None)) {
         ThrowFunctionReturnStrategy::Void

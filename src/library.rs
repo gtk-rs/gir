@@ -525,6 +525,16 @@ pub struct Parameter {
     pub destroy: Option<usize>,
 }
 
+impl Parameter {
+    pub fn typ(&self) -> TypeId {
+        self.typ
+    }
+
+    pub fn set_typ(&mut self, typ: TypeId) {
+        self.typ = typ;
+    }
+}
+
 #[derive(Debug)]
 pub struct Function {
     pub name: String,

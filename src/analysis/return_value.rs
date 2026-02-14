@@ -32,7 +32,7 @@ pub fn analyze(
         .iter()
         .find_map(|f| f.ret.type_name.as_ref())
         .and_then(|typ| env.library.find_type(0, typ))
-        .unwrap_or_else(|| override_string_type_return(env, func.ret.typ, configured_functions));
+        .unwrap_or_else(|| override_string_type_return(env, func.ret.typ(), configured_functions));
     let mut parameter = if typ == Default::default() {
         None
     } else {
@@ -108,8 +108,8 @@ pub fn analyze(
         && let Some(par) = parameter
     {
         let nullable_override = configured_functions.iter().find_map(|f| f.ret.nullable);
-        if par.typ != type_tid {
-            base_tid = Some(par.typ);
+        if par.typ() != type_tid {
+            base_tid = Some(par.typ());
         }
         parameter = Some(library::Parameter {
             typ: type_tid,

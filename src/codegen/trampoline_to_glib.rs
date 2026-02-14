@@ -7,7 +7,7 @@ pub trait TrampolineToGlib {
 impl TrampolineToGlib for library::Parameter {
     fn trampoline_to_glib(&self, env: &env::Env) -> String {
         use crate::analysis::conversion_type::ConversionType::*;
-        match ConversionType::of(env, self.typ) {
+        match ConversionType::of(env, self.typ()) {
             Direct => String::new(),
             Scalar | Option | Result { .. } => ".into_glib()".to_owned(),
             Pointer => to_glib_xxx(self.transfer).to_owned(),
