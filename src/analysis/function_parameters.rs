@@ -289,7 +289,7 @@ pub fn analyze(
                 array_name = (array_name.into_owned()
                     + &Bounds::get_to_glib_extra(
                         &bound_type,
-                        array_par.nullable,
+                        array_par.is_nullable(),
                         array_par.instance_parameter,
                         move_,
                     ))
@@ -311,7 +311,7 @@ pub fn analyze(
             RefMode::without_unneeded_mut(env, par, immutable, in_trait && par.instance_parameter);
 
         let nullable_override = configured_parameters.iter().find_map(|p| p.nullable);
-        let nullable = nullable_override.unwrap_or(par.nullable);
+        let nullable = nullable_override.unwrap_or(par.is_nullable());
 
         let try_from_glib = TryFromGlib::from_parameter(env, typ, &configured_parameters);
 

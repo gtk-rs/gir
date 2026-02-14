@@ -151,7 +151,7 @@ pub fn analyze(
                         .and_then(|c| c.nullable)
                 })
             });
-        let nullable = nullable_override.unwrap_or(par.nullable);
+        let nullable = nullable_override.unwrap_or(par.is_nullable());
 
         let conversion_type = {
             match env.library.type_(par.typ()) {

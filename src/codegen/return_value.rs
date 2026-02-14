@@ -29,7 +29,7 @@ impl ToReturnValue for library::Parameter {
     ) -> Option<String> {
         let mut name = RustType::builder(env, self.typ())
             .direction(self.direction)
-            .nullable(self.nullable)
+            .nullable(self.is_nullable())
             .scope(self.scope)
             .try_from_glib(try_from_glib)
             .try_build_param()
@@ -260,7 +260,7 @@ fn out_parameter_as_return(out: &analysis::Parameter, env: &Env) -> String {
     // TODO: upcasts?
     let name = RustType::builder(env, out.lib_par.typ())
         .direction(ParameterDirection::Return)
-        .nullable(out.lib_par.nullable)
+        .nullable(out.lib_par.is_nullable())
         .scope(out.lib_par.scope)
         .try_from_glib(&out.try_from_glib)
         .try_build_param()

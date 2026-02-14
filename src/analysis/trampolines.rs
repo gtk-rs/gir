@@ -160,7 +160,7 @@ pub fn analyze(
         }
     }
 
-    let mut ret_nullable = signal.ret.nullable;
+    let mut ret_nullable = signal.ret.is_nullable();
 
     if signal.ret.typ() != Default::default() {
         if let Ok(rust_type) = RustType::builder(env, signal.ret.typ())

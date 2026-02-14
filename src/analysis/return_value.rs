@@ -36,7 +36,7 @@ pub fn analyze(
     let mut parameter = if typ == Default::default() {
         None
     } else {
-        let mut nullable = func.ret.nullable;
+        let mut nullable = func.ret.is_nullable();
         if !obj.trust_return_value_nullability {
             // Since GIRs are bad at specifying return value nullability, assume
             // any returned pointer is nullable unless overridden by the config.
@@ -113,7 +113,7 @@ pub fn analyze(
         }
         parameter = Some(library::Parameter {
             typ: type_tid,
-            nullable: nullable_override.unwrap_or(func.ret.nullable),
+            nullable: nullable_override.unwrap_or(func.ret.is_nullable()),
             ..par
         });
     }

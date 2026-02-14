@@ -127,7 +127,7 @@ impl Bounds {
                             let nullable = configured_functions
                                 .iter()
                                 .find_map(|f| f.ret.nullable)
-                                .unwrap_or(function.ret.nullable);
+                                .unwrap_or(function.ret.is_nullable());
 
                             out_parameters.insert(
                                 0,
@@ -349,7 +349,7 @@ fn find_out_parameters(
                         .filter(|p| p.ident.is_match(&param.name))
                         .find_map(|p| p.nullable)
                 })
-                .unwrap_or(param.nullable);
+                .unwrap_or(param.is_nullable());
 
             RustType::builder(env, param.typ())
                 .direction(param.direction)

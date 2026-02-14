@@ -459,7 +459,7 @@ impl<'env> RustTypeBuilder<'env> {
                         .iter()
                         .find(|cp| cp.ident.is_match(&p.name))
                         .and_then(|c| c.nullable)
-                        .unwrap_or(p.nullable);
+                        .unwrap_or(p.is_nullable());
                     let p_res = RustType::builder(self.env, p.typ())
                         .direction(p.direction)
                         .nullable(nullable)
@@ -500,7 +500,7 @@ impl<'env> RustTypeBuilder<'env> {
                 };
                 let ret_res = RustType::builder(self.env, f.ret.typ())
                     .direction(f.ret.direction)
-                    .nullable(f.ret.nullable)
+                    .nullable(f.ret.is_nullable())
                     .try_build();
                 let ret = match ret_res {
                     Ok(ret_rust_type) => {
@@ -512,7 +512,7 @@ impl<'env> RustTypeBuilder<'env> {
                             params.join(", "),
                             if !is_gstring(y.as_str()) {
                                 ret_rust_type.as_str()
-                            } else if f.ret.nullable {
+                            } else if f.ret.is_nullable() {
                                 "Option<String>"
                             } else {
                                 "String"
