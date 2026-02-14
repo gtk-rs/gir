@@ -93,7 +93,7 @@ pub fn analyze(
                 .find(|c_par| c_par.name == lib_par.name)
             {
                 out.lib_par.set_typ(c_par.typ);
-                out.lib_par.nullable = c_par.nullable;
+                out.lib_par.set_nullable(c_par.nullable);
             }
 
             info.params.push(out);
@@ -115,7 +115,7 @@ pub fn analyze(
             ret.lib_par.set_typ(par.lib_par.typ());
         }
         if let Some(val) = nullable_override {
-            ret.lib_par.nullable = val;
+            ret.lib_par.set_nullable(val);
         }
         info.params.insert(0, ret);
     }

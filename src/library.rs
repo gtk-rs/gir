@@ -533,6 +533,14 @@ impl Parameter {
     pub fn set_typ(&mut self, typ: TypeId) {
         self.typ = typ;
     }
+
+    pub fn is_nullable(&self) -> bool {
+        self.nullable
+    }
+
+    pub fn set_nullable(&mut self, nullable: bool) {
+        self.nullable = nullable;
+    }
 }
 
 #[derive(Debug)]
