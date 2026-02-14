@@ -348,7 +348,7 @@ fn analyze_property(
                         .find_type(library::INTERNAL_NAMESPACE, "none")
                         .unwrap(),
                     c_type: "none".into(),
-                    instance_parameter: false,
+                    is_instance_parameter: false,
                     direction: library::ParameterDirection::Return,
                     transfer: library::Transfer::None,
                     caller_allocates: false,
