@@ -78,9 +78,11 @@ impl Library {
 
         fn update_empty_signal_c_types(signal: &mut Signal, c_types: &DetectedCTypes) {
             for par in &mut signal.parameters {
-                update_empty_c_type(&mut par.c_type, par.typ, c_types);
+                let par_typ = par.typ();
+                update_empty_c_type(&mut par.c_type, par_typ, c_types);
             }
-            update_empty_c_type(&mut signal.ret.c_type, signal.ret.typ, c_types);
+            let signal_ret_typ = signal.ret.typ();
+            update_empty_c_type(&mut signal.ret.c_type, signal_ret_typ, c_types);
         }
 
         fn update_empty_c_type(c_type: &mut String, tid: TypeId, c_types: &DetectedCTypes) {
@@ -145,11 +147,11 @@ impl Library {
     fn detect_empty_signal_c_types(&self, signal: &Signal, c_types: &mut DetectedCTypes) -> bool {
         let mut detected = false;
         for par in &signal.parameters {
-            if self.detect_empty_c_type(&par.c_type, par.typ, c_types) {
+            if self.detect_empty_c_type(&par.c_type, par.typ(), c_types) {
                 detected = true;
             }
         }
-        if self.detect_empty_c_type(&signal.ret.c_type, signal.ret.typ, c_types) {
+        if self.detect_empty_c_type(&signal.ret.c_type, signal.ret.typ(), c_types) {
             detected = true;
         }
         detected

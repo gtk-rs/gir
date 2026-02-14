@@ -32,7 +32,7 @@ impl From<&analysis::Parameter> for Parameter {
     fn from(orig: &analysis::Parameter) -> Self {
         Self {
             name: orig.lib_par.name.clone(),
-            typ: orig.lib_par.typ,
+            typ: orig.lib_par.typ(),
             transfer: orig.lib_par.transfer,
             caller_allocates: orig.lib_par.caller_allocates,
             is_error: orig.lib_par.is_error,

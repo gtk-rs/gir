@@ -514,7 +514,7 @@ fn analyze_callbacks(
     if !destroys.is_empty() || !callbacks.is_empty() {
         for (pos, typ) in to_replace {
             let ty = env.library.type_(typ);
-            params[pos].typ = typ;
+            params[pos].set_typ(typ);
             params[pos].c_type = ty.get_glib_name().unwrap().to_owned();
         }
         let mut s = to_remove
@@ -569,7 +569,7 @@ fn analyze_function(
         && func
             .parameters
             .iter()
-            .any(|par| env.library.type_(par.typ).is_function());
+            .any(|par| env.library.type_(par.typ()).is_function());
     let concurrency = match env.library.type_(type_tid) {
         library::Type::Class(_) | library::Type::Interface(_) | library::Type::Record(_) => {
             obj.concurrency
@@ -632,8 +632,8 @@ fn analyze_function(
                 .filter(|param| library::ParameterDirection::In == param.direction)
                 .fold(0, |acc, _| acc + 1);
             let is_bool_getter = (func.parameters.len() == nb_in_params)
-                && (func.ret.typ == library::TypeId::tid_bool()
-                    || func.ret.typ == library::TypeId::tid_c_bool());
+                && (func.ret.typ() == library::TypeId::tid_bool()
+                    || func.ret.typ() == library::TypeId::tid_c_bool());
             new_name = getter_rules::try_rename_would_be_getter(&name, is_bool_getter)
                 .ok()
                 .map(getter_rules::NewName::unwrap);
@@ -697,7 +697,7 @@ fn analyze_function(
     parameters.analyze_return(env, &ret.parameter);
 
     if let Some(ref f) = ret.parameter
-        && let Type::Function(_) = env.library.type_(f.lib_par.typ)
+        && let Type::Function(_) = env.library.type_(f.lib_par.typ())
         && env.config.work_mode.is_normal()
     {
         warn!("Function \"{}\" returns callback", func.name);
@@ -859,7 +859,7 @@ fn analyze_function(
 
         if let Some(ref trampoline) = trampoline {
             for out in &trampoline.output_params {
-                if let Ok(rust_type) = RustType::builder(env, out.lib_par.typ)
+                if let Ok(rust_type) = RustType::builder(env, out.lib_par.typ())
                     .direction(ParameterDirection::Out)
                     .try_build()
                 {
@@ -867,7 +867,7 @@ fn analyze_function(
                 }
             }
             if let Some(ref out) = trampoline.ffi_ret
-                && let Ok(rust_type) = RustType::builder(env, out.lib_par.typ)
+                && let Ok(rust_type) = RustType::builder(env, out.lib_par.typ())
                     .direction(ParameterDirection::Return)
                     .try_build()
             {
@@ -993,7 +993,7 @@ fn analyze_async(
         if let Some(function) = find_function(env, &finish_func_name) {
             if use_function_return_for_result(
                 env,
-                function.ret.typ,
+                function.ret.typ(),
                 &func.name,
                 configured_functions,
             ) {
@@ -1183,7 +1183,7 @@ fn analyze_callback(
                 imports_to_add.extend(rust_type.into_used_types());
             }
         }
-        if let Ok(rust_type) = RustType::builder(env, func.ret.typ)
+        if let Ok(rust_type) = RustType::builder(env, func.ret.typ())
             .direction(ParameterDirection::Return)
             .try_build()
             && !rust_type.as_str().ends_with("GString")

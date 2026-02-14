@@ -447,7 +447,7 @@ mod tests {
         },
         *,
     };
-    use crate::{version::Version};
+    use crate::version::Version;
 
     fn functions_toml(input: &str) -> ::toml::Value {
         let mut value: ::toml::value::Table = ::toml::from_str(input).unwrap();

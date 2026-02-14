@@ -73,7 +73,7 @@ pub fn analyze(
 
     // TODO: move to object.signal.return config
     let inhibit = configured_signals.iter().any(|f| f.inhibit);
-    if inhibit && signal.ret.typ != library::TypeId::tid_bool() {
+    if inhibit && signal.ret.typ() != library::TypeId::tid_bool() {
         error!("Wrong return type for Inhibit for signal '{}'", signal.name);
     }
 
@@ -162,15 +162,15 @@ pub fn analyze(
 
     let mut ret_nullable = signal.ret.nullable;
 
-    if signal.ret.typ != Default::default() {
-        if let Ok(rust_type) = RustType::builder(env, signal.ret.typ)
+    if signal.ret.typ() != Default::default() {
+        if let Ok(rust_type) = RustType::builder(env, signal.ret.typ())
             .direction(library::ParameterDirection::Out)
             .try_build()
         {
             // No GString
             used_types.extend(rust_type.into_used_types());
         }
-        if let Some(ffi_type) = used_ffi_type(env, signal.ret.typ, &signal.ret.c_type) {
+        if let Some(ffi_type) = used_ffi_type(env, signal.ret.typ(), &signal.ret.c_type) {
             used_types.push(ffi_type);
         }
 
@@ -218,17 +218,17 @@ fn closure_errors(env: &Env, signal: &library::Signal) -> Vec<String> {
                 "{} {}: {}",
                 error,
                 par.name,
-                par.typ.full_name(&env.library)
+                par.typ().full_name(&env.library)
             ));
         }
     }
-    if signal.ret.typ != Default::default()
+    if signal.ret.typ() != Default::default()
         && let Some(error) = type_error(env, &signal.ret)
     {
         errors.push(format!(
             "{} return value {}",
             error,
-            signal.ret.typ.full_name(&env.library)
+            signal.ret.typ().full_name(&env.library)
         ));
     }
     errors
@@ -242,10 +242,10 @@ pub fn type_error(env: &Env, par: &library::Parameter) -> Option<&'static str> {
         Some("InOut")
     } else if is_empty_c_type(&par.c_type) {
         Some("Empty ctype")
-    } else if ConversionType::of(env, par.typ) == ConversionType::Unknown {
+    } else if ConversionType::of(env, par.typ()) == ConversionType::Unknown {
         Some("Unknown conversion")
     } else {
-        match RustType::try_new(env, par.typ) {
+        match RustType::try_new(env, par.typ()) {
             Err(Ignored(_)) => Some("Ignored"),
             Err(Mismatch(_)) => Some("Mismatch"),
             Err(Unimplemented(_)) => Some("Unimplemented"),

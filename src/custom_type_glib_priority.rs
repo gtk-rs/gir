@@ -45,8 +45,8 @@ impl FunctionsMutVisitor for ReplaceToPriority {
             return true;
         }
         for par in &mut func.parameters {
-            if par.typ == self.tid_int && par.name.ends_with("priority") {
-                par.typ = self.tid_priority;
+            if par.typ() == self.tid_int && par.name.ends_with("priority") {
+                par.set_typ(self.tid_priority);
             }
         }
         true

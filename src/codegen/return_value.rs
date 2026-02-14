@@ -27,7 +27,7 @@ impl ToReturnValue for library::Parameter {
         try_from_glib: &TryFromGlib,
         is_trampoline: bool,
     ) -> Option<String> {
-        let mut name = RustType::builder(env, self.typ)
+        let mut name = RustType::builder(env, self.typ())
             .direction(self.direction)
             .nullable(self.nullable)
             .scope(self.scope)
@@ -40,7 +40,7 @@ impl ToReturnValue for library::Parameter {
         {
             name = "String".to_owned();
         }
-        let type_str = match ConversionType::of(env, self.typ) {
+        let type_str = match ConversionType::of(env, self.typ()) {
             ConversionType::Unknown => format!("/*Unknown conversion*/{name}"),
             // TODO: records as in gtk_container_get_path_for_child
             _ => name,
@@ -136,13 +136,13 @@ pub fn out_parameter_types(analysis: &analysis::functions::Info) -> Vec<TypeId> 
                             continue;
                         }
                     }
-                    ret_params.push(out.lib_par.typ);
+                    ret_params.push(out.lib_par.typ());
                 }
                 ret_params
             }
             _ => Vec::new(),
         }
-    } else if let Some(typ) = analysis.ret.parameter.as_ref().map(|out| out.lib_par.typ) {
+    } else if let Some(typ) = analysis.ret.parameter.as_ref().map(|out| out.lib_par.typ()) {
         vec![typ]
     } else {
         Vec::new()
@@ -258,14 +258,14 @@ pub fn out_parameters_as_return(env: &Env, analysis: &analysis::functions::Info)
 
 fn out_parameter_as_return(out: &analysis::Parameter, env: &Env) -> String {
     // TODO: upcasts?
-    let name = RustType::builder(env, out.lib_par.typ)
+    let name = RustType::builder(env, out.lib_par.typ())
         .direction(ParameterDirection::Return)
         .nullable(out.lib_par.nullable)
         .scope(out.lib_par.scope)
         .try_from_glib(&out.try_from_glib)
         .try_build_param()
         .into_string();
-    match ConversionType::of(env, out.lib_par.typ) {
+    match ConversionType::of(env, out.lib_par.typ()) {
         ConversionType::Unknown => format!("/*Unknown conversion*/{name}"),
         _ => name,
     }

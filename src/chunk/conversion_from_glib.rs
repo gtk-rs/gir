@@ -24,7 +24,7 @@ impl From<&parameter_ffi_call_out::Parameter> for Mode {
 impl From<&analysis::Parameter> for Mode {
     fn from(orig: &analysis::Parameter) -> Mode {
         Mode {
-            typ: orig.lib_par.typ,
+            typ: orig.lib_par.typ(),
             transfer: orig.lib_par.transfer,
             try_from_glib: orig.try_from_glib.clone(),
         }
