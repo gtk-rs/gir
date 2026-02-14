@@ -509,7 +509,7 @@ pub struct Parameter {
     pub name: String,
     pub typ: TypeId,
     pub c_type: String,
-    pub instance_parameter: bool,
+    pub is_instance_parameter: bool,
     pub direction: ParameterDirection,
     pub transfer: Transfer,
     pub caller_allocates: bool,

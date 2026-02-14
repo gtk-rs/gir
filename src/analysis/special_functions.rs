@@ -90,7 +90,7 @@ fn is_stringify(func: &mut FuncInfo, parent_type: &LibType, obj: &GObject) -> bo
     if func.parameters.c_parameters.len() != 1 {
         return false;
     }
-    if !func.parameters.c_parameters[0].instance_parameter {
+    if !func.parameters.c_parameters[0].is_instance_parameter {
         return false;
     }
 
