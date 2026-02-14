@@ -17,7 +17,7 @@ use crate::{
         ref_mode::RefMode, rust_type::RustType, safety_assertion_mode::SafetyAssertionMode,
     },
     env::Env,
-    library::{self, Nullable},
+    library::{self},
     nameutil,
     traits::IntoString,
 };
@@ -389,7 +389,7 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                     let (bounds, _) = function::bounds(&property.bounds, &[], false, false);
                     let param_bound = property.bounds.get_parameter_bound(&property.name);
                     let alias = param_bound.map(|bound| {
-                        bound.full_type_parameter_reference(RefMode::ByRef, Nullable(false), false)
+                        bound.full_type_parameter_reference(RefMode::ByRef, false, false)
                     });
                     let conversion = param_bound.and_then(|bound| match bound.bound_type {
                         BoundType::AsRef(_) => Some(".as_ref().clone()"),

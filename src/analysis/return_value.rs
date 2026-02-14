@@ -7,7 +7,7 @@ use crate::{
     },
     config,
     env::Env,
-    library::{self, Nullable, TypeId},
+    library::{self, TypeId},
 };
 
 #[derive(Clone, Debug, Default)]
@@ -40,8 +40,8 @@ pub fn analyze(
         if !obj.trust_return_value_nullability {
             // Since GIRs are bad at specifying return value nullability, assume
             // any returned pointer is nullable unless overridden by the config.
-            if !*nullable && can_be_nullable_return(env, typ) {
-                *nullable = true;
+            if !nullable && can_be_nullable_return(env, typ) {
+                nullable = true;
             }
         }
 
@@ -84,7 +84,7 @@ pub fn analyze(
         .iter()
         .find_map(|f| f.ret.nullable_return_is_error.as_ref());
     let nullable_return_error_message = nullable_return_is_error.and_then(|m| {
-        if let Some(library::Parameter { nullable: Nullable(false), ..}) = parameter {
+        if let Some(library::Parameter { nullable: false, ..}) = parameter {
             error!(
                 "Ignoring nullable_return_is_error configuration for non-none returning function {}",
                 func.name

@@ -374,7 +374,7 @@ fn analyze_callbacks(
                 used_types.extend(rust_type.into_used_types());
             }
             let rust_type = env.library.type_(par.typ);
-            let callback_info = if !*par.nullable || !rust_type.is_function() {
+            let callback_info = if !par.nullable || !rust_type.is_function() {
                 let (to_glib_extra, callback_info) = bounds.add_for_parameter(
                     env,
                     func,

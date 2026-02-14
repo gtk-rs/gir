@@ -448,7 +448,7 @@ pub fn body_chunk_futures(
 
         if is_slice {
             writeln!(body, "let {} = {}.to_vec();", par.name, par.name)?;
-        } else if *c_par.nullable {
+        } else if c_par.nullable {
             writeln!(
                 body,
                 "let {} = {}.map(ToOwned::to_owned);",
@@ -492,7 +492,7 @@ pub fn body_chunk_futures(
         } else {
             let c_par = &analysis.parameters.c_parameters[par.ind_c];
 
-            if *c_par.nullable {
+            if c_par.nullable {
                 writeln!(
                     body,
                     "\t\t{}.as_ref().map(::std::borrow::Borrow::borrow),",

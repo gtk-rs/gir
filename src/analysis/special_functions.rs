@@ -113,12 +113,12 @@ fn is_stringify(func: &mut FuncInfo, parent_type: &LibType, obj: &GObject) -> bo
             if !obj.trust_return_value_nullability
                 && !matches!(parent_type, LibType::Enumeration(_) | LibType::Bitfield(_))
             {
-                *ret.lib_par.nullable = false;
+                ret.lib_par.nullable = false;
             }
         }
 
         // Cannot generate Display implementation for Option<>
-        !*ret.lib_par.nullable
+        !ret.lib_par.nullable
     } else {
         false
     }

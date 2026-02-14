@@ -25,7 +25,7 @@ pub struct Property {
     pub is_get: bool,
     pub func_name: String,
     pub func_name_alias: Option<String>,
-    pub nullable: library::Nullable,
+    pub nullable: bool,
     pub get_out_ref_mode: RefMode,
     pub set_in_ref_mode: RefMode,
     pub bounds: Bounds,
@@ -291,7 +291,7 @@ fn analyze_property(
         let set_bound = PropertyBound::get(env, prop.typ);
         if type_string.is_ok() && set_bound.is_some() {
             imports.add("glib::prelude::*");
-            if !*nullable {
+            if !nullable {
                 // TODO: support non-nullable setter if found any
                 warn!(
                     "Non nullable setter for property generated as nullable \"{type_name}.{name}\""
@@ -352,7 +352,7 @@ fn analyze_property(
                     direction: library::ParameterDirection::Return,
                     transfer: library::Transfer::None,
                     caller_allocates: false,
-                    nullable: library::Nullable(false),
+                    nullable: false,
                     array_length: None,
                     is_error: false,
                     doc: None,
@@ -442,15 +442,12 @@ fn get_func_name(prop_name: &str, is_bool_getter: bool) -> (Vec<String>, String)
     }
 }
 
-pub fn get_property_ref_modes(
-    env: &Env,
-    prop: &library::Property,
-) -> (RefMode, RefMode, library::Nullable) {
+pub fn get_property_ref_modes(env: &Env, prop: &library::Property) -> (RefMode, RefMode, bool) {
     let get_out_ref_mode = RefMode::of(env, prop.typ, library::ParameterDirection::Return);
     let mut set_in_ref_mode = RefMode::of(env, prop.typ, library::ParameterDirection::In);
     if set_in_ref_mode == RefMode::ByRefMut {
         set_in_ref_mode = RefMode::ByRef;
     }
-    let nullable = library::Nullable(set_in_ref_mode.is_ref());
+    let nullable = set_in_ref_mode.is_ref();
     (get_out_ref_mode, set_in_ref_mode, nullable)
 }

@@ -1041,7 +1041,7 @@ pub fn declare_default_from_new(
             && f.status.need_generate()
             && f.name == "new"
             // Cannot generate Default implementation for Option<>
-            && f.ret.parameter.as_ref().is_some_and(|x| !*x.lib_par.nullable)
+            && f.ret.parameter.as_ref().is_some_and(|x| !x.lib_par.nullable)
             // Cannot generate Default implementation for Result<>
             && f.outs.mode != Mode::Throws(ThrowFunctionReturnStrategy::ReturnResult)
     }) {

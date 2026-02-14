@@ -432,7 +432,7 @@ impl Builder {
             let nullable = trampoline.parameters.rust_parameters[par.ind_rust].nullable;
             let is_basic = add_chunk_for_type(env, par.typ, par, &mut body, &ty_name, nullable);
             if is_gstring(&ty_name) {
-                if *nullable {
+                if nullable {
                     arguments.push(Chunk::Name(format!(
                         "(*{}).as_ref().map(|s| s.as_str())",
                         par.name
@@ -442,7 +442,7 @@ impl Builder {
                 }
                 continue;
             }
-            if *nullable && !is_basic {
+            if nullable && !is_basic {
                 arguments.push(Chunk::Name(format!("{}.as_ref().as_ref()", par.name)));
                 continue;
             }
@@ -506,14 +506,14 @@ impl Builder {
                         } else {
                             String::new()
                         },
-                        if *trampoline.nullable {
+                        if trampoline.nullable {
                             ".expect(\"cannot get closure...\")"
                         } else {
                             ""
                         }
                     )));
                 } else if !trampoline.scope.is_call() {
-                    if *trampoline.nullable {
+                    if trampoline.nullable {
                         body.push(Chunk::Custom(format!(
                             "if let Some(ref callback) = callback{} {{",
                             if let Some(pos) = pos {
@@ -532,7 +532,7 @@ impl Builder {
                             }
                         )));
                     }
-                } else if !trampoline.scope.is_async() && *trampoline.nullable {
+                } else if !trampoline.scope.is_async() && trampoline.nullable {
                     body.push(Chunk::Custom(format!(
                         "if let Some(ref {}callback) = {} {{",
                         if trampoline.scope.is_call() {
@@ -563,7 +563,7 @@ impl Builder {
                 )),
                 type_: None,
             });
-            if !is_destroy && *trampoline.nullable {
+            if !is_destroy && trampoline.nullable {
                 if trampoline.scope.is_async() {
                     body.push(Chunk::Custom(
                         "let callback = (*callback).expect(\"cannot get closure...\");".to_owned(),
@@ -589,7 +589,7 @@ impl Builder {
             use crate::writer::to_code::ToCode;
             body.push(Chunk::Custom(format!(
                 "{}({})",
-                if !*trampoline.nullable {
+                if !trampoline.nullable {
                     "(*callback)"
                 } else if trampoline.scope.is_async() {
                     "callback"
@@ -602,7 +602,7 @@ impl Builder {
                     .collect::<Vec<_>>()
                     .join(", "),
             )));
-            if !trampoline.scope.is_async() && *trampoline.nullable {
+            if !trampoline.scope.is_async() && trampoline.nullable {
                 body.push(Chunk::Custom("} else {".to_owned()));
                 body.push(Chunk::Custom(
                     "\tpanic!(\"cannot get closure...\")".to_owned(),
@@ -660,7 +660,7 @@ impl Builder {
             format!("::<{bounds_names}>")
         };
         if !is_destroy {
-            if *trampoline.nullable {
+            if trampoline.nullable {
                 chunks.push(Chunk::Custom(format!(
                     "let {0} = if {0}_data.is_some() {{ Some({0}_func{1} as _) }} else {{ None }};",
                     trampoline.name, bounds_str
@@ -1341,7 +1341,7 @@ fn add_chunk_for_type(
     par: &trampoline_parameters::Transformation,
     body: &mut Vec<Chunk>,
     ty_name: &str,
-    nullable: library::Nullable,
+    nullable: bool,
 ) -> bool {
     let type_ = env.type_(typ_);
     match type_ {
@@ -1375,7 +1375,7 @@ fn add_chunk_for_type(
 
             let type_name;
             if is_gstring(ty_name) {
-                if *nullable {
+                if nullable {
                     if par.conversion_type == ConversionType::Borrow {
                         type_name = String::from(": Borrowed<Option<glib::GString>>");
                     } else {
@@ -1386,7 +1386,7 @@ fn add_chunk_for_type(
                 } else {
                     type_name = String::from(": GString");
                 }
-            } else if par.transfer == library::Transfer::None && *nullable {
+            } else if par.transfer == library::Transfer::None && nullable {
                 if par.conversion_type == ConversionType::Borrow {
                     type_name = format!(": Borrowed<Option<{ty_name}>>");
                 } else {

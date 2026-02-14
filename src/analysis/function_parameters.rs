@@ -9,7 +9,7 @@ use crate::{
     analysis::{self, bounds::Bounds},
     config::{self, parameter_matchable::ParameterMatchable},
     env::Env,
-    library::{self, Nullable, ParameterScope, Transfer, TypeId},
+    library::{self, ParameterScope, Transfer, TypeId},
     nameutil,
     traits::IntoString,
 };
@@ -59,7 +59,7 @@ pub struct CParameter {
     pub c_type: String,
     pub instance_parameter: bool,
     pub direction: library::ParameterDirection,
-    pub nullable: library::Nullable,
+    pub nullable: bool,
     pub transfer: library::Transfer,
     pub caller_allocates: bool,
     pub is_error: bool,
@@ -83,7 +83,7 @@ pub enum TransformationType {
     },
     ToGlibScalar {
         name: String,
-        nullable: library::Nullable,
+        nullable: bool,
         needs_into: bool,
     },
     ToGlibPointer {
@@ -289,7 +289,7 @@ pub fn analyze(
                 array_name = (array_name.into_owned()
                     + &Bounds::get_to_glib_extra(
                         &bound_type,
-                        *array_par.nullable,
+                        array_par.nullable,
                         array_par.instance_parameter,
                         move_,
                     ))
@@ -373,7 +373,7 @@ pub fn analyze(
                 };
                 TransformationType::ToGlibScalar {
                     name,
-                    nullable: Nullable(false),
+                    nullable: false,
                     needs_into,
                 }
             }
@@ -385,7 +385,7 @@ pub fn analyze(
                 };
                 TransformationType::ToGlibScalar {
                     name,
-                    nullable: Nullable(false),
+                    nullable: false,
                     needs_into,
                 }
             }
@@ -404,7 +404,7 @@ pub fn analyze(
                     Default::default()
                 },
                 in_trait,
-                nullable: *nullable,
+                nullable,
                 move_,
             },
             ConversionType::Borrow => TransformationType::ToGlibBorrow,
