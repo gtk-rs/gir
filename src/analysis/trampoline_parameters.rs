@@ -14,7 +14,7 @@ pub struct RustParameter {
     pub name: String,
     pub typ: library::TypeId,
     pub direction: library::ParameterDirection,
-    pub nullable: library::Nullable,
+    pub nullable: bool,
     pub ref_mode: RefMode,
     pub try_from_glib: TryFromGlib,
 }
@@ -68,7 +68,7 @@ impl Parameters {
         c_type: String,
         direction: library::ParameterDirection,
         transfer: library::Transfer,
-        nullable: library::Nullable,
+        nullable: bool,
         ref_mode: RefMode,
         conversion_type: ConversionType,
     ) -> Transformation {
@@ -129,7 +129,7 @@ pub fn analyze(
         c_type,
         library::ParameterDirection::In,
         library::Transfer::None,
-        library::Nullable(false),
+        false,
         RefMode::ByRef,
         ConversionType::Borrow,
     );

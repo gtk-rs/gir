@@ -23,7 +23,7 @@ pub struct ChildProperty {
     pub typ: library::TypeId,
     pub child_name: String,
     pub child_type: Option<library::TypeId>,
-    pub nullable: library::Nullable,
+    pub nullable: bool,
     pub get_out_ref_mode: RefMode,
     pub set_in_ref_mode: RefMode,
     pub doc_hidden: bool,
@@ -117,7 +117,7 @@ fn analyze_property(
         if set_in_ref_mode == RefMode::ByRefMut {
             set_in_ref_mode = RefMode::ByRef;
         }
-        let nullable = library::Nullable(set_in_ref_mode.is_ref());
+        let nullable = set_in_ref_mode.is_ref();
 
         let mut bounds_str = String::new();
         let dir = ParameterDirection::In;

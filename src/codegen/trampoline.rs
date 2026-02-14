@@ -242,7 +242,7 @@ fn trampoline_call_parameters(env: &Env, analysis: &Trampoline, in_trait: bool) 
                 continue;
             }
         };
-        let par_str = transformation.trampoline_from_glib(env, need_downcast, *par.nullable);
+        let par_str = transformation.trampoline_from_glib(env, need_downcast, par.nullable);
         parameter_strs.push(par_str);
         need_downcast = false; // Only downcast first parameter
     }

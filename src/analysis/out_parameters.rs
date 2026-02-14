@@ -9,9 +9,7 @@ use crate::{
     },
     config::{self, parameter_matchable::ParameterMatchable},
     env::Env,
-    library::{
-        self, Basic, Function, INTERNAL_NAMESPACE, Nullable, ParameterDirection, Type, TypeId,
-    },
+    library::{self, Basic, Function, INTERNAL_NAMESPACE, ParameterDirection, Type, TypeId},
     nameutil,
 };
 
@@ -67,7 +65,7 @@ pub fn analyze(
     } else if func.ret.typ == TypeId::tid_none() {
         info.mode = Mode::Normal;
     } else if func.ret.typ == TypeId::tid_bool() || func.ret.typ == TypeId::tid_c_bool() {
-        if nullable_override == Some(Nullable(false)) {
+        if nullable_override == Some(false) {
             info.mode = Mode::Combined;
         } else {
             info.mode = Mode::Optional;
