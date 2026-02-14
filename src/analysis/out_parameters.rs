@@ -79,8 +79,9 @@ pub fn analyze(
             continue;
         }
         if can_as_return(env, lib_par) {
+            let new_name = nameutil::mangle_keywords(lib_par.name());
             let mut lib_par = lib_par.clone();
-            lib_par.set_name(&nameutil::mangle_keywords(lib_par.name()).into_owned());
+            lib_par.set_name(&new_name);
             let configured_parameters = configured_functions.matched_parameters(lib_par.name());
             let mut out = analysis::Parameter::from_parameter(env, lib_par, &configured_parameters);
 

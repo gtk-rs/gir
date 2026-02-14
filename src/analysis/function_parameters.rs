@@ -220,7 +220,7 @@ pub fn analyze(
         let name = if is_instance_parameter {
             par.name().to_owned()
         } else {
-            nameutil::mangle_keywords(par.name()).to_string()
+            nameutil::mangle_keywords(par.name()).into_owned()
         };
         if is_instance_parameter {
             correction_instance = 1;

@@ -52,9 +52,7 @@ impl Library {
         );
         for dir in dirs {
             let dir: &Path = dir.as_ref();
-            let file_name = make_file_name(dir, &libs[libs.len() - 1])
-                .canonicalize()
-                .unwrap();
+            let file_name = make_file_name(dir, &libs[libs.len() - 1]);
             warn!("repo {}", file_name.display());
             let Ok(mut repo) = Repository::from_path(&file_name) else {
                 warn!("couldn't parse repository");
@@ -1336,11 +1334,13 @@ impl Library {
             trace!("Trying to find type {type_name}, array={:#?}", elem);
             let (tid, c_type, _) = self.read_type(ns_id, elem.ty())?;
             Type::c_array(self, tid, elem.fixed_size(), c_type)
+        } else if type_name == "GLib.ByteArray" {
+            self.find_or_stub_type(ns_id, type_name)
         } else {
-            // let inner = inner.iter().map(|r| r.0).collect();
-            // Type::container(self, type_name, inner)
-            //     .ok_or_else(|| String::from("Unknown container type"))?
-            panic!("container type!")
+            let inner = elem.ty();
+            let (inner_ty, _c_type, _) = self.read_type(ns_id, inner)?;
+            Type::container(self, type_name, vec![inner_ty])
+                .ok_or_else(|| format!("Unknown container type {type_name} {:?}", elem.c_type()))?
         };
         Ok((tid, elem.c_type().map(ToOwned::to_owned), array_length))
     }

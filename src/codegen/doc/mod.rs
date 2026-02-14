@@ -881,7 +881,7 @@ where
 
     let mut st = fn_.to_stripper_type();
     if let Some(name_override) = name_override {
-        st.name = nameutil::mangle_keywords(name_override).to_string();
+        st.name = nameutil::mangle_keywords(name_override).into_owned();
     }
     let ty = TypeStruct { parent, ..st };
     let self_name = fn_
