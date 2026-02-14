@@ -607,7 +607,7 @@ impl Library {
                 name: "error".into(),
                 typ: self.find_or_stub_type(ns_id, "GLib.Error"),
                 c_type: "GError**".into(),
-                instance_parameter: false,
+                is_instance_parameter: false,
                 direction: ParameterDirection::Out,
                 transfer: Transfer::Full,
                 caller_allocates: false,
@@ -1140,7 +1140,7 @@ impl Library {
                 name: "error".into(),
                 typ: self.find_or_stub_type(ns_id, "GLib.Error"),
                 c_type: "GError**".into(),
-                instance_parameter: false,
+                is_instance_parameter: false,
                 direction: ParameterDirection::Out,
                 transfer: Transfer::Full,
                 caller_allocates: false,
@@ -1300,7 +1300,7 @@ impl Library {
         for_method: bool,
     ) -> Result<Parameter, String> {
         let param_name = elem.attr("name").unwrap_or("");
-        let instance_parameter = elem.name() == "instance-parameter";
+        let is_instance_parameter = elem.name() == "instance-parameter";
         let transfer = elem
             .attr_from_str("transfer-ownership")?
             .unwrap_or(Transfer::None);
@@ -1358,7 +1358,7 @@ impl Library {
                 name: param_name.into(),
                 typ: tid,
                 c_type: c_type.unwrap(),
-                instance_parameter,
+                is_instance_parameter,
                 direction,
                 transfer,
                 caller_allocates,
@@ -1375,7 +1375,7 @@ impl Library {
                 name: String::new(),
                 typ: self.find_type(INTERNAL_NAMESPACE, "varargs").unwrap(),
                 c_type: String::new(),
-                instance_parameter,
+                is_instance_parameter,
                 direction: Default::default(),
                 transfer: Transfer::None,
                 caller_allocates: false,

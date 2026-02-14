@@ -57,7 +57,7 @@ pub struct CParameter {
     pub name: String,
     pub typ: TypeId,
     pub c_type: String,
-    pub instance_parameter: bool,
+    pub is_instance_parameter: bool,
     pub direction: library::ParameterDirection,
     pub nullable: bool,
     pub transfer: library::Transfer,
@@ -88,7 +88,7 @@ pub enum TransformationType {
     },
     ToGlibPointer {
         name: String,
-        instance_parameter: bool,
+        is_instance_parameter: bool,
         transfer: library::Transfer,
         ref_mode: RefMode,
         // filled by functions
@@ -214,12 +214,12 @@ pub fn analyze(
     }
 
     for (pos, par) in function_parameters.iter().enumerate() {
-        let name = if par.instance_parameter {
+        let name = if par.is_instance_parameter {
             par.name.clone()
         } else {
             nameutil::mangle_keywords(&*par.name).into_owned()
         };
-        if par.instance_parameter {
+        if par.is_instance_parameter {
             correction_instance = 1;
         }
 
@@ -290,7 +290,7 @@ pub fn analyze(
                     + &Bounds::get_to_glib_extra(
                         &bound_type,
                         array_par.is_nullable(),
-                        array_par.instance_parameter,
+                        array_par.is_instance_parameter,
                         move_,
                     ))
                     .into();
@@ -308,7 +308,7 @@ pub fn analyze(
 
         let immutable = configured_parameters.iter().any(|p| p.constant);
         let ref_mode =
-            RefMode::without_unneeded_mut(env, par, immutable, in_trait && par.instance_parameter);
+            RefMode::without_unneeded_mut(env, par, immutable, in_trait && par.is_instance_parameter);
 
         let nullable_override = configured_parameters.iter().find_map(|p| p.nullable);
         let nullable = nullable_override.unwrap_or(par.is_nullable());
@@ -319,7 +319,7 @@ pub fn analyze(
             name: name.clone(),
             typ,
             c_type,
-            instance_parameter: par.instance_parameter,
+            is_instance_parameter: par.is_instance_parameter,
             direction: par.direction,
             transfer,
             caller_allocates,
@@ -391,7 +391,7 @@ pub fn analyze(
             }
             ConversionType::Pointer => TransformationType::ToGlibPointer {
                 name,
-                instance_parameter: par.instance_parameter,
+                is_instance_parameter: par.is_instance_parameter,
                 transfer,
                 ref_mode,
                 to_glib_extra: Default::default(),

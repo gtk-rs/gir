@@ -97,12 +97,12 @@ impl Bounds {
         let mut ret = None;
         let mut need_is_into_check = false;
 
-        if !par.instance_parameter && par.direction != ParameterDirection::Out {
+        if !par.is_instance_parameter && par.direction != ParameterDirection::Out {
             if let Some(bound_type) = Bounds::type_for(env, par.typ) {
                 ret = Some(Bounds::get_to_glib_extra(
                     &bound_type,
                     par.nullable,
-                    par.instance_parameter,
+                    par.is_instance_parameter,
                     par.move_,
                 ));
                 if r#async && (par.name == "callback" || par.name.ends_with("_callback")) {
@@ -191,7 +191,7 @@ impl Bounds {
                     self.add_parameter(&par.name, &type_string, bound_type, r#async);
                 }
             }
-        } else if par.instance_parameter
+        } else if par.is_instance_parameter
             && let Some(bound_type) = Bounds::type_for(env, par.typ)
         {
             ret = Some(Bounds::get_to_glib_extra(
@@ -229,7 +229,7 @@ impl Bounds {
     pub fn get_to_glib_extra(
         bound_type: &BoundType,
         nullable: bool,
-        instance_parameter: bool,
+        is_instance_parameter: bool,
         move_: bool,
     ) -> String {
         use self::BoundType::*;
@@ -239,7 +239,7 @@ impl Bounds {
             AsRef(_) if move_ => ".upcast()".to_owned(),
             AsRef(_) => ".as_ref()".to_owned(),
             IsA(_) if move_ && nullable => ".map(|p| p.upcast())".to_owned(),
-            IsA(_) if nullable && !instance_parameter => ".map(|p| p.as_ref())".to_owned(),
+            IsA(_) if nullable && !is_instance_parameter => ".map(|p| p.as_ref())".to_owned(),
             IsA(_) if move_ => ".upcast()".to_owned(),
             IsA(_) => ".as_ref()".to_owned(),
             _ => String::new(),

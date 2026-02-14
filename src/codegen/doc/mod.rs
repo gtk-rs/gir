@@ -471,7 +471,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
         let configured_functions = obj.functions.matched(&function.name);
         let is_manual = configured_functions.iter().any(|f| f.status.manual());
         let (ty, object_location) = if (has_trait || is_manual)
-            && function.parameters.iter().any(|p| p.instance_parameter)
+            && function.parameters.iter().any(|p| p.is_instance_parameter)
             && !info.final_type
         {
             if let Some(struct_name) = configured_functions
@@ -876,7 +876,7 @@ where
     let self_name: Option<String> = fn_
         .parameters()
         .iter()
-        .find(|p| p.instance_parameter)
+        .find(|p| p.is_instance_parameter)
         .map(|p| p.name.clone());
 
     write_item_doc(w, &ty, |w| {
@@ -918,7 +918,7 @@ where
             .filter_map(|(indice, param)| {
                 (!indices_to_ignore.contains(&(indice as u32))).then_some(param)
             })
-            .filter(|param| !param.instance_parameter)
+            .filter(|param| !param.is_instance_parameter)
             .collect();
 
         let in_parameters = no_array_length_params.iter().filter(|param| {

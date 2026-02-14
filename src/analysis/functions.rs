@@ -242,14 +242,14 @@ fn fixup_gpointer_parameter(
 ) {
     use crate::analysis::ffi_type;
 
-    let instance_parameter = idx == 0;
+    let is_instance_parameter = idx == 0;
 
     let glib_name = env.library.type_(type_tid).get_glib_name().unwrap();
     let ffi_name = ffi_type::ffi_type(env, type_tid, glib_name).unwrap();
     let pointer_type = if is_boxed { "*const" } else { "*mut" };
     parameters.rust_parameters[idx].typ = type_tid;
     parameters.c_parameters[idx].typ = type_tid;
-    parameters.c_parameters[idx].instance_parameter = instance_parameter;
+    parameters.c_parameters[idx].is_instance_parameter = is_instance_parameter;
     parameters.c_parameters[idx].ref_mode = RefMode::ByRef;
     parameters.c_parameters[idx].transfer = Transfer::None;
     parameters.transformations[idx] = Transformation {
@@ -257,7 +257,7 @@ fn fixup_gpointer_parameter(
         ind_rust: Some(idx),
         transformation_type: TransformationType::ToGlibPointer {
             name: parameters.rust_parameters[idx].name.clone(),
-            instance_parameter,
+            is_instance_parameter,
             transfer: Transfer::None,
             ref_mode: RefMode::ByRef,
             to_glib_extra: Default::default(),
@@ -343,7 +343,7 @@ fn analyze_callbacks(
         // account the actual closure parameter.
         let mut c_parameters = Vec::new();
         for (pos, par) in parameters.c_parameters.iter().enumerate() {
-            if par.instance_parameter {
+            if par.is_instance_parameter {
                 continue;
             }
             c_parameters.push((par, pos));
@@ -362,7 +362,7 @@ fn analyze_callbacks(
             }
             let par = &parameters.c_parameters[pos];
             assert!(
-                !par.instance_parameter || pos == 0,
+                !par.is_instance_parameter || pos == 0,
                 "Wrong instance parameter in {}",
                 func.c_identifier.as_ref().unwrap()
             );
@@ -734,7 +734,7 @@ fn analyze_function(
                 }
             }
             for (pos, par) in parameters.c_parameters.iter().enumerate() {
-                if par.instance_parameter {
+                if par.is_instance_parameter {
                     correction_instance = 1;
                 }
 
@@ -745,7 +745,7 @@ fn analyze_function(
                     continue;
                 }
                 assert!(
-                    !par.instance_parameter || pos == 0,
+                    !par.is_instance_parameter || pos == 0,
                     "Wrong instance parameter in {}",
                     func.c_identifier.as_ref().unwrap()
                 );
