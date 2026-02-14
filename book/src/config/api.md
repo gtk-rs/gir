@@ -13,8 +13,6 @@ target_path = "."
 # Path where objects generated (defaults to <target_path>/src/auto)
 # auto_path = "src/auto"
 work_mode = "normal"
-# Whether the library uses https://gitlab.gnome.org/GNOME/gi-docgen for its documentation
-use_gi_docgen = false
 generate_safety_asserts = true
 deprecate_by_min_version = true
 # With this option enabled, versions for gir and gir-files saved only to one file to minimize noise,
