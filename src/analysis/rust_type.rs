@@ -5,7 +5,7 @@ use crate::{
     analysis::{record_type::RecordType, ref_mode::RefMode, try_from_glib::TryFromGlib},
     config::functions::{CallbackParameter, CallbackParameters},
     env::Env,
-    library::{self, Nullable, ParameterDirection, ParameterScope},
+    library::{self, ParameterDirection, ParameterScope},
     nameutil::{is_gstring, use_glib_type},
     traits::*,
 };
@@ -185,7 +185,7 @@ pub struct RustTypeBuilder<'env> {
     env: &'env Env,
     type_id: library::TypeId,
     direction: ParameterDirection,
-    nullable: Nullable,
+    nullable: bool,
     ref_mode: RefMode,
     scope: ParameterScope,
     concurrency: library::Concurrency,
@@ -199,7 +199,7 @@ impl<'env> RustTypeBuilder<'env> {
             env,
             type_id,
             direction: ParameterDirection::None,
-            nullable: Nullable(false),
+            nullable: false,
             ref_mode: RefMode::None,
             scope: ParameterScope::None,
             concurrency: library::Concurrency::None,
@@ -213,7 +213,7 @@ impl<'env> RustTypeBuilder<'env> {
         self
     }
 
-    pub fn nullable(mut self, nullable: Nullable) -> Self {
+    pub fn nullable(mut self, nullable: bool) -> Self {
         self.nullable = nullable;
         self
     }
@@ -471,14 +471,14 @@ impl<'env> RustTypeBuilder<'env> {
                                 .unwrap_or_else(|_| RustType::default());
                             params.push(format!(
                                 "{}{}",
-                                if is_basic || *nullable { "" } else { "&" },
+                                if is_basic || nullable { "" } else { "&" },
                                 if !is_gstring(y.as_str()) {
-                                    if !is_basic && *nullable {
+                                    if !is_basic && nullable {
                                         p_rust_type.into_string().replace("Option<", "Option<&")
                                     } else {
                                         p_rust_type.into_string()
                                     }
-                                } else if *nullable {
+                                } else if nullable {
                                     "Option<&str>".to_owned()
                                 } else {
                                     "&str".to_owned()
@@ -512,7 +512,7 @@ impl<'env> RustTypeBuilder<'env> {
                             params.join(", "),
                             if !is_gstring(y.as_str()) {
                                 ret_rust_type.as_str()
-                            } else if *f.ret.nullable {
+                            } else if f.ret.nullable {
                                 "Option<String>"
                             } else {
                                 "String"
@@ -537,7 +537,7 @@ impl<'env> RustTypeBuilder<'env> {
                 if err {
                     return Err(TypeError::Unimplemented(ret));
                 }
-                Ok(if *self.nullable {
+                Ok(if self.nullable {
                     if self.scope.is_call() {
                         format!("Option<&mut dyn {ret}>")
                     } else {
@@ -604,7 +604,7 @@ impl<'env> RustTypeBuilder<'env> {
             }
         }
 
-        if *self.nullable && !skip_option {
+        if self.nullable && !skip_option {
             match ConversionType::of(self.env, self.type_id) {
                 ConversionType::Pointer | ConversionType::Scalar => {
                     rust_type = rust_type.map_any(|rust_type| {

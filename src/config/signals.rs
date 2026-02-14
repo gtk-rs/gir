@@ -12,7 +12,7 @@ use super::{
     parsable::{Parsable, Parse},
 };
 use crate::{
-    library::{self, Nullable},
+    library::{self},
     version::Version,
 };
 
@@ -39,7 +39,7 @@ impl FromStr for TransformationType {
 #[derive(Clone, Debug)]
 pub struct Parameter {
     pub ident: Ident,
-    pub nullable: Option<Nullable>,
+    pub nullable: Option<bool>,
     pub transformation: Option<TransformationType>,
     pub new_name: Option<String>,
 }
@@ -55,10 +55,7 @@ impl Parse for Parameter {
             &format!("parameter {object_name}"),
         );
 
-        let nullable = toml
-            .lookup("nullable")
-            .and_then(Value::as_bool)
-            .map(Nullable);
+        let nullable = toml.lookup("nullable").and_then(Value::as_bool);
         let transformation = toml
             .lookup("transformation")
             .and_then(Value::as_str)

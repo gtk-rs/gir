@@ -37,7 +37,7 @@ pub struct Trampoline {
     /// It's used to group callbacks
     pub user_data_index: usize,
     pub destroy_index: usize,
-    pub nullable: library::Nullable,
+    pub nullable: bool,
     /// This field is used to give the type name when generating the "IsA<X>"
     /// part.
     pub type_name: String,
@@ -113,7 +113,7 @@ pub fn analyze(
             c_type,
             library::ParameterDirection::In,
             library::Transfer::None,
-            library::Nullable(false),
+            false,
             crate::analysis::ref_mode::RefMode::ByRef,
             ConversionType::Borrow,
         );
@@ -204,7 +204,7 @@ pub fn analyze(
         scope: library::ParameterScope::None,
         user_data_index: 0,
         destroy_index: 0,
-        nullable: library::Nullable(false),
+        nullable: false,
         type_name: env.library.type_(type_tid).get_name(),
     };
     Ok(trampoline)

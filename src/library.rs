@@ -3,7 +3,7 @@ use std::{
     collections::{BTreeMap, BTreeSet, HashMap, HashSet},
     fmt,
     iter::Iterator,
-    ops::{Deref, DerefMut},
+    ops::Deref,
     str::FromStr,
 };
 
@@ -115,22 +115,6 @@ impl FromStr for ParameterScope {
             "forever" => Ok(Self::Forever),
             _ => Err(format!("Unknown parameter scope type: {name}")),
         }
-    }
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct Nullable(pub bool);
-
-impl Deref for Nullable {
-    type Target = bool;
-    fn deref(&self) -> &bool {
-        &self.0
-    }
-}
-
-impl DerefMut for Nullable {
-    fn deref_mut(&mut self) -> &mut bool {
-        &mut self.0
     }
 }
 
@@ -529,7 +513,7 @@ pub struct Parameter {
     pub direction: ParameterDirection,
     pub transfer: Transfer,
     pub caller_allocates: bool,
-    pub nullable: Nullable,
+    pub nullable: bool,
     pub array_length: Option<u32>,
     pub is_error: bool,
     pub doc: Option<String>,

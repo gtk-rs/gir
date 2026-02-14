@@ -92,19 +92,19 @@ impl TranslateFromGlib for analysis::return_value::Info {
                         .try_build();
                     let from_glib_xxx = from_glib_xxx(par.lib_par.transfer, None);
 
-                    let prefix = if *par.lib_par.nullable {
+                    let prefix = if par.lib_par.nullable {
                         format!("Option::<{}>::{}", rust_type.into_string(), from_glib_xxx.0)
                     } else {
                         format!("{}::{}", rust_type.into_string(), from_glib_xxx.0)
                     };
-                    let suffix_function = if *par.lib_par.nullable {
+                    let suffix_function = if par.lib_par.nullable {
                         "map(|o| o.unsafe_cast())"
                     } else {
                         "unsafe_cast()"
                     };
 
                     if let Some(ref msg) = self.nullable_return_is_error {
-                        assert!(*par.lib_par.nullable);
+                        assert!(par.lib_par.nullable);
                         (
                             prefix,
                             format!(
@@ -126,7 +126,7 @@ impl TranslateFromGlib for analysis::return_value::Info {
                 None if self.nullable_return_is_error.is_some() => {
                     let res = Mode::from(par).translate_from_glib_as_function(env, array_length);
                     if let Some(ref msg) = self.nullable_return_is_error {
-                        assert!(*par.lib_par.nullable);
+                        assert!(par.lib_par.nullable);
                         (
                             format!("Option::<_>::{}", res.0),
                             format!(

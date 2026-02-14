@@ -101,7 +101,7 @@ impl Bounds {
             if let Some(bound_type) = Bounds::type_for(env, par.typ) {
                 ret = Some(Bounds::get_to_glib_extra(
                     &bound_type,
-                    *par.nullable,
+                    par.nullable,
                     par.instance_parameter,
                     par.move_,
                 ));
@@ -187,7 +187,7 @@ impl Bounds {
                         });
                     }
                 }
-                if (!need_is_into_check || !*par.nullable) && par.c_type != "GDestroyNotify" {
+                if (!need_is_into_check || !par.nullable) && par.c_type != "GDestroyNotify" {
                     self.add_parameter(&par.name, &type_string, bound_type, r#async);
                 }
             }
@@ -196,7 +196,7 @@ impl Bounds {
         {
             ret = Some(Bounds::get_to_glib_extra(
                 &bound_type,
-                *par.nullable,
+                par.nullable,
                 true,
                 par.move_,
             ));
