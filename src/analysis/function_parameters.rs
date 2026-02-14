@@ -28,7 +28,7 @@ impl Parameter {
     ) -> Self {
         Parameter {
             lib_par: lib_par.clone(),
-            try_from_glib: TryFromGlib::from_parameter(env, lib_par.typ, configured_parameters),
+            try_from_glib: TryFromGlib::from_parameter(env, lib_par.typ(), configured_parameters),
         }
     }
 
@@ -39,7 +39,7 @@ impl Parameter {
     ) -> Self {
         Parameter {
             lib_par: lib_par.clone(),
-            try_from_glib: TryFromGlib::from_return_value(env, lib_par.typ, configured_functions),
+            try_from_glib: TryFromGlib::from_return_value(env, lib_par.typ(), configured_functions),
         }
     }
 }
@@ -226,7 +226,7 @@ pub fn analyze(
         let configured_parameters = configured_functions.matched_parameters(&name);
 
         let c_type = par.c_type.clone();
-        let typ = override_string_type_parameter(env, par.typ, &configured_parameters);
+        let typ = override_string_type_parameter(env, par.typ(), &configured_parameters);
 
         let ind_c = parameters.c_parameters.len();
         let mut ind_rust = Some(parameters.rust_parameters.len());
@@ -285,7 +285,7 @@ pub fn analyze(
         }
         if let Some(array_par) = array_par {
             let mut array_name = nameutil::mangle_keywords(&array_par.name);
-            if let Some(bound_type) = Bounds::type_for(env, array_par.typ) {
+            if let Some(bound_type) = Bounds::type_for(env, array_par.typ()) {
                 array_name = (array_name.into_owned()
                     + &Bounds::get_to_glib_extra(
                         &bound_type,
@@ -468,7 +468,7 @@ fn detect_length<'a>(
     }
 
     parameters.get(pos - 1).and_then(|p| {
-        if has_length(env, p.typ) {
+        if has_length(env, p.typ()) {
             Some(p)
         } else {
             None

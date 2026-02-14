@@ -95,7 +95,7 @@ fn is_stringify(func: &mut FuncInfo, parent_type: &LibType, obj: &GObject) -> bo
     }
 
     if let Some(ret) = func.ret.parameter.as_mut() {
-        if ret.lib_par.typ != TypeId::tid_utf8() {
+        if ret.lib_par.typ() != TypeId::tid_utf8() {
             return false;
         }
 

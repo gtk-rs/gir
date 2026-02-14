@@ -94,7 +94,7 @@ impl RefMode {
         immutable: bool,
         self_in_trait: bool,
     ) -> Self {
-        let ref_mode = Self::of(env, par.typ, par.direction);
+        let ref_mode = Self::of(env, par.typ(), par.direction);
         match ref_mode {
             Self::ByRefMut if !is_mut_ptr(&par.c_type) => Self::ByRef,
             Self::ByRefMut if immutable => Self::ByRefImmut,

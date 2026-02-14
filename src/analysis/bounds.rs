@@ -120,7 +120,7 @@ impl Bounds {
                             find_out_parameters(env, function, configured_functions);
                         if use_function_return_for_result(
                             env,
-                            function.ret.typ,
+                            function.ret.typ(),
                             &func.name,
                             configured_functions,
                         ) {
@@ -131,7 +131,7 @@ impl Bounds {
 
                             out_parameters.insert(
                                 0,
-                                RustType::builder(env, function.ret.typ)
+                                RustType::builder(env, function.ret.typ())
                                     .direction(function.ret.direction)
                                     .nullable(nullable)
                                     .try_build()
@@ -351,7 +351,7 @@ fn find_out_parameters(
                 })
                 .unwrap_or(param.nullable);
 
-            RustType::builder(env, param.typ)
+            RustType::builder(env, param.typ())
                 .direction(param.direction)
                 .nullable(nullable)
                 .try_build()
@@ -373,9 +373,9 @@ fn find_error_type(env: &Env, function: &Function) -> Option<String> {
         .parameters
         .iter()
         .find(|param| param.direction.is_out() && param.is_error)?;
-    if let Type::Record(_) = env.type_(error_param.typ) {
+    if let Type::Record(_) = env.type_(error_param.typ()) {
         Some(
-            RustType::builder(env, error_param.typ)
+            RustType::builder(env, error_param.typ())
                 .direction(error_param.direction)
                 .try_build()
                 .into_string(),
