@@ -1355,6 +1355,19 @@ impl Library {
 
         if type_name == "gboolean" && matches!(c_type.as_deref(), Some("_Bool") | Some("bool")) {
             Ok((self.find_or_stub_type(ns_id, "bool"), c_type, None))
+        } else if !elem.types().is_empty() {
+            let inner_types = elem
+                .types()
+                .iter()
+                .filter_map(|inner| {
+                    self.read_type(ns_id, inner)
+                        .map(|(inner_ty, _, _)| inner_ty)
+                        .ok()
+                })
+                .collect::<Vec<_>>();
+            let tid = Type::container(self, type_name, inner_types)
+                .ok_or_else(|| format!("Unknown container type {type_name} {:?}", elem.c_type()))?;
+            Ok((tid, c_type, None))
         } else {
             Ok((self.find_or_stub_type(ns_id, type_name), c_type, None))
         }
