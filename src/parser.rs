@@ -1628,3 +1628,116 @@ fn make_file_name(dir: &Path, name: &str) -> PathBuf {
     path.push(name);
     path
 }
+
+#[cfg(test)]
+mod tests {
+    use std::{collections::HashMap, str::FromStr};
+
+    use super::*;
+
+    #[test]
+    fn test_pango_test_gir() {
+        let content = br#"<?xml version="1.0"?>
+<repository xmlns="http://www.gtk.org/introspection/core/1.0" xmlns:c="http://www.gtk.org/introspection/c/1.0" xmlns:doc="http://www.gtk.org/introspection/doc/1.0" xmlns:glib="http://www.gtk.org/introspection/glib/1.0" version="1.2">
+  <include name="GObject" version="2.0"/>
+  <package name="pango"/>
+  <c:include name="pango/pango.h"/>
+  <doc:format name="gi-docgen"/>
+  <namespace name="Pango" version="1.0" shared-library="libpango-1.0.so.0" c:identifier-prefixes="Pango" c:symbol-prefixes="pango">
+    <class name="Context" c:symbol-prefix="context" c:type="PangoContext" parent="GObject.Object" glib:type-name="PangoContext" glib:get-type="pango_context_get_type" glib:type-struct="ContextClass">
+      <method name="list_families" c:identifier="pango_context_list_families">
+        <return-value transfer-ownership="none">
+          <type name="none" c:type="void"/>
+        </return-value>
+        <parameters>
+          <instance-parameter name="context" transfer-ownership="none">
+            <type name="Context" c:type="PangoContext*"/>
+          </instance-parameter>
+          <parameter name="families" direction="out" caller-allocates="0" transfer-ownership="container">
+            <array length="1" zero-terminated="0" c:type="PangoFontFamily***">
+              <type name="FontFamily" c:type="PangoFontFamily**"/>
+            </array>
+          </parameter>
+          <parameter name="n_families" direction="out" caller-allocates="0" transfer-ownership="full">
+            <type name="gint" c:type="int*"/>
+          </parameter>
+        </parameters>
+      </method>
+    </class>
+    <class name="FontFamily" c:symbol-prefix="font_family" c:type="PangoFontFamily" parent="GObject.Object" abstract="1" glib:type-name="PangoFontFamily" glib:get-type="pango_font_family_get_type" glib:type-struct="FontFamilyClass">
+    </class>
+  </namespace>
+</repository>"#;
+        let mut lib = crate::Library::new("Pango");
+        let mut parser = crate::xmlparser::XmlParser::new(&content[..]);
+        let dirs = vec!["../gir-files"];
+        let mut libs = vec!["Pango".to_string()];
+        parser.document(|p, _| {
+            p.element_with_name("repository", |sub_parser, _elem| {
+                lib.read_repository(&dirs, sub_parser, &mut libs)
+            })
+        });
+
+        const PANGO_NS_ID: u16 = 1;
+        let expected_index = HashMap::from([
+            ("*".to_string(), 0),
+            ("Pango".to_string(), PANGO_NS_ID),
+            ("GLib".to_string(), 2),
+            ("GObject".to_string(), 3),
+        ]);
+
+        assert_eq!(&lib.index, &expected_index);
+        assert_eq!(lib.doc_format, DocFormat::GiDocgen);
+
+        let pango_ns = &lib.namespaces[PANGO_NS_ID as usize];
+        assert_eq!(pango_ns.types.len(), 2);
+
+        let Some(crate::parser::Type::Class(context_class)) = &pango_ns.types[0] else {
+            panic!();
+        };
+        assert_eq!(context_class.name, "Context");
+
+        let Some(crate::parser::Type::Class(font_family_class)) = &pango_ns.types[1] else {
+            panic!();
+        };
+        assert_eq!(font_family_class.name, "FontFamily");
+
+        assert_eq!(context_class.functions.len(), 1);
+        let list_families = &context_class.functions[0];
+        assert_eq!(list_families.name, "list_families");
+
+        if let crate::parser::Parameter { typ, .. } = list_families.ret {
+            assert_eq!(typ, TypeId::tid_none());
+        } else {
+            panic!();
+        };
+
+        assert_eq!(list_families.parameters.len(), 3);
+
+        let context_par = &list_families.parameters[0];
+        let families_par = &list_families.parameters[1];
+        let n_families_par = &list_families.parameters[2];
+
+        if let crate::parser::Parameter { typ, .. } = context_par {
+            assert_eq!(
+                typ,
+                &TypeId {
+                    ns_id: PANGO_NS_ID,
+                    id: 0
+                }
+            );
+        } else {
+            panic!()
+        };
+        if let crate::parser::Parameter { typ, .. } = families_par {
+            assert_eq!(typ, &TypeId { ns_id: 0, id: 128 });
+        } else {
+            panic!()
+        };
+        if let crate::parser::Parameter { typ, .. } = n_families_par {
+            assert_eq!(typ, &TypeId { ns_id: 0, id: 14 });
+        } else {
+            panic!()
+        };
+    }
+}
