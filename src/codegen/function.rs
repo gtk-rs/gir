@@ -146,7 +146,7 @@ pub fn generate(
                 .ret
                 .parameter
                 .as_ref()
-                .is_some_and(|par| par.lib_par.typ != tid)
+                .is_some_and(|par| par.lib_par.typ() != tid)
         }) {
         format!(
             "{}{}#[allow(clippy::new_ret_no_self)]\n",
