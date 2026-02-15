@@ -1353,7 +1353,7 @@ impl Library {
         let type_name = elem.name().unwrap_or(""); // TODO: should this warn?
         let c_type = elem.c_type().map(ToOwned::to_owned);
 
-        if type_name == "gboolean" && c_type.as_deref() == Some("_Bool") {
+        if type_name == "gboolean" && matches!(c_type.as_deref(), Some("_Bool") | Some("bool")) {
             Ok((self.find_or_stub_type(ns_id, "bool"), c_type, None))
         } else {
             Ok((self.find_or_stub_type(ns_id, type_name), c_type, None))
