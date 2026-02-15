@@ -74,8 +74,8 @@ impl Library {
     ) -> Result<(), String> {
         trace!(
             "Reading repository identifier={:#?},symbol={:#?}",
-            repo.c_identifier_prefixes(),
-            repo.c_symbol_prefixes(),
+            repo.c_identifier_prefixes().collect::<Vec<_>>().join(", "),
+            repo.c_symbol_prefixes().collect::<Vec<_>>().join(", "),
         );
         self.read_namespace(repo, repo.namespace())?;
         for include in repo.namespace_includes() {
@@ -139,12 +139,9 @@ impl Library {
             }
             ns.identifier_prefixes = namespace
                 .c_identifier_prefixes()
-                .split(",")
                 .map(String::from)
                 .collect();
-            if let Some(s) = namespace.c_symbol_prefixes() {
-                ns.symbol_prefixes = s.split(',').map(String::from).collect();
-            }
+            ns.symbol_prefixes = namespace.c_symbol_prefixes().map(String::from).collect();
         }
 
         trace!("Reading {}-{}", ns_name, namespace.version());
@@ -301,7 +298,9 @@ impl Library {
         }
 
         for field in elem.fields() {
-            fields.push(self.read_field(ns_id, field)?);
+            if let gir_parser::ClassField::Field(field) = field {
+                fields.push(self.read_field(ns_id, field)?);
+            }
         }
 
         for virtual_method in elem.virtual_methods() {
@@ -312,7 +311,10 @@ impl Library {
             vfns.push(f);
         }
 
-        for union in elem.unions() {
+        for field in elem.fields() {
+            let gir_parser::ClassField::Union(union) = field else {
+                continue;
+            };
             let mut u = self.read_union(ns_id, union, Some(&name), Some(&c_type))?;
             let field_name = if let Some(field_name) = union.name() {
                 field_name.into()
@@ -402,7 +404,10 @@ impl Library {
             .map(|d| d.text())
             .map(ToOwned::to_owned);
         let mut union_count = 1;
-        for union in elem.unions() {
+        for field in elem.fields() {
+            let gir_parser::RecordField::Union(union) = field else {
+                continue;
+            };
             let mut u = self.read_union(ns_id, union, Some(record_name), Some(c_type))?;
             let field_name = if let Some(field_name) = union.name() {
                 field_name.into()
@@ -462,6 +467,9 @@ impl Library {
         }
 
         for field in elem.fields() {
+            let gir_parser::RecordField::Field(field) = field else {
+                continue;
+            };
             let mut f = self.read_field(ns_id, field)?;
             // Workaround for bitfields
             if c_type == "GDate" {
@@ -551,7 +559,10 @@ impl Library {
 
         let mut struct_count = 1;
 
-        for record in elem.records() {
+        for field in elem.fields() {
+            let gir_parser::UnionField::Record(record) = field else {
+                continue;
+            };
             let Some(Type::Record(mut r)) =
                 self.read_record(ns_id, record, parent_name_prefix, parent_ctype_prefix)?
             else {
@@ -595,7 +606,9 @@ impl Library {
         }
 
         for field in elem.fields() {
-            fields.push(self.read_field(ns_id, field)?);
+            if let gir_parser::UnionField::Field(field) = field {
+                fields.push(self.read_field(ns_id, field)?);
+            };
         }
 
         for constructor in elem.constructors().iter() {

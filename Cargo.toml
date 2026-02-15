@@ -20,7 +20,7 @@ log = "0.4"
 regex = "1.12"
 hprof = "0.1"
 rustdoc-stripper = "0.1.19"
-gir-parser = "=0.1.2"
+gir-parser = "0.1.4"
 
 [profile.release]
 codegen-units = 4
