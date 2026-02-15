@@ -84,9 +84,9 @@ dependencies = [
 
 [[package]]
 name = "gir-parser"
-version = "0.1.2"
+version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "53b05784edf92806ecf1749a048e2ea8da0f29e130d7bcb1398d376bc1c8304d"
+checksum = "aa7476c23b709fc80c7652756d89e48ec026b45c68591d400756ed52f04f26b9"
 dependencies = [
  "serde",
  "xmlserde",
@@ -318,18 +318,18 @@ checksum = "0592e1c9d151f854e6fd382574c3a0855250e1d9b2f99d9281c6e6391af352f1"
 
 [[package]]
 name = "xmlserde"
-version = "0.10.2"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b4e03afadb8b334c9403789a7077ea4239b3aab6a8afb4bb05e91d90da680a9e"
+checksum = "c74aeef672aa2d8803466595ea4f8cde6873120004e0adcc7a80e399b9e48a34"
 dependencies = [
  "quick-xml",
 ]
 
 [[package]]
 name = "xmlserde_derives"
-version = "0.10.2"
+version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7ac4847350140b85fb4d52e7a51af13cf6328a47c9dde02c6af402a86a91c9b9"
+checksum = "98bba6063b36ccd1151b243761dd9184b19ebf51d1514628196eb64d76bfc169"
 dependencies = [
  "proc-macro2",
  "quote",
