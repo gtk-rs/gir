@@ -1,4 +1,4 @@
-use gir_parser::{TransferOwnership, prelude::*};
+use gir_parser::{DocFormat, TransferOwnership, prelude::*};
 use std::{
     cmp::{Ord, Ordering, PartialOrd},
     collections::{BTreeMap, BTreeSet, HashMap, HashSet},
@@ -10,7 +10,7 @@ use std::{
 
 use crate::{
     analysis::conversion_type::ConversionType, config::gobjects::GStatus, env::Env,
-    nameutil::split_namespace_name, parser::DocFormat, traits::*, version::Version,
+    nameutil::split_namespace_name, traits::*, version::Version,
 };
 
 #[derive(Default, Clone, Copy, Debug, Eq, PartialEq)]

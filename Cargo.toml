@@ -20,7 +20,7 @@ log = "0.4"
 regex = "1.12"
 hprof = "0.1"
 rustdoc-stripper = "0.1.19"
-gir-parser = "0.1.4"
+gir-parser = { git = "https://github.com/bilelmoussaoui/gir-parser.git", rev = "946d79b9d220e3c68692f3b590986a15fcca7139" }
 
 [profile.release]
 codegen-units = 4
