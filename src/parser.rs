@@ -1365,7 +1365,11 @@ impl Library {
         ns_id: u16,
         version: Option<&gir_parser::Version>,
     ) -> Option<Version> {
-        let version = Version::new(version?.major(), version?.minor()?, version?.patch()?);
+        let version = Version::new(
+            version?.major(),
+            version?.minor().unwrap_or_default(),
+            version?.patch().unwrap_or_default(),
+        );
         self.register_version(ns_id, version);
         Some(version)
     }
