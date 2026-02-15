@@ -43,18 +43,6 @@ impl ParameterDirection {
     }
 }
 
-impl FromStr for ParameterDirection {
-    type Err = String;
-    fn from_str(name: &str) -> Result<Self, String> {
-        match name {
-            "in" => Ok(Self::In),
-            "out" => Ok(Self::Out),
-            "inout" => Ok(Self::InOut),
-            _ => Err(format!("Unknown parameter direction '{name}'")),
-        }
-    }
-}
-
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Mandatory(pub bool);
 
@@ -83,20 +71,6 @@ pub enum FunctionKind {
     Global,
     ClassMethod,
     VirtualMethod,
-}
-
-impl FromStr for FunctionKind {
-    type Err = String;
-    fn from_str(name: &str) -> Result<Self, String> {
-        match name {
-            "constructor" => Ok(Self::Constructor),
-            "function" => Ok(Self::Function),
-            "method" => Ok(Self::Method),
-            "callback" => Ok(Self::Function),
-            "global" => Ok(Self::Global),
-            _ => Err(format!("Unknown function kind '{name}'")),
-        }
-    }
 }
 
 #[derive(Default, Clone, Copy, Debug, Eq, PartialEq)]
