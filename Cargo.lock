@@ -84,9 +84,8 @@ dependencies = [
 
 [[package]]
 name = "gir-parser"
-version = "0.1.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aa7476c23b709fc80c7652756d89e48ec026b45c68591d400756ed52f04f26b9"
+version = "0.1.4"
+source = "git+https://github.com/bilelmoussaoui/gir-parser.git?rev=946d79b9d220e3c68692f3b590986a15fcca7139#946d79b9d220e3c68692f3b590986a15fcca7139"
 dependencies = [
  "serde",
  "xmlserde",
