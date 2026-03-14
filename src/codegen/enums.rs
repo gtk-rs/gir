@@ -115,6 +115,19 @@ fn generate_enum(
         });
     }
 
+    // Check if we can use #[derive(Default)] instead of a manual impl.
+    // This is possible when the default member has no version or cfg condition.
+    let derive_default_member = config.default_value.as_ref().and_then(|default_value| {
+        let m = members
+            .iter()
+            .find(|m| m.name == enum_member_name(default_value))?;
+        if m.version.is_none() && m.cfg_condition.is_none() {
+            Some(m.name.clone())
+        } else {
+            None
+        }
+    });
+
     cfg_deprecated(
         w,
         env,
@@ -134,7 +147,11 @@ fn generate_enum(
     } else {
         writeln!(w, "#[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Hash)]")?;
     }
-    writeln!(w, "#[derive(Clone, Copy)]")?;
+    if derive_default_member.is_some() {
+        writeln!(w, "#[derive(Clone, Copy, Default)]")?;
+    } else {
+        writeln!(w, "#[derive(Clone, Copy)]")?;
+    }
     if config.exhaustive {
         writeln!(w, "#[repr(i32)]")?;
     } else {
@@ -157,6 +174,9 @@ fn generate_enum(
         // Don't generate a doc_alias if the C name is the same as the Rust one
         if member.c_name != member.name {
             doc_alias(w, &member.c_name, "", 1)?;
+        }
+        if derive_default_member.as_deref() == Some(&*member.name) {
+            writeln!(w, "\t#[default]")?;
         }
         if config.exhaustive {
             writeln!(
@@ -538,24 +558,26 @@ impl FromGlib<{sys_crate_name}::{ffi_name}> for {name} {{
         writeln!(w)?;
     }
 
-    generate_default_impl(
-        w,
-        env,
-        config,
-        &enum_.name,
-        enum_.version,
-        enum_.members.iter(),
-        |member| {
-            let e_member = members.iter().find(|m| m.c_name == member.c_identifier)?;
-            let member_config = config.members.matched(&member.name);
-            let version = member_config
-                .iter()
-                .find_map(|m| m.version)
-                .or(e_member.version);
-            let cfg_condition = member_config.iter().find_map(|m| m.cfg_condition.as_ref());
-            Some((version, cfg_condition, e_member.name.as_str()))
-        },
-    )?;
+    if derive_default_member.is_none() {
+        generate_default_impl(
+            w,
+            env,
+            config,
+            &enum_.name,
+            enum_.version,
+            enum_.members.iter(),
+            |member| {
+                let e_member = members.iter().find(|m| m.c_name == member.c_identifier)?;
+                let member_config = config.members.matched(&member.name);
+                let version = member_config
+                    .iter()
+                    .find_map(|m| m.version)
+                    .or(e_member.version);
+                let cfg_condition = member_config.iter().find_map(|m| m.cfg_condition.as_ref());
+                Some((version, cfg_condition, e_member.name.as_str()))
+            },
+        )?;
+    }
 
     Ok(())
 }
