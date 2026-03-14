@@ -140,10 +140,28 @@ pub fn generate(
         String::new()
     };
 
+    let allow_new_ret_no_self = if analysis.codegen_name() == "new"
+        && parent_type_id.is_some_and(|tid| {
+            analysis
+                .ret
+                .parameter
+                .as_ref()
+                .is_some_and(|par| par.lib_par.typ != tid)
+        }) {
+        format!(
+            "{}{}#[allow(clippy::new_ret_no_self)]\n",
+            tabs(indent),
+            comment_prefix
+        )
+    } else {
+        String::new()
+    };
+
     writeln!(
         w,
-        "{}{}{}{}{}{}{}{}{}",
+        "{}{}{}{}{}{}{}{}{}{}",
         allow_should_implement_trait,
+        allow_new_ret_no_self,
         dead_code_cfg,
         get_must_use_if_needed(parent_type_id, analysis, comment_prefix).unwrap_or_default(),
         tabs(indent),
