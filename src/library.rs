@@ -393,6 +393,7 @@ pub struct Member {
     pub name: String,
     pub c_identifier: String,
     pub value: String,
+    pub nick: Option<String>,
     pub doc: Option<String>,
     pub doc_deprecated: Option<String>,
     pub status: GStatus,
