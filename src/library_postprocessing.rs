@@ -328,10 +328,19 @@ impl Library {
                                 continue;
                             }
                             if let Type::FixedArray(..) = field_type {
-                                // fixed-size Arrays can only have inner c_type
-                                // HACK: field c_type used only in sys mode for pointer checking
-                                // so any string without * will work
+                                // Fixed-size arrays may provide only the inner c:type.
+                                // We still set a non-pointer sentinel here because field-level
+                                // c:type is required by sys field codegen to proceed.
                                 let array_c_type = "fixed_array".to_owned();
+                                actions.push((tid, fid, Action::SetCType(array_c_type)));
+                                continue;
+                            }
+                            if let Type::CArray(..) = field_type {
+                                // Flexible arrays / VLA-like fields may not carry a field-level
+                                // c:type in GIR even when the inner type is known.
+                                // We set a non-pointer sentinel to satisfy the field c:type
+                                // requirement in sys field codegen.
+                                let array_c_type = "c_array".to_owned();
                                 actions.push((tid, fid, Action::SetCType(array_c_type)));
                                 continue;
                             }
