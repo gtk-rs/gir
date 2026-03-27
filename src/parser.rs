@@ -1030,6 +1030,7 @@ impl Library {
         let member_name = elem.attr_required("name")?;
         let value = elem.attr_required("value")?;
         let c_identifier = elem.attr("identifier").map(|x| x.into());
+        let nick = elem.attr("nick").map(|x| x.into());
         let version = self.read_version(parser, ns_id, elem)?;
         let deprecated_version = self.read_deprecated_version(parser, ns_id, elem)?;
 
@@ -1050,6 +1051,7 @@ impl Library {
             doc,
             doc_deprecated,
             c_identifier: c_identifier.unwrap_or_else(|| member_name.into()),
+            nick,
             status: crate::config::gobjects::GStatus::Generate,
             version,
             deprecated_version,
