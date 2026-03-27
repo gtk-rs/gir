@@ -22,7 +22,7 @@ pub struct Namespace {
 pub struct Info {
     namespaces: Vec<Namespace>,
     pub is_glib_crate: bool,
-    pub glib_ns_id: NsId,
+    pub glib_ns_id: Option<NsId>,
 }
 
 impl Info {
@@ -74,6 +74,6 @@ pub fn run(gir: &library::Library) -> Info {
     Info {
         namespaces,
         is_glib_crate,
-        glib_ns_id: glib_ns_id.expect("Missing `GLib` namespace!"),
+        glib_ns_id,
     }
 }
