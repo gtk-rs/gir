@@ -1112,7 +1112,7 @@ pub fn document_type_properties(
             details.push("Readable");
         }
         if property.writable {
-            details.push("Writeable");
+            details.push("Writable");
         }
         if property.construct {
             details.push("Construct");
