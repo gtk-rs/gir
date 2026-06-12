@@ -420,13 +420,7 @@ fn generate_builder(w: &mut dyn Write, env: &Env, analysis: &analysis::object::I
                         if let crate::library::Type::Record(record) = env.type_(property.typ) {
                             match RecordType::of(record) {
                                 RecordType::Boxed => "",
-                                RecordType::AutoBoxed => {
-                                    if !record.has_copy() {
-                                        ""
-                                    } else {
-                                        ".clone()"
-                                    }
-                                }
+                                RecordType::AutoBoxed if !record.has_copy() => "",
                                 _ => ".clone()",
                             }
                         } else {

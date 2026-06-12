@@ -44,19 +44,11 @@ impl Env {
     ) -> bool {
         let to_compare_with = self.config.min_required_version(self, ns_id);
         match (deprecated_version, to_compare_with) {
-            (Some(v), Some(to_compare_v)) => {
-                if v <= to_compare_v {
-                    self.config.deprecate_by_min_version
-                } else {
-                    false
-                }
+            (Some(v), Some(to_compare_v)) if v <= to_compare_v => {
+                self.config.deprecate_by_min_version
             }
-            (Some(v), _) => {
-                if v <= self.config.min_cfg_version {
-                    self.config.deprecate_by_min_version
-                } else {
-                    false
-                }
+            (Some(v), _) if v <= self.config.min_cfg_version => {
+                self.config.deprecate_by_min_version
             }
             _ => false,
         }
