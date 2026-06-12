@@ -419,18 +419,18 @@ pub fn analyze(
         let mut transformation_type = None;
         match transformation.transformation_type {
             TransformationType::ToGlibDirect { ref name, .. }
-            | TransformationType::ToGlibUnknown { ref name, .. } => {
-                if async_func && name == callback_param_name {
-                    // Remove the conversion of callback for async functions.
-                    transformation_type = Some(TransformationType::ToSome(name.clone()));
-                }
+            | TransformationType::ToGlibUnknown { ref name, .. }
+                if async_func && name == callback_param_name =>
+            {
+                // Remove the conversion of callback for async functions.
+                transformation_type = Some(TransformationType::ToSome(name.clone()));
             }
-            TransformationType::ToGlibPointer { ref name, .. } => {
-                if async_func && name == data_param_name {
-                    // Do the conversion of user_data for async functions.
-                    // In async functions, this argument is used to send the callback.
-                    transformation_type = Some(TransformationType::IntoRaw(name.clone()));
-                }
+            TransformationType::ToGlibPointer { ref name, .. }
+                if async_func && name == data_param_name =>
+            {
+                // Do the conversion of user_data for async functions.
+                // In async functions, this argument is used to send the callback.
+                transformation_type = Some(TransformationType::IntoRaw(name.clone()));
             }
             _ => (),
         }

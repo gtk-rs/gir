@@ -327,21 +327,17 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
 
             for parent_info in &info.supertypes {
                 match env.library.type_(parent_info.type_id) {
-                    Type::Class(cl) => {
-                        if !cl.properties.is_empty() {
-                            document_type_properties(env, w, info, &cl.properties, Some(&cl.name))?;
-                        }
+                    Type::Class(cl) if !cl.properties.is_empty() => {
+                        document_type_properties(env, w, info, &cl.properties, Some(&cl.name))?;
                     }
-                    Type::Interface(iface) => {
-                        if !iface.properties.is_empty() {
-                            document_type_properties(
-                                env,
-                                w,
-                                info,
-                                &iface.properties,
-                                Some(&iface.name),
-                            )?;
-                        }
+                    Type::Interface(iface) if !iface.properties.is_empty() => {
+                        document_type_properties(
+                            env,
+                            w,
+                            info,
+                            &iface.properties,
+                            Some(&iface.name),
+                        )?;
                     }
                     _ => (),
                 }
@@ -353,15 +349,11 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
 
             for parent_info in &info.supertypes {
                 match env.library.type_(parent_info.type_id) {
-                    Type::Class(cl) => {
-                        if !cl.signals.is_empty() {
-                            document_type_signals(env, w, info, &cl.signals, Some(&cl.name))?;
-                        }
+                    Type::Class(cl) if !cl.signals.is_empty() => {
+                        document_type_signals(env, w, info, &cl.signals, Some(&cl.name))?;
                     }
-                    Type::Interface(iface) => {
-                        if !iface.signals.is_empty() {
-                            document_type_signals(env, w, info, &iface.signals, Some(&iface.name))?;
-                        }
+                    Type::Interface(iface) if !iface.signals.is_empty() => {
+                        document_type_signals(env, w, info, &iface.signals, Some(&iface.name))?;
                     }
                     _ => (),
                 }

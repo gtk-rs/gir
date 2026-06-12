@@ -1041,7 +1041,7 @@ impl Builder {
                 },
             ));
         }
-        to_insert.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
+        to_insert.sort_unstable_by_key(|(a, _)| *a);
         for (pos, data) in to_insert {
             params.insert(pos, data);
         }
