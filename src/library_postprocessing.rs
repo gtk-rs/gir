@@ -102,15 +102,15 @@ impl Library {
                     id: id as u32,
                 };
                 match type_ {
-                    Type::Class(klass) => {
-                        if self.detect_empty_signals_c_types(&klass.signals, &mut c_types) {
-                            tids.push(tid);
-                        }
+                    Type::Class(klass)
+                        if self.detect_empty_signals_c_types(&klass.signals, &mut c_types) =>
+                    {
+                        tids.push(tid);
                     }
-                    Type::Interface(iface) => {
-                        if self.detect_empty_signals_c_types(&iface.signals, &mut c_types) {
-                            tids.push(tid);
-                        }
+                    Type::Interface(iface)
+                        if self.detect_empty_signals_c_types(&iface.signals, &mut c_types) =>
+                    {
+                        tids.push(tid);
                     }
                     _ => (),
                 }
