@@ -26,7 +26,7 @@ pub enum Chunk {
     },
     // TODO: separate without return_value::Info
     FfiCallConversion {
-        ret: return_value::Info,
+        ret: Box<return_value::Info>,
         array_length_name: Option<String>,
         call: Box<Chunk>,
     },

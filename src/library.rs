@@ -842,7 +842,7 @@ pub enum Type {
     Bitfield(Bitfield),
     Record(Record),
     Union(Union),
-    Function(Function),
+    Function(Box<Function>),
     Interface(Interface),
     Class(Class),
     Custom(Custom),
@@ -1007,7 +1007,7 @@ impl Type {
     pub fn function(library: &mut Library, func: Function) -> TypeId {
         let mut param_tids: Vec<TypeId> = func.parameters.iter().map(|p| p.typ()).collect();
         param_tids.push(func.ret.typ());
-        let typ = Self::Function(func);
+        let typ = Self::Function(Box::new(func));
         library.add_type(INTERNAL_NAMESPACE, &format!("fn<#{param_tids:?}>"), typ)
     }
 

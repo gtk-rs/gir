@@ -997,7 +997,7 @@ impl Builder {
         let array_length_name = self.find_array_length_name("");
         self.remove_extra_assume_init(array_length_name.as_deref(), uninitialized_vars);
         Chunk::FfiCallConversion {
-            ret: self.ret.ret.clone(),
+            ret: Box::new(self.ret.ret.clone()),
             array_length_name,
             call: Box::new(call),
         }
