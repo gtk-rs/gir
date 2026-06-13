@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/function.rs`."><title>function.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-77263533.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.94.0 (4a4ef493e 2026-03-02)" data-channel="1.94.0" data-search-js="search-9e2438ea.js" data-stringdex-js="stringdex-b897f86f.js" data-settings-js="settings-c38705f0.js" ><script src="../../../static.files/storage-e2aeef58.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-7bab91a1.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-ffcac47a.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">libgir/codegen/</div>function.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>std::{
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `src/codegen/function.rs`."><title>function.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2"href="../../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../../static.files/rustdoc-17e0aaed.css"><meta name="rustdoc-vars" data-root-path="../../../" data-static-root-path="../../../static.files/" data-current-crate="libgir" data-themes="" data-resource-suffix="" data-rustdoc-version="1.96.0 (ac68faa20 2026-05-25)" data-channel="1.96.0" data-search-js="search-b5634cc7.js" data-stringdex-js="stringdex-2da4960a.js" data-settings-js="settings-170eb4bf.js" ><script src="../../../static.files/storage-41dd4d93.js"></script><script defer src="../../../static.files/src-script-813739b1.js"></script><script defer src="../../../src-files.js"></script><script defer src="../../../static.files/main-5013f961.js"></script><noscript><link rel="stylesheet" href="../../../static.files/noscript-f7c3ffd8.css"></noscript><link rel="alternate icon" type="image/png" href="../../../static.files/favicon-32x32-eab170b8.png"><link rel="icon" type="image/svg+xml" href="../../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><a class="skip-main-content" href="#main-content">Skip to main content</a><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><section id="main-content" class="content" tabindex="-1"><div class="main-heading"><h1><div class="sub-heading">libgir/codegen/</div>function.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="kw">use </span>std::{
 <a href=#2 id=2 data-nosnippet>2</a>    fmt,
 <a href=#3 id=3 data-nosnippet>3</a>    io::{<span class="prelude-ty">Result</span>, Write},
 <a href=#4 id=4 data-nosnippet>4</a>    result::Result <span class="kw">as </span>StdResult,
@@ -115,11 +115,11 @@
 <a href=#115 id=115 data-nosnippet>115</a>    <span class="comment">// TODO Warn the user if both get_property and set_property are set as it is
 <a href=#116 id=116 data-nosnippet>116</a>    // an error on the gir data.
 <a href=#117 id=117 data-nosnippet>117</a>    </span><span class="kw">if let </span><span class="prelude-val">Some</span>(get_property) = <span class="kw-2">&amp;</span>analysis.get_property {
-<a href=#118 id=118 data-nosnippet>118</a>        <span class="kw">if </span><span class="macro">get_property !</span>= analysis.codegen_name() {
+<a href=#118 id=118 data-nosnippet>118</a>        <span class="kw">if </span>get_property != analysis.codegen_name() {
 <a href=#119 id=119 data-nosnippet>119</a>            doc_alias(w, get_property, comment_prefix, indent)<span class="question-mark">?</span>;
 <a href=#120 id=120 data-nosnippet>120</a>        }
 <a href=#121 id=121 data-nosnippet>121</a>    } <span class="kw">else if let </span><span class="prelude-val">Some</span>(set_property) = <span class="kw-2">&amp;</span>analysis.set_property
-<a href=#122 id=122 data-nosnippet>122</a>        &amp;&amp; <span class="macro">set_property !</span>= analysis.codegen_name()
+<a href=#122 id=122 data-nosnippet>122</a>        &amp;&amp; set_property != analysis.codegen_name()
 <a href=#123 id=123 data-nosnippet>123</a>    {
 <a href=#124 id=124 data-nosnippet>124</a>        doc_alias(w, set_property, comment_prefix, indent)<span class="question-mark">?</span>;
 <a href=#125 id=125 data-nosnippet>125</a>    }
@@ -146,7 +146,7 @@
 <a href=#146 id=146 data-nosnippet>146</a>                .ret
 <a href=#147 id=147 data-nosnippet>147</a>                .parameter
 <a href=#148 id=148 data-nosnippet>148</a>                .as_ref()
-<a href=#149 id=149 data-nosnippet>149</a>                .is_some_and(|par| par.lib_par.<span class="macro">typ !</span>= tid)
+<a href=#149 id=149 data-nosnippet>149</a>                .is_some_and(|par| par.lib_par.typ != tid)
 <a href=#150 id=150 data-nosnippet>150</a>        }) {
 <a href=#151 id=151 data-nosnippet>151</a>        <span class="macro">format!</span>(
 <a href=#152 id=152 data-nosnippet>152</a>            <span class="string">"{}{}#[allow(clippy::new_ret_no_self)]\n"</span>,
@@ -440,7 +440,7 @@
 <a href=#440 id=440 data-nosnippet>440</a>
 <a href=#441 id=441 data-nosnippet>441</a>    <span class="kw">let </span><span class="kw-2">mut </span>body = String::new();
 <a href=#442 id=442 data-nosnippet>442</a>
-<a href=#443 id=443 data-nosnippet>443</a>    <span class="kw">let </span>gio_future_name = <span class="kw">if </span>env.config.<span class="macro">library_name !</span>= <span class="string">"Gio" </span>{
+<a href=#443 id=443 data-nosnippet>443</a>    <span class="kw">let </span>gio_future_name = <span class="kw">if </span>env.config.library_name != <span class="string">"Gio" </span>{
 <a href=#444 id=444 data-nosnippet>444</a>        <span class="string">"gio::GioFuture"
 <a href=#445 id=445 data-nosnippet>445</a>    </span>} <span class="kw">else </span>{
 <a href=#446 id=446 data-nosnippet>446</a>        <span class="string">"crate::GioFuture"
@@ -474,7 +474,7 @@
 <a href=#474 id=474 data-nosnippet>474</a>            )<span class="question-mark">?</span>;
 <a href=#475 id=475 data-nosnippet>475</a>        } <span class="kw">else if </span>is_str {
 <a href=#476 id=476 data-nosnippet>476</a>            <span class="macro">writeln!</span>(body, <span class="string">"let {} = String::from({});"</span>, par.name, par.name)<span class="question-mark">?</span>;
-<a href=#477 id=477 data-nosnippet>477</a>        } <span class="kw">else if </span>c_par.<span class="macro">ref_mode !</span>= RefMode::None {
+<a href=#477 id=477 data-nosnippet>477</a>        } <span class="kw">else if </span>c_par.ref_mode != RefMode::None {
 <a href=#478 id=478 data-nosnippet>478</a>            <span class="macro">writeln!</span>(body, <span class="string">"let {} = {}.clone();"</span>, par.name, par.name)<span class="question-mark">?</span>;
 <a href=#479 id=479 data-nosnippet>479</a>        }
 <a href=#480 id=480 data-nosnippet>480</a>    }
@@ -516,7 +516,7 @@
 <a href=#516 id=516 data-nosnippet>516</a>                    <span class="string">"\t\t{}.as_ref().map(::std::borrow::Borrow::borrow),"</span>,
 <a href=#517 id=517 data-nosnippet>517</a>                    par.name
 <a href=#518 id=518 data-nosnippet>518</a>                )<span class="question-mark">?</span>;
-<a href=#519 id=519 data-nosnippet>519</a>            } <span class="kw">else if </span>c_par.<span class="macro">ref_mode !</span>= RefMode::None {
+<a href=#519 id=519 data-nosnippet>519</a>            } <span class="kw">else if </span>c_par.ref_mode != RefMode::None {
 <a href=#520 id=520 data-nosnippet>520</a>                <span class="macro">writeln!</span>(body, <span class="string">"\t\t&amp;{},"</span>, par.name)<span class="question-mark">?</span>;
 <a href=#521 id=521 data-nosnippet>521</a>            } <span class="kw">else </span>{
 <a href=#522 id=522 data-nosnippet>522</a>                <span class="macro">writeln!</span>(body, <span class="string">"\t\t{},"</span>, par.name)<span class="question-mark">?</span>;
