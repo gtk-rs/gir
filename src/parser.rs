@@ -28,9 +28,9 @@ impl Library {
         for dir in dirs {
             let dir: &Path = dir.as_ref();
             let file_name = make_file_name(dir, &libs[libs.len() - 1]);
-            warn!("repo {}", file_name.display());
+            trace!("Reading GIR file {}", file_name.display());
             let Ok(mut repo) = Repository::from_path(&file_name) else {
-                warn!("couldn't parse repository");
+                warn!("Failed to parse GIR file {}", file_name.display());
                 continue;
             };
             self.read_repository(dirs, &mut repo, libs)?;
@@ -359,7 +359,7 @@ impl Library {
 
         let c_type = elem.c_type().unwrap_or_default();
         if c_type.is_empty() {
-            warn!("Found empty record {record_name}");
+            trace!("Record {record_name} has no c:type");
         }
         let symbol_prefix = elem.symbol_prefix().map(ToOwned::to_owned);
         let get_type = elem.g_get_type().map(ToOwned::to_owned);
@@ -525,7 +525,7 @@ impl Library {
         let name = elem.name().unwrap_or("").to_owned();
         let c_type = elem.c_type().unwrap_or("").to_owned();
         if c_type.is_empty() {
-            warn!("Found empty union {name}");
+            trace!("Union {name} has no c:type");
         }
         let get_type = elem.g_get_type().map(ToOwned::to_owned);
         let symbol_prefix = elem.c_symbol_prefix().map(ToOwned::to_owned);
@@ -1233,7 +1233,7 @@ impl Library {
         let (tid, c_type, _) = self
             .read_parameter(ns_id, true, "return-value", elem.ty().clone().into())
             .inspect_err(|_| {
-                warn!("Failed to parse {:#?}", elem);
+                warn!("Failed to parse return value {:#?}", elem);
             })?;
         Ok(Parameter::Return {
             param: elem,
