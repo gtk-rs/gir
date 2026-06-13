@@ -1098,12 +1098,13 @@ impl Library {
         }
 
         for param in parameters.inner() {
-            let ty = if param.name() == "..." {
-                gir_parser::ParameterType::VarArgs
-            } else {
-                param.ty().unwrap().clone()
-            };
+            if param.name() == "..." {
+                let tid = self.find_type(INTERNAL_NAMESPACE, "varargs").unwrap();
+                params.push(Parameter::VarArgs(tid));
+                continue;
+            }
 
+            let ty = param.ty().unwrap().clone();
             let (tid, _c_type, _) = self.read_parameter(ns_id, true, param.name(), ty)?;
 
             let param = Parameter::Default {
