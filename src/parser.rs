@@ -1,6 +1,6 @@
 use std::path::{Path, PathBuf};
 
-use log::{trace, warn};
+use log::{error, trace, warn};
 
 use crate::{library::*, version::Version};
 
@@ -117,12 +117,16 @@ impl Library {
 
         trace!("Reading classes");
         for class in namespace.classes() {
-            self.read_class(ns_id, class)?;
+            if let Err(e) = self.read_class(ns_id, class) {
+                error!("Skipping class \"{}\": {e}", class.name());
+            }
         }
 
         trace!("Reading records");
         for record in namespace.records() {
-            self.read_record(ns_id, record, None, None)?;
+            if let Err(e) = self.read_record(ns_id, record, None, None) {
+                error!("Skipping record \"{}\": {e}", record.name().unwrap_or("?"));
+            }
         }
 
         trace!("Reading global functions");
@@ -130,36 +134,52 @@ impl Library {
             if function.moved_to().is_some() {
                 continue;
             }
-            let f = self.read_function(ns_id, function, FunctionKind::Global)?;
-            self.add_function(ns_id, f);
+            match self.read_function(ns_id, function, FunctionKind::Global) {
+                Ok(f) => self.add_function(ns_id, f),
+                Err(e) => error!("Skipping function \"{}\": {e}", function.name()),
+            }
         }
 
         trace!("Reading callbacks");
         for callback in namespace.callbacks() {
-            let f = self.read_callback(ns_id, callback)?;
-            self.add_type(ns_id, &f.name.clone(), Type::Function(Box::new(f)));
+            match self.read_callback(ns_id, callback) {
+                Ok(f) => {
+                    self.add_type(ns_id, &f.name.clone(), Type::Function(Box::new(f)));
+                }
+                Err(e) => error!("Skipping callback \"{}\": {e}", callback.name()),
+            }
         }
 
         trace!("Reading aliases");
         for alias in namespace.aliases() {
-            self.read_alias(ns_id, alias)?;
+            if let Err(e) = self.read_alias(ns_id, alias) {
+                error!("Skipping alias \"{}\": {e}", alias.name());
+            }
         }
 
         trace!("Reading constants");
         for constant in namespace.constants() {
-            self.read_constant(ns_id, constant)?;
+            if let Err(e) = self.read_constant(ns_id, constant) {
+                error!("Skipping constant \"{}\": {e}", constant.name());
+            }
         }
 
         trace!("Reading enumerations");
         for enumeration in namespace.enums() {
-            self.read_enumeration(ns_id, enumeration)?;
+            if let Err(e) = self.read_enumeration(ns_id, enumeration) {
+                error!("Skipping enumeration \"{}\": {e}", enumeration.name());
+            }
         }
 
         trace!("Reading records");
         for record in namespace.records() {
-            if let Some(typ) = self.read_record(ns_id, record, None, None)? {
-                let name = typ.get_name();
-                self.add_type(ns_id, &name, typ);
+            match self.read_record(ns_id, record, None, None) {
+                Ok(Some(typ)) => {
+                    let name = typ.get_name();
+                    self.add_type(ns_id, &name, typ);
+                }
+                Ok(None) => {}
+                Err(e) => error!("Skipping record \"{}\": {e}", record.name().unwrap_or("?")),
             }
         }
 
@@ -170,7 +190,9 @@ impl Library {
                 union.name(),
                 union.c_type()
             );
-            self.read_named_union(ns_id, union)?;
+            if let Err(e) = self.read_named_union(ns_id, union) {
+                error!("Skipping union \"{}\": {e}", union.name().unwrap_or("?"));
+            }
         }
 
         trace!("Reading interfaces");
@@ -180,18 +202,21 @@ impl Library {
                 interface.name(),
                 interface.c_type()
             );
-            self.read_interface(ns_id, interface)?;
+            if let Err(e) = self.read_interface(ns_id, interface) {
+                error!("Skipping interface \"{}\": {e}", interface.name());
+            }
         }
 
         trace!("Reading bitfields");
         for bitfield in namespace.flags() {
-            // should be renamed upstream maybe?
             trace!(
                 "Reading bitfield name={},c:type={}",
                 bitfield.name(),
                 bitfield.c_type()
             );
-            self.read_bitfield(ns_id, bitfield)?;
+            if let Err(e) = self.read_bitfield(ns_id, bitfield) {
+                error!("Skipping bitfield \"{}\": {e}", bitfield.name());
+            }
         }
         Ok(())
     }
@@ -234,36 +259,42 @@ impl Library {
         let mut union_count = 1;
 
         for callable in elem.callables() {
-            match callable {
+            let result = match callable {
                 gir_parser::Callable::Constructor(constructor) => {
                     if constructor.moved_to().is_some() {
                         continue;
                     }
-                    let f = self.read_function(ns_id, constructor, FunctionKind::Constructor)?;
-                    fns.push(f);
+                    self.read_function(ns_id, constructor, FunctionKind::Constructor)
                 }
                 gir_parser::Callable::Function(function) => {
                     if function.moved_to().is_some() {
                         continue;
                     }
-                    let f = self.read_function(ns_id, function, FunctionKind::Function)?;
-                    fns.push(f);
+                    self.read_function(ns_id, function, FunctionKind::Function)
                 }
                 gir_parser::Callable::Method(method) => {
                     if method.moved_to().is_some() {
                         continue;
                     }
-                    let f = self.read_method(ns_id, method)?;
-                    fns.push(f);
+                    self.read_method(ns_id, method)
                 }
+            };
+            match result {
+                Ok(f) => fns.push(f),
+                Err(e) => error!("Skipping callable \"{}\": {e}", callable.name()),
             }
         }
         for signal in elem.signals() {
-            let signal = self.read_signal(ns_id, signal)?;
-            signals.push(signal);
+            match self.read_signal(ns_id, signal) {
+                Ok(signal) => signals.push(signal),
+                Err(e) => error!("Skipping signal \"{}\": {e}", signal.name()),
+            }
         }
         for property in elem.properties() {
-            properties.push(self.read_property(ns_id, property, &symbol_prefix)?);
+            match self.read_property(ns_id, property, &symbol_prefix) {
+                Ok(prop) => properties.push(prop),
+                Err(e) => error!("Skipping property \"{}\": {e}", property.name()),
+            }
         }
 
         for implement in elem.implements() {
@@ -272,7 +303,10 @@ impl Library {
 
         for field in elem.fields() {
             if let gir_parser::ClassField::Field(field) = field {
-                fields.push(self.read_field(ns_id, field)?);
+                match self.read_field(ns_id, field) {
+                    Ok(f) => fields.push(f),
+                    Err(e) => error!("Skipping field \"{}\": {e}", field.name()),
+                }
             }
         }
 
@@ -280,8 +314,10 @@ impl Library {
             if virtual_method.moved_to().is_some() {
                 continue;
             }
-            let f = self.read_virtual_method(ns_id, virtual_method)?;
-            vfns.push(f);
+            match self.read_virtual_method(ns_id, virtual_method) {
+                Ok(f) => vfns.push(f),
+                Err(e) => error!("Skipping virtual method \"{}\": {e}", virtual_method.name()),
+            }
         }
 
         for field in elem.fields() {
@@ -418,28 +454,29 @@ impl Library {
         }
 
         for callable in elem.callables() {
-            match callable {
+            let result = match callable {
                 gir_parser::Callable::Constructor(constructor) => {
                     if constructor.moved_to().is_some() {
                         continue;
                     }
-                    let f = self.read_function(ns_id, constructor, FunctionKind::Constructor)?;
-                    fns.push(f);
+                    self.read_function(ns_id, constructor, FunctionKind::Constructor)
                 }
                 gir_parser::Callable::Method(method) => {
                     if method.moved_to().is_some() {
                         continue;
                     }
-                    let f = self.read_method(ns_id, method)?;
-                    fns.push(f);
+                    self.read_method(ns_id, method)
                 }
                 gir_parser::Callable::Function(function) => {
                     if function.moved_to().is_some() {
                         continue;
                     }
-                    let f = self.read_function(ns_id, function, FunctionKind::Function)?;
-                    fns.push(f);
+                    self.read_function(ns_id, function, FunctionKind::Function)
                 }
+            };
+            match result {
+                Ok(f) => fns.push(f),
+                Err(e) => error!("Skipping callable \"{}\": {e}", callable.name()),
             }
         }
 
@@ -447,7 +484,13 @@ impl Library {
             let gir_parser::RecordField::Field(field) = field else {
                 continue;
             };
-            let mut f = self.read_field(ns_id, field)?;
+            let mut f = match self.read_field(ns_id, field) {
+                Ok(f) => f,
+                Err(e) => {
+                    error!("Skipping field \"{}\": {e}", field.name());
+                    continue;
+                }
+            };
             // Workaround for bitfields
             if c_type == "GDate" {
                 if f.name == "julian_days" {
@@ -584,33 +627,37 @@ impl Library {
 
         for field in elem.fields() {
             if let gir_parser::UnionField::Field(field) = field {
-                fields.push(self.read_field(ns_id, field)?);
+                match self.read_field(ns_id, field) {
+                    Ok(f) => fields.push(f),
+                    Err(e) => error!("Skipping field \"{}\": {e}", field.name()),
+                }
             };
         }
 
         for callable in elem.callables() {
-            match callable {
+            let result = match callable {
                 gir_parser::Callable::Constructor(constructor) => {
                     if constructor.moved_to().is_some() {
                         continue;
                     }
-                    let f = self.read_function(ns_id, constructor, FunctionKind::Constructor)?;
-                    fns.push(f);
+                    self.read_function(ns_id, constructor, FunctionKind::Constructor)
                 }
                 gir_parser::Callable::Method(method) => {
                     if method.moved_to().is_some() {
                         continue;
                     }
-                    let f = self.read_method(ns_id, method)?;
-                    fns.push(f);
+                    self.read_method(ns_id, method)
                 }
                 gir_parser::Callable::Function(function) => {
                     if function.moved_to().is_some() {
                         continue;
                     }
-                    let f = self.read_function(ns_id, function, FunctionKind::Function)?;
-                    fns.push(f);
+                    self.read_function(ns_id, function, FunctionKind::Function)
                 }
+            };
+            match result {
+                Ok(f) => fns.push(f),
+                Err(e) => error!("Skipping callable \"{}\": {e}", callable.name()),
             }
         }
         Ok(Union {
@@ -737,45 +784,53 @@ impl Library {
             .map(ToOwned::to_owned);
 
         for callable in elem.callables() {
-            match callable {
+            let result = match callable {
                 gir_parser::Callable::Constructor(constructor) => {
                     if constructor.moved_to().is_some() {
                         continue;
                     }
-                    let f = self.read_function(ns_id, constructor, FunctionKind::Constructor)?;
-                    fns.push(f);
+                    self.read_function(ns_id, constructor, FunctionKind::Constructor)
                 }
                 gir_parser::Callable::Method(method) => {
                     if method.moved_to().is_some() {
                         continue;
                     }
-                    let f = self.read_method(ns_id, method)?;
-                    fns.push(f);
+                    self.read_method(ns_id, method)
                 }
                 gir_parser::Callable::Function(function) => {
                     if function.moved_to().is_some() {
                         continue;
                     }
-                    let f = self.read_function(ns_id, function, FunctionKind::Function)?;
-                    fns.push(f);
+                    self.read_function(ns_id, function, FunctionKind::Function)
                 }
+            };
+            match result {
+                Ok(f) => fns.push(f),
+                Err(e) => error!("Skipping callable \"{}\": {e}", callable.name()),
             }
         }
         for virtual_method in elem.virtual_methods().iter() {
             if virtual_method.moved_to().is_some() {
                 continue;
             }
-            let f = self.read_virtual_method(ns_id, virtual_method)?;
-            vfns.push(f);
+            match self.read_virtual_method(ns_id, virtual_method) {
+                Ok(f) => vfns.push(f),
+                Err(e) => error!("Skipping virtual method \"{}\": {e}", virtual_method.name()),
+            }
         }
 
         for property in elem.properties().iter() {
-            properties.push(self.read_property(ns_id, property, &symbol_prefix)?);
+            match self.read_property(ns_id, property, &symbol_prefix) {
+                Ok(prop) => properties.push(prop),
+                Err(e) => error!("Skipping property \"{}\": {e}", property.name()),
+            }
         }
 
         for signal in elem.signals().iter() {
-            let signal = self.read_signal(ns_id, signal)?;
-            signals.push(signal);
+            match self.read_signal(ns_id, signal) {
+                Ok(signal) => signals.push(signal),
+                Err(e) => error!("Skipping signal \"{}\": {e}", signal.name()),
+            }
         }
 
         for prereq in elem.prerequisites() {
@@ -827,8 +882,10 @@ impl Library {
             if function.moved_to().is_some() {
                 continue;
             }
-            let f = self.read_function(ns_id, function, FunctionKind::Function)?;
-            functions.push(f);
+            match self.read_function(ns_id, function, FunctionKind::Function) {
+                Ok(f) => functions.push(f),
+                Err(e) => error!("Skipping function \"{}\": {e}", function.name()),
+            }
         }
 
         let typ = Type::Bitfield(Bitfield {
@@ -877,8 +934,10 @@ impl Library {
             if function.moved_to().is_some() {
                 continue;
             }
-            let f = self.read_function(ns_id, function, FunctionKind::Function)?;
-            fns.push(f);
+            match self.read_function(ns_id, function, FunctionKind::Function) {
+                Ok(f) => fns.push(f),
+                Err(e) => error!("Skipping function \"{}\": {e}", function.name()),
+            }
         }
 
         let typ = Type::Enumeration(Enumeration {
@@ -1358,7 +1417,9 @@ impl Library {
         ns_id: u16,
         elem: &gir_parser::Type,
     ) -> Result<(TypeId, Option<String>, Option<u32>), String> {
-        let type_name = elem.name().unwrap_or(""); // TODO: should this warn?
+        let type_name = elem
+            .name()
+            .ok_or_else(|| "Missing name attribute on <type> element".to_string())?;
         let c_type = elem.c_type().map(ToOwned::to_owned);
 
         if type_name == "gboolean" && matches!(c_type.as_deref(), Some("_Bool") | Some("bool")) {
