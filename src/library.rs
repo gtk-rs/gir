@@ -428,6 +428,7 @@ pub enum Parameter {
         nullable_override: Option<bool>,
         name_override: Option<String>,
         c_type_override: Option<String>,
+        array_length_offset: u32,
     },
     Default {
         param: gir_parser::Parameter,
@@ -435,6 +436,8 @@ pub enum Parameter {
         nullable_override: Option<bool>,
         name_override: Option<String>,
         c_type_override: Option<String>,
+        array_length_offset: u32,
+        closure_override: Option<usize>,
     },
     Error(TypeId),
     VarArgs(TypeId),
@@ -509,7 +512,11 @@ impl Parameter {
     pub fn closure(&self) -> Option<usize> {
         match self {
             Parameter::Return { param, .. } => param.closure(),
-            Parameter::Default { param, .. } => param.closure(),
+            Parameter::Default {
+                param,
+                closure_override,
+                ..
+            } => closure_override.or_else(|| param.closure()),
             _ => None,
         }
     }
@@ -562,14 +569,26 @@ impl Parameter {
 
     pub fn array_length(&self) -> Option<u32> {
         match self {
-            Self::Return { param, .. } => match param.ty() {
-                gir_parser::AnyType::Array(array) => array.length(),
+            Self::Return {
+                param,
+                array_length_offset,
+                ..
+            } => match param.ty() {
+                gir_parser::AnyType::Array(array) => {
+                    array.length().map(|l| l + array_length_offset)
+                }
                 _ => None,
             },
-            Self::Default { param, .. } => {
+            Self::Default {
+                param,
+                array_length_offset,
+                ..
+            } => {
                 if let Some(ty) = param.ty() {
                     match ty {
-                        gir_parser::ParameterType::Array(array) => array.length(),
+                        gir_parser::ParameterType::Array(array) => {
+                            array.length().map(|l| l + array_length_offset)
+                        }
                         _ => None,
                     }
                 } else {

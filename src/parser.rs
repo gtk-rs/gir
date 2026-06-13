@@ -625,7 +625,7 @@ impl Library {
             .map(ToOwned::to_owned)
             .unwrap_or(name.clone());
         let mut params = Vec::new();
-        let ret = self.read_return_value(ns_id, elem.return_value().clone(), true)?;
+        let ret = self.read_return_value(ns_id, elem.return_value().clone(), true, 0)?;
         let doc = elem.doc().map(|d| d.text()).map(ToOwned::to_owned);
         let doc_deprecated = elem
             .doc_deprecated()
@@ -642,6 +642,8 @@ impl Library {
                 nullable_override: None,
                 name_override: None,
                 c_type_override: None,
+                array_length_offset: 0,
+                closure_override: None,
             };
             params.push(param);
         }
@@ -984,7 +986,7 @@ impl Library {
         ns_id: u16,
         elem: &gir_parser::Callback,
     ) -> Result<Function, String> {
-        self.read_function_inner(
+        let mut func = self.read_function_inner(
             ns_id,
             elem,
             FunctionKind::Function,
@@ -997,7 +999,16 @@ impl Library {
             None,
             None,
             None,
-        )
+        )?;
+        // The last argument of a callback is always user data, mark it as
+        // such in case the closure attribute is missing from the GIR.
+        if let Some(Parameter::Default {
+            closure_override, ..
+        }) = func.parameters.last_mut().filter(|p| p.closure().is_none())
+        {
+            *closure_override = Some(2000);
+        }
+        Ok(func)
     }
 
     fn read_method(&mut self, ns_id: u16, elem: &gir_parser::Method) -> Result<Function, String> {
@@ -1071,7 +1082,10 @@ impl Library {
         });
 
         let mut params = Vec::new();
-        let ret = self.read_return_value(ns_id, return_value.clone(), false)?;
+        let has_instance = parameters.instance().is_some();
+        let array_length_offset = u32::from(has_instance);
+        let ret =
+            self.read_return_value(ns_id, return_value.clone(), false, array_length_offset)?;
         let doc: Option<String> = elem.doc().map(|d| d.text()).map(ToOwned::to_owned);
         let doc_deprecated = elem
             .doc_deprecated()
@@ -1098,6 +1112,8 @@ impl Library {
                 nullable_override: None,
                 name_override: None,
                 c_type_override: None,
+                array_length_offset,
+                closure_override: None,
             };
             params.push(param);
         }
@@ -1134,7 +1150,7 @@ impl Library {
         let deprecated_version = self.read_version(ns_id, elem.deprecated_version());
 
         let mut params = Vec::new();
-        let ret = self.read_return_value(ns_id, elem.return_value().clone(), true)?;
+        let ret = self.read_return_value(ns_id, elem.return_value().clone(), true, 0)?;
         let doc = elem.doc().map(|d| d.text()).map(ToOwned::to_owned);
         let doc_deprecated = elem
             .doc_deprecated()
@@ -1150,6 +1166,8 @@ impl Library {
                 nullable_override: None,
                 name_override: None,
                 c_type_override: Some(c_type),
+                array_length_offset: 0,
+                closure_override: None,
             };
             params.push(param);
         }
@@ -1193,6 +1211,7 @@ impl Library {
         ns_id: u16,
         elem: gir_parser::ReturnValue,
         _allow_no_ctype: bool,
+        array_length_offset: u32,
     ) -> Result<Parameter, String> {
         let (tid, c_type, _) = self
             .read_parameter(ns_id, true, "return-value", elem.ty().clone().into())
@@ -1205,6 +1224,7 @@ impl Library {
             c_type_override: Some(c_type),
             name_override: None,
             nullable_override: None,
+            array_length_offset,
         })
     }
 

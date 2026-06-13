@@ -78,18 +78,16 @@ impl Library {
 
         fn update_empty_signal_c_types(signal: &mut Signal, c_types: &DetectedCTypes) {
             for par in &mut signal.parameters {
-                if !is_empty_c_type(par.c_type()) {
-                    return;
-                }
-                if let Some(s) = c_types.get(&par.typ()) {
-                    par.set_c_type(s);
+                if is_empty_c_type(par.c_type()) {
+                    if let Some(s) = c_types.get(&par.typ()) {
+                        par.set_c_type(s);
+                    }
                 }
             }
-            if !is_empty_c_type(signal.ret.c_type()) {
-                return;
-            }
-            if let Some(s) = c_types.get(&signal.ret.typ()) {
-                signal.ret.set_c_type(s);
+            if is_empty_c_type(signal.ret.c_type()) {
+                if let Some(s) = c_types.get(&signal.ret.typ()) {
+                    signal.ret.set_c_type(s);
+                }
             }
         }
 
