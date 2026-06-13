@@ -75,7 +75,7 @@ pub fn analyze(
     }
 
     for lib_par in &func.parameters {
-        if !lib_par.direction().is_out() {
+        if lib_par.direction() != ParameterDirection::Out {
             continue;
         }
         if can_as_return(env, lib_par) {
