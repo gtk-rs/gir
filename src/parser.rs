@@ -233,26 +233,30 @@ impl Library {
             .map(ToOwned::to_owned);
         let mut union_count = 1;
 
-        for constructor in elem.constructors() {
-            if constructor.moved_to().is_some() {
-                continue;
+        for callable in elem.callables() {
+            match callable {
+                gir_parser::Callable::Constructor(constructor) => {
+                    if constructor.moved_to().is_some() {
+                        continue;
+                    }
+                    let f = self.read_function(ns_id, constructor, FunctionKind::Constructor)?;
+                    fns.push(f);
+                }
+                gir_parser::Callable::Function(function) => {
+                    if function.moved_to().is_some() {
+                        continue;
+                    }
+                    let f = self.read_function(ns_id, function, FunctionKind::Function)?;
+                    fns.push(f);
+                }
+                gir_parser::Callable::Method(method) => {
+                    if method.moved_to().is_some() {
+                        continue;
+                    }
+                    let f = self.read_method(ns_id, method)?;
+                    fns.push(f);
+                }
             }
-            let f = self.read_function(ns_id, constructor, FunctionKind::Constructor)?;
-            fns.push(f);
-        }
-        for function in elem.functions() {
-            if function.moved_to().is_some() {
-                continue;
-            }
-            let f = self.read_function(ns_id, function, FunctionKind::Function)?;
-            fns.push(f);
-        }
-        for method in elem.methods() {
-            if method.moved_to().is_some() {
-                continue;
-            }
-            let f = self.read_method(ns_id, method)?;
-            fns.push(f);
         }
         for signal in elem.signals() {
             let signal = self.read_signal(ns_id, signal)?;
@@ -413,26 +417,30 @@ impl Library {
             union_count += 1;
         }
 
-        for constructor in elem.constructors().iter() {
-            if constructor.moved_to().is_some() {
-                continue;
+        for callable in elem.callables() {
+            match callable {
+                gir_parser::Callable::Constructor(constructor) => {
+                    if constructor.moved_to().is_some() {
+                        continue;
+                    }
+                    let f = self.read_function(ns_id, constructor, FunctionKind::Constructor)?;
+                    fns.push(f);
+                }
+                gir_parser::Callable::Method(method) => {
+                    if method.moved_to().is_some() {
+                        continue;
+                    }
+                    let f = self.read_method(ns_id, method)?;
+                    fns.push(f);
+                }
+                gir_parser::Callable::Function(function) => {
+                    if function.moved_to().is_some() {
+                        continue;
+                    }
+                    let f = self.read_function(ns_id, function, FunctionKind::Function)?;
+                    fns.push(f);
+                }
             }
-            let f = self.read_function(ns_id, constructor, FunctionKind::Constructor)?;
-            fns.push(f);
-        }
-        for method in elem.methods().iter() {
-            if method.moved_to().is_some() {
-                continue;
-            }
-            let f = self.read_method(ns_id, method)?;
-            fns.push(f);
-        }
-        for function in elem.functions().iter() {
-            if function.moved_to().is_some() {
-                continue;
-            }
-            let f = self.read_function(ns_id, function, FunctionKind::Function)?;
-            fns.push(f);
         }
 
         for field in elem.fields() {
@@ -580,26 +588,30 @@ impl Library {
             };
         }
 
-        for constructor in elem.constructors().iter() {
-            if constructor.moved_to().is_some() {
-                continue;
+        for callable in elem.callables() {
+            match callable {
+                gir_parser::Callable::Constructor(constructor) => {
+                    if constructor.moved_to().is_some() {
+                        continue;
+                    }
+                    let f = self.read_function(ns_id, constructor, FunctionKind::Constructor)?;
+                    fns.push(f);
+                }
+                gir_parser::Callable::Method(method) => {
+                    if method.moved_to().is_some() {
+                        continue;
+                    }
+                    let f = self.read_method(ns_id, method)?;
+                    fns.push(f);
+                }
+                gir_parser::Callable::Function(function) => {
+                    if function.moved_to().is_some() {
+                        continue;
+                    }
+                    let f = self.read_function(ns_id, function, FunctionKind::Function)?;
+                    fns.push(f);
+                }
             }
-            let f = self.read_function(ns_id, constructor, FunctionKind::Constructor)?;
-            fns.push(f);
-        }
-        for method in elem.methods().iter() {
-            if method.moved_to().is_some() {
-                continue;
-            }
-            let f = self.read_method(ns_id, method)?;
-            fns.push(f);
-        }
-        for function in elem.functions().iter() {
-            if function.moved_to().is_some() {
-                continue;
-            }
-            let f = self.read_function(ns_id, function, FunctionKind::Function)?;
-            fns.push(f);
         }
         Ok(Union {
             name,
@@ -724,26 +736,30 @@ impl Library {
             .map(|d| d.text())
             .map(ToOwned::to_owned);
 
-        for constructor in elem.constructors().iter() {
-            if constructor.moved_to().is_some() {
-                continue;
+        for callable in elem.callables() {
+            match callable {
+                gir_parser::Callable::Constructor(constructor) => {
+                    if constructor.moved_to().is_some() {
+                        continue;
+                    }
+                    let f = self.read_function(ns_id, constructor, FunctionKind::Constructor)?;
+                    fns.push(f);
+                }
+                gir_parser::Callable::Method(method) => {
+                    if method.moved_to().is_some() {
+                        continue;
+                    }
+                    let f = self.read_method(ns_id, method)?;
+                    fns.push(f);
+                }
+                gir_parser::Callable::Function(function) => {
+                    if function.moved_to().is_some() {
+                        continue;
+                    }
+                    let f = self.read_function(ns_id, function, FunctionKind::Function)?;
+                    fns.push(f);
+                }
             }
-            let f = self.read_function(ns_id, constructor, FunctionKind::Constructor)?;
-            fns.push(f);
-        }
-        for method in elem.methods().iter() {
-            if method.moved_to().is_some() {
-                continue;
-            }
-            let f = self.read_method(ns_id, method)?;
-            fns.push(f);
-        }
-        for function in elem.functions().iter() {
-            if function.moved_to().is_some() {
-                continue;
-            }
-            let f = self.read_function(ns_id, function, FunctionKind::Function)?;
-            fns.push(f);
         }
         for virtual_method in elem.virtual_methods().iter() {
             if virtual_method.moved_to().is_some() {
