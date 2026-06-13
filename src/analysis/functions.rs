@@ -583,7 +583,8 @@ fn analyze_function(
     let mut destroys = Vec::new();
     let mut async_future = None;
 
-    if !r#async
+    if status.need_generate()
+        && !r#async
         && !has_callback_parameter
         && func
             .parameters
@@ -693,7 +694,8 @@ fn analyze_function(
     );
     parameters.analyze_return(env, &ret.parameter);
 
-    if let Some(ref f) = ret.parameter
+    if status.need_generate()
+        && let Some(ref f) = ret.parameter
         && let Type::Function(_) = env.library.type_(f.lib_par.typ())
         && env.config.work_mode.is_normal()
     {
@@ -841,7 +843,7 @@ fn analyze_function(
         &ret,
         configured_functions,
     );
-    if unsupported_outs {
+    if unsupported_outs && status.need_generate() {
         warn_main!(
             type_tid,
             "Function {} has unsupported outs",

@@ -190,7 +190,7 @@ pub fn new(env: &Env, obj: &GObject) -> Option<Info> {
                 get_type_version <= version,
                 "Have to use get_type function for {full_name} but version is higher than for the type ({get_type_version:?} > {version:?})"
             );
-        } else {
+        } else if obj.status.need_generate() {
             error!("Missing memory management functions for {full_name}");
         }
     }
