@@ -1,11 +1,6 @@
 use std::{borrow::Cow, sync::Arc};
 
-use crate::{
-    Env,
-    analysis::conversion_type::ConversionType,
-    config,
-    library::{self, Infallible, Mandatory},
-};
+use crate::{Env, analysis::conversion_type::ConversionType, config, library};
 
 #[derive(Default, Clone, Debug)]
 pub enum TryFromGlib {
@@ -27,20 +22,20 @@ impl TryFromGlib {
     fn _new(
         env: &Env,
         type_id: library::TypeId,
-        mut config_mandatory: impl Iterator<Item = Mandatory>,
-        mut config_infallible: impl Iterator<Item = Infallible>,
+        mut config_mandatory: impl Iterator<Item = bool>,
+        mut config_infallible: impl Iterator<Item = bool>,
     ) -> Self {
         let conversion_type = ConversionType::of(env, type_id);
         match conversion_type {
             ConversionType::Option => {
-                if *config_mandatory.next().unwrap_or(Mandatory(false)) {
+                if config_mandatory.next().unwrap_or(false) {
                     TryFromGlib::OptionMandatory
                 } else {
                     TryFromGlib::Option
                 }
             }
             ConversionType::Result { ok_type, err_type } => {
-                if *config_infallible.next().unwrap_or(Infallible(false)) {
+                if config_infallible.next().unwrap_or(false) {
                     TryFromGlib::ResultInfallible {
                         ok_type: Arc::clone(&ok_type),
                     }

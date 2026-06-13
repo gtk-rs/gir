@@ -12,10 +12,7 @@ use super::{
     string_type::StringType,
 };
 use crate::{
-    analysis::safety_assertion_mode::SafetyAssertionMode,
-    codegen::Visibility,
-    library::{Infallible, Mandatory},
-    version::Version,
+    analysis::safety_assertion_mode::SafetyAssertionMode, codegen::Visibility, version::Version,
 };
 
 #[derive(Clone, Debug)]
@@ -54,8 +51,8 @@ pub struct Parameter {
     pub constant: bool,
     pub move_: Option<bool>,
     pub nullable: Option<bool>,
-    pub mandatory: Option<Mandatory>,
-    pub infallible: Option<Infallible>,
+    pub mandatory: Option<bool>,
+    pub infallible: Option<bool>,
     pub length_of: Option<String>,
     pub string_type: Option<StringType>,
     pub callback_parameters: CallbackParameters,
@@ -89,14 +86,8 @@ impl Parse for Parameter {
             .unwrap_or(false);
         let move_ = toml.lookup("move").and_then(Value::as_bool);
         let nullable = toml.lookup("nullable").and_then(Value::as_bool);
-        let mandatory = toml
-            .lookup("mandatory")
-            .and_then(Value::as_bool)
-            .map(Mandatory);
-        let infallible = toml
-            .lookup("infallible")
-            .and_then(Value::as_bool)
-            .map(Infallible);
+        let mandatory = toml.lookup("mandatory").and_then(Value::as_bool);
+        let infallible = toml.lookup("infallible").and_then(Value::as_bool);
         let length_of = toml
             .lookup("length_of")
             .and_then(Value::as_str)
@@ -141,8 +132,8 @@ pub type Parameters = Vec<Parameter>;
 #[derive(Clone, Debug)]
 pub struct Return {
     pub nullable: Option<bool>,
-    pub mandatory: Option<Mandatory>,
-    pub infallible: Option<Infallible>,
+    pub mandatory: Option<bool>,
+    pub infallible: Option<bool>,
     pub bool_return_is_error: Option<String>,
     pub nullable_return_is_error: Option<String>,
     pub use_return_for_result: Option<bool>,
@@ -181,14 +172,8 @@ impl Return {
         );
 
         let nullable = v.lookup("nullable").and_then(Value::as_bool);
-        let mandatory = v
-            .lookup("mandatory")
-            .and_then(Value::as_bool)
-            .map(Mandatory);
-        let infallible = v
-            .lookup("infallible")
-            .and_then(Value::as_bool)
-            .map(Infallible);
+        let mandatory = v.lookup("mandatory").and_then(Value::as_bool);
+        let infallible = v.lookup("infallible").and_then(Value::as_bool);
         let bool_return_is_error = v
             .lookup("bool_return_is_error")
             .and_then(Value::as_str)
@@ -788,7 +773,7 @@ name = "func1"
         );
         let f = Function::parse(&toml, "a");
         let f = f.unwrap();
-        assert_eq!(f.ret.mandatory, Some(Mandatory(true)));
+        assert_eq!(f.ret.mandatory, Some(true));
     }
 
     #[test]
@@ -802,7 +787,7 @@ name = "func1"
         );
         let f = Function::parse(&toml, "a");
         let f = f.unwrap();
-        assert_eq!(f.ret.mandatory, Some(Mandatory(false)));
+        assert_eq!(f.ret.mandatory, Some(false));
     }
 
     #[test]
@@ -833,7 +818,7 @@ name = "func1"
         let f = Function::parse(&toml, "a");
         let f = f.unwrap();
         let param1 = &f.parameters[0];
-        assert_eq!(param1.mandatory, Some(Mandatory(true)));
+        assert_eq!(param1.mandatory, Some(true));
     }
 
     #[test]
@@ -849,7 +834,7 @@ name = "func1"
         let f = Function::parse(&toml, "a");
         let f = f.unwrap();
         let param1 = &f.parameters[0];
-        assert_eq!(param1.mandatory, Some(Mandatory(false)));
+        assert_eq!(param1.mandatory, Some(false));
     }
 
     #[test]
@@ -875,7 +860,7 @@ name = "func1"
         );
         let f = Function::parse(&toml, "a");
         let f = f.unwrap();
-        assert_eq!(f.ret.infallible, Some(Infallible(true)));
+        assert_eq!(f.ret.infallible, Some(true));
     }
 
     #[test]
@@ -889,7 +874,7 @@ name = "func1"
         );
         let f = Function::parse(&toml, "a");
         let f = f.unwrap();
-        assert_eq!(f.ret.infallible, Some(Infallible(false)));
+        assert_eq!(f.ret.infallible, Some(false));
     }
 
     #[test]
@@ -920,7 +905,7 @@ name = "func1"
         let f = Function::parse(&toml, "a");
         let f = f.unwrap();
         let param1 = &f.parameters[0];
-        assert_eq!(param1.infallible, Some(Infallible(true)));
+        assert_eq!(param1.infallible, Some(true));
     }
 
     #[test]
@@ -936,6 +921,6 @@ name = "func1"
         let f = Function::parse(&toml, "a");
         let f = f.unwrap();
         let param1 = &f.parameters[0];
-        assert_eq!(param1.infallible, Some(Infallible(false)));
+        assert_eq!(param1.infallible, Some(false));
     }
 }
