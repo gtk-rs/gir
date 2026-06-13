@@ -137,7 +137,7 @@ impl Library {
         trace!("Reading callbacks");
         for callback in namespace.callbacks() {
             let f = self.read_callback(ns_id, callback)?;
-            self.add_type(ns_id, &f.name.clone(), Type::Function(f));
+            self.add_type(ns_id, &f.name.clone(), Type::Function(Box::new(f)));
         }
 
         trace!("Reading aliases");

@@ -97,9 +97,7 @@ impl ConversionType {
             List(_) => Self::Pointer,
             SList(_) => Self::Pointer,
             PtrArray(_) => Self::Pointer,
-            Function(super::library::Function { name, .. }) if name == "AsyncReadyCallback" => {
-                Self::Direct
-            }
+            Function(f) if f.name == "AsyncReadyCallback" => Self::Direct,
             Function(_) => Self::Direct,
             Custom(super::library::Custom {
                 conversion_type, ..

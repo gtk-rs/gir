@@ -243,9 +243,7 @@ impl ImplementsDebug for Field {
     fn implements_debug(&self, lib: &Library) -> bool {
         match *lib.type_(self.typ) {
             Type::FixedArray(_, size, _) => size <= RUST_DERIVE_ARRAY_SIZE_LIMIT,
-            Type::Function(Function { ref parameters, .. }) => {
-                parameters.len() <= RUST_DERIVE_PARAM_SIZE_LIMIT
-            }
+            Type::Function(ref f) => f.parameters.len() <= RUST_DERIVE_PARAM_SIZE_LIMIT,
             _ => true,
         }
     }
