@@ -4,7 +4,6 @@ use std::{
     collections::{BTreeMap, BTreeSet, HashMap, HashSet},
     fmt,
     iter::Iterator,
-    ops::Deref,
     str::FromStr,
 };
 
@@ -40,26 +39,6 @@ impl ParameterDirection {
 
     pub fn is_out(self) -> bool {
         matches!(self, Self::Out | Self::InOut)
-    }
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct Mandatory(pub bool);
-
-impl Deref for Mandatory {
-    type Target = bool;
-    fn deref(&self) -> &bool {
-        &self.0
-    }
-}
-
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct Infallible(pub bool);
-
-impl Deref for Infallible {
-    type Target = bool;
-    fn deref(&self) -> &bool {
-        &self.0
     }
 }
 
