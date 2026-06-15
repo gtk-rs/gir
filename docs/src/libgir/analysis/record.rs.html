@@ -190,7 +190,7 @@
 <a href=#190 id=190 data-nosnippet>190</a>                get_type_version &lt;= version,
 <a href=#191 id=191 data-nosnippet>191</a>                <span class="string">"Have to use get_type function for {full_name} but version is higher than for the type ({get_type_version:?} &gt; {version:?})"
 <a href=#192 id=192 data-nosnippet>192</a>            </span>);
-<a href=#193 id=193 data-nosnippet>193</a>        } <span class="kw">else </span>{
+<a href=#193 id=193 data-nosnippet>193</a>        } <span class="kw">else if </span>obj.status.need_generate() {
 <a href=#194 id=194 data-nosnippet>194</a>            <span class="macro">error!</span>(<span class="string">"Missing memory management functions for {full_name}"</span>);
 <a href=#195 id=195 data-nosnippet>195</a>        }
 <a href=#196 id=196 data-nosnippet>196</a>    }

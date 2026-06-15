@@ -90,12 +90,12 @@
 <a href=#90 id=90 data-nosnippet>90</a>    <span class="kw">if </span>func.parameters.c_parameters.len() != <span class="number">1 </span>{
 <a href=#91 id=91 data-nosnippet>91</a>        <span class="kw">return </span><span class="bool-val">false</span>;
 <a href=#92 id=92 data-nosnippet>92</a>    }
-<a href=#93 id=93 data-nosnippet>93</a>    <span class="kw">if </span>!func.parameters.c_parameters[<span class="number">0</span>].instance_parameter {
+<a href=#93 id=93 data-nosnippet>93</a>    <span class="kw">if </span>!func.parameters.c_parameters[<span class="number">0</span>].is_instance_parameter {
 <a href=#94 id=94 data-nosnippet>94</a>        <span class="kw">return </span><span class="bool-val">false</span>;
 <a href=#95 id=95 data-nosnippet>95</a>    }
 <a href=#96 id=96 data-nosnippet>96</a>
 <a href=#97 id=97 data-nosnippet>97</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(ret) = func.ret.parameter.as_mut() {
-<a href=#98 id=98 data-nosnippet>98</a>        <span class="kw">if </span>ret.lib_par.typ != TypeId::tid_utf8() {
+<a href=#98 id=98 data-nosnippet>98</a>        <span class="kw">if </span>ret.lib_par.typ() != TypeId::tid_utf8() {
 <a href=#99 id=99 data-nosnippet>99</a>            <span class="kw">return </span><span class="bool-val">false</span>;
 <a href=#100 id=100 data-nosnippet>100</a>        }
 <a href=#101 id=101 data-nosnippet>101</a>
@@ -113,12 +113,12 @@
 <a href=#113 id=113 data-nosnippet>113</a>            </span><span class="kw">if </span>!obj.trust_return_value_nullability
 <a href=#114 id=114 data-nosnippet>114</a>                &amp;&amp; !<span class="macro">matches!</span>(parent_type, LibType::Enumeration(<span class="kw">_</span>) | LibType::Bitfield(<span class="kw">_</span>))
 <a href=#115 id=115 data-nosnippet>115</a>            {
-<a href=#116 id=116 data-nosnippet>116</a>                <span class="kw-2">*</span>ret.lib_par.nullable = <span class="bool-val">false</span>;
+<a href=#116 id=116 data-nosnippet>116</a>                ret.lib_par.set_nullable(<span class="bool-val">false</span>);
 <a href=#117 id=117 data-nosnippet>117</a>            }
 <a href=#118 id=118 data-nosnippet>118</a>        }
 <a href=#119 id=119 data-nosnippet>119</a>
 <a href=#120 id=120 data-nosnippet>120</a>        <span class="comment">// Cannot generate Display implementation for Option&lt;&gt;
-<a href=#121 id=121 data-nosnippet>121</a>        </span>!<span class="kw-2">*</span>ret.lib_par.nullable
+<a href=#121 id=121 data-nosnippet>121</a>        </span>!ret.lib_par.is_nullable()
 <a href=#122 id=122 data-nosnippet>122</a>    } <span class="kw">else </span>{
 <a href=#123 id=123 data-nosnippet>123</a>        <span class="bool-val">false
 <a href=#124 id=124 data-nosnippet>124</a>    </span>}
@@ -148,7 +148,7 @@
 <a href=#148 id=148 data-nosnippet>148</a>                .ret
 <a href=#149 id=149 data-nosnippet>149</a>                .parameter
 <a href=#150 id=150 data-nosnippet>150</a>                .as_ref()
-<a href=#151 id=151 data-nosnippet>151</a>                .is_some_and(|ret| ret.lib_par.transfer == <span class="kw">crate</span>::library::Transfer::None);
+<a href=#151 id=151 data-nosnippet>151</a>                .is_some_and(|ret| ret.lib_par.transfer_ownership().is_none());
 <a href=#152 id=152 data-nosnippet>152</a>
 <a href=#153 id=153 data-nosnippet>153</a>            <span class="comment">// Assume only enumerations and bitfields can return static strings
 <a href=#154 id=154 data-nosnippet>154</a>            </span><span class="kw">let </span>returns_static_ref = return_transfer_none

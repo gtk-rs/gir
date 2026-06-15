@@ -179,7 +179,7 @@
 <a href=#179 id=179 data-nosnippet>179</a>                            name: func.name.clone(),
 <a href=#180 id=180 data-nosnippet>180</a>                            ..Default::default()
 <a href=#181 id=181 data-nosnippet>181</a>                        };
-<a href=#182 id=182 data-nosnippet>182</a>                        info.insert(func.c_identifier.as_ref().unwrap(), symbol, <span class="prelude-val">None</span>);
+<a href=#182 id=182 data-nosnippet>182</a>                        info.insert(<span class="kw-2">&amp;</span>func.c_identifier, symbol, <span class="prelude-val">None</span>);
 <a href=#183 id=183 data-nosnippet>183</a>                    }
 <a href=#184 id=184 data-nosnippet>184</a>                }
 <a href=#185 id=185 data-nosnippet>185</a>                Type::Record(Record {
@@ -208,7 +208,7 @@
 <a href=#208 id=208 data-nosnippet>208</a>                            name: func.name.clone(),
 <a href=#209 id=209 data-nosnippet>209</a>                            ..Default::default()
 <a href=#210 id=210 data-nosnippet>210</a>                        };
-<a href=#211 id=211 data-nosnippet>211</a>                        info.insert(func.c_identifier.as_ref().unwrap(), symbol, <span class="prelude-val">None</span>);
+<a href=#211 id=211 data-nosnippet>211</a>                        info.insert(<span class="kw-2">&amp;</span>func.c_identifier, symbol, <span class="prelude-val">None</span>);
 <a href=#212 id=212 data-nosnippet>212</a>                    }
 <a href=#213 id=213 data-nosnippet>213</a>                }
 <a href=#214 id=214 data-nosnippet>214</a>                <span class="kw">_ </span>=&gt; {}

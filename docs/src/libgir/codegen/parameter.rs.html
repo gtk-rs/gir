@@ -18,7 +18,7 @@
 <a href=#18 id=18 data-nosnippet>18</a>        } <span class="kw">else </span>{
 <a href=#19 id=19 data-nosnippet>19</a>            <span class="self">self</span>.ref_mode
 <a href=#20 id=20 data-nosnippet>20</a>        };
-<a href=#21 id=21 data-nosnippet>21</a>        <span class="kw">if </span><span class="self">self</span>.instance_parameter {
+<a href=#21 id=21 data-nosnippet>21</a>        <span class="kw">if </span><span class="self">self</span>.is_instance_parameter {
 <a href=#22 id=22 data-nosnippet>22</a>            <span class="macro">format!</span>(<span class="string">"{}self"</span>, ref_mode.for_rust_type())
 <a href=#23 id=23 data-nosnippet>23</a>        } <span class="kw">else </span>{
 <a href=#24 id=24 data-nosnippet>24</a>            <span class="kw">let </span>type_str = <span class="kw">match </span>bounds.get_parameter_bound(<span class="kw-2">&amp;</span><span class="self">self</span>.name) {

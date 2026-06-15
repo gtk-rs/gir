@@ -30,10 +30,10 @@
 <a href=#30 id=30 data-nosnippet>30</a>}
 <a href=#31 id=31 data-nosnippet>31</a>
 <a href=#32 id=32 data-nosnippet>32</a><span class="kw">fn </span>check_versions(param: <span class="kw-2">&amp;</span>Parameter, current_version: <span class="kw-2">&amp;mut </span><span class="prelude-ty">Option</span>&lt;Version&gt;, lib: <span class="kw-2">*const </span>Library) {
-<a href=#33 id=33 data-nosnippet>33</a>    <span class="kw">if </span>param.typ.ns_id != MAIN_NAMESPACE {
+<a href=#33 id=33 data-nosnippet>33</a>    <span class="kw">if </span>param.typ().ns_id != MAIN_NAMESPACE {
 <a href=#34 id=34 data-nosnippet>34</a>        <span class="kw">return</span>;
 <a href=#35 id=35 data-nosnippet>35</a>    }
-<a href=#36 id=36 data-nosnippet>36</a>    <span class="kw">let </span>ty_version = <span class="kw">match unsafe </span>{ (<span class="kw-2">*</span>lib).type_(param.typ) } {
+<a href=#36 id=36 data-nosnippet>36</a>    <span class="kw">let </span>ty_version = <span class="kw">match unsafe </span>{ (<span class="kw-2">*</span>lib).type_(param.typ()) } {
 <a href=#37 id=37 data-nosnippet>37</a>        library::Type::Class(c) =&gt; c.version,
 <a href=#38 id=38 data-nosnippet>38</a>        library::Type::Enumeration(c) =&gt; c.version,
 <a href=#39 id=39 data-nosnippet>39</a>        library::Type::Bitfield(c) =&gt; c.version,

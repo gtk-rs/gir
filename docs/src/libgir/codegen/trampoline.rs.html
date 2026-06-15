@@ -147,7 +147,7 @@
 <a href=#147 id=147 data-nosnippet>147</a>}
 <a href=#148 id=148 data-nosnippet>148</a>
 <a href=#149 id=149 data-nosnippet>149</a><span class="kw">fn </span>func_returns(env: <span class="kw-2">&amp;</span>Env, analysis: <span class="kw-2">&amp;</span>Trampoline) -&gt; String {
-<a href=#150 id=150 data-nosnippet>150</a>    <span class="kw">if </span>analysis.ret.typ == Default::default() {
+<a href=#150 id=150 data-nosnippet>150</a>    <span class="kw">if </span>analysis.ret.typ() == Default::default() {
 <a href=#151 id=151 data-nosnippet>151</a>        String::new()
 <a href=#152 id=152 data-nosnippet>152</a>    } <span class="kw">else if </span>analysis.inhibit {
 <a href=#153 id=153 data-nosnippet>153</a>        <span class="macro">format!</span>(<span class="string">" -&gt; {inhibit}"</span>, inhibit = use_glib_type(env, <span class="string">"Propagation"</span>))
@@ -186,10 +186,10 @@
 <a href=#186 id=186 data-nosnippet>186</a>}
 <a href=#187 id=187 data-nosnippet>187</a>
 <a href=#188 id=188 data-nosnippet>188</a><span class="kw">fn </span>trampoline_returns(env: <span class="kw-2">&amp;</span>Env, analysis: <span class="kw-2">&amp;</span>Trampoline) -&gt; String {
-<a href=#189 id=189 data-nosnippet>189</a>    <span class="kw">if </span>analysis.ret.typ == Default::default() {
+<a href=#189 id=189 data-nosnippet>189</a>    <span class="kw">if </span>analysis.ret.typ() == Default::default() {
 <a href=#190 id=190 data-nosnippet>190</a>        String::new()
 <a href=#191 id=191 data-nosnippet>191</a>    } <span class="kw">else </span>{
-<a href=#192 id=192 data-nosnippet>192</a>        <span class="kw">let </span>ffi_type = ffi_type(env, analysis.ret.typ, <span class="kw-2">&amp;</span>analysis.ret.c_type);
+<a href=#192 id=192 data-nosnippet>192</a>        <span class="kw">let </span>ffi_type = ffi_type(env, analysis.ret.typ(), analysis.ret.c_type());
 <a href=#193 id=193 data-nosnippet>193</a>        <span class="macro">format!</span>(<span class="string">" -&gt; {}"</span>, ffi_type.into_string())
 <a href=#194 id=194 data-nosnippet>194</a>    }
 <a href=#195 id=195 data-nosnippet>195</a>}
@@ -223,7 +223,7 @@
 <a href=#223 id=223 data-nosnippet>223</a>
 <a href=#224 id=224 data-nosnippet>224</a><span class="kw">fn </span>trampoline_call_func(env: <span class="kw-2">&amp;</span>Env, analysis: <span class="kw-2">&amp;</span>Trampoline, in_trait: bool) -&gt; String {
 <a href=#225 id=225 data-nosnippet>225</a>    <span class="kw">let </span>params = trampoline_call_parameters(env, analysis, in_trait);
-<a href=#226 id=226 data-nosnippet>226</a>    <span class="kw">let </span>ret = <span class="kw">if </span>analysis.ret.typ == Default::default() {
+<a href=#226 id=226 data-nosnippet>226</a>    <span class="kw">let </span>ret = <span class="kw">if </span>analysis.ret.typ() == Default::default() {
 <a href=#227 id=227 data-nosnippet>227</a>        String::new()
 <a href=#228 id=228 data-nosnippet>228</a>    } <span class="kw">else </span>{
 <a href=#229 id=229 data-nosnippet>229</a>        analysis.ret.trampoline_to_glib(env)
@@ -242,7 +242,7 @@
 <a href=#242 id=242 data-nosnippet>242</a>                <span class="kw">continue</span>;
 <a href=#243 id=243 data-nosnippet>243</a>            }
 <a href=#244 id=244 data-nosnippet>244</a>        };
-<a href=#245 id=245 data-nosnippet>245</a>        <span class="kw">let </span>par_str = transformation.trampoline_from_glib(env, need_downcast, <span class="kw-2">*</span>par.nullable);
+<a href=#245 id=245 data-nosnippet>245</a>        <span class="kw">let </span>par_str = transformation.trampoline_from_glib(env, need_downcast, par.nullable);
 <a href=#246 id=246 data-nosnippet>246</a>        parameter_strs.push(par_str);
 <a href=#247 id=247 data-nosnippet>247</a>        need_downcast = <span class="bool-val">false</span>; <span class="comment">// Only downcast first parameter
 <a href=#248 id=248 data-nosnippet>248</a>    </span>}

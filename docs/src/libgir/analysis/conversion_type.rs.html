@@ -97,19 +97,17 @@
 <a href=#97 id=97 data-nosnippet>97</a>            List(<span class="kw">_</span>) =&gt; <span class="self">Self</span>::Pointer,
 <a href=#98 id=98 data-nosnippet>98</a>            SList(<span class="kw">_</span>) =&gt; <span class="self">Self</span>::Pointer,
 <a href=#99 id=99 data-nosnippet>99</a>            PtrArray(<span class="kw">_</span>) =&gt; <span class="self">Self</span>::Pointer,
-<a href=#100 id=100 data-nosnippet>100</a>            Function(<span class="kw">super</span>::library::Function { name, .. }) <span class="kw">if </span>name == <span class="string">"AsyncReadyCallback" </span>=&gt; {
-<a href=#101 id=101 data-nosnippet>101</a>                <span class="self">Self</span>::Direct
-<a href=#102 id=102 data-nosnippet>102</a>            }
-<a href=#103 id=103 data-nosnippet>103</a>            Function(<span class="kw">_</span>) =&gt; <span class="self">Self</span>::Direct,
-<a href=#104 id=104 data-nosnippet>104</a>            Custom(<span class="kw">super</span>::library::Custom {
-<a href=#105 id=105 data-nosnippet>105</a>                conversion_type, ..
-<a href=#106 id=106 data-nosnippet>106</a>            }) =&gt; conversion_type.clone(),
-<a href=#107 id=107 data-nosnippet>107</a>            <span class="kw">_ </span>=&gt; <span class="self">Self</span>::Unknown,
-<a href=#108 id=108 data-nosnippet>108</a>        }
-<a href=#109 id=109 data-nosnippet>109</a>    }
-<a href=#110 id=110 data-nosnippet>110</a>
-<a href=#111 id=111 data-nosnippet>111</a>    <span class="kw">pub fn </span>can_use_to_generate(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-<a href=#112 id=112 data-nosnippet>112</a>        <span class="macro">matches!</span>(<span class="self">self</span>, <span class="self">Self</span>::Option | <span class="self">Self</span>::Result { .. })
-<a href=#113 id=113 data-nosnippet>113</a>    }
-<a href=#114 id=114 data-nosnippet>114</a>}
+<a href=#100 id=100 data-nosnippet>100</a>            Function(f) <span class="kw">if </span>f.name == <span class="string">"AsyncReadyCallback" </span>=&gt; <span class="self">Self</span>::Direct,
+<a href=#101 id=101 data-nosnippet>101</a>            Function(<span class="kw">_</span>) =&gt; <span class="self">Self</span>::Direct,
+<a href=#102 id=102 data-nosnippet>102</a>            Custom(<span class="kw">super</span>::library::Custom {
+<a href=#103 id=103 data-nosnippet>103</a>                conversion_type, ..
+<a href=#104 id=104 data-nosnippet>104</a>            }) =&gt; conversion_type.clone(),
+<a href=#105 id=105 data-nosnippet>105</a>            <span class="kw">_ </span>=&gt; <span class="self">Self</span>::Unknown,
+<a href=#106 id=106 data-nosnippet>106</a>        }
+<a href=#107 id=107 data-nosnippet>107</a>    }
+<a href=#108 id=108 data-nosnippet>108</a>
+<a href=#109 id=109 data-nosnippet>109</a>    <span class="kw">pub fn </span>can_use_to_generate(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+<a href=#110 id=110 data-nosnippet>110</a>        <span class="macro">matches!</span>(<span class="self">self</span>, <span class="self">Self</span>::Option | <span class="self">Self</span>::Result { .. })
+<a href=#111 id=111 data-nosnippet>111</a>    }
+<a href=#112 id=112 data-nosnippet>112</a>}
 </code></pre></div></section></main></body></html>

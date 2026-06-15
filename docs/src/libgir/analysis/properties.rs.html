@@ -25,7 +25,7 @@
 <a href=#25 id=25 data-nosnippet>25</a>    <span class="kw">pub </span>is_get: bool,
 <a href=#26 id=26 data-nosnippet>26</a>    <span class="kw">pub </span>func_name: String,
 <a href=#27 id=27 data-nosnippet>27</a>    <span class="kw">pub </span>func_name_alias: <span class="prelude-ty">Option</span>&lt;String&gt;,
-<a href=#28 id=28 data-nosnippet>28</a>    <span class="kw">pub </span>nullable: library::Nullable,
+<a href=#28 id=28 data-nosnippet>28</a>    <span class="kw">pub </span>nullable: bool,
 <a href=#29 id=29 data-nosnippet>29</a>    <span class="kw">pub </span>get_out_ref_mode: RefMode,
 <a href=#30 id=30 data-nosnippet>30</a>    <span class="kw">pub </span>set_in_ref_mode: RefMode,
 <a href=#31 id=31 data-nosnippet>31</a>    <span class="kw">pub </span>bounds: Bounds,
@@ -291,7 +291,7 @@
 <a href=#291 id=291 data-nosnippet>291</a>        <span class="kw">let </span>set_bound = PropertyBound::get(env, prop.typ);
 <a href=#292 id=292 data-nosnippet>292</a>        <span class="kw">if </span>type_string.is_ok() &amp;&amp; set_bound.is_some() {
 <a href=#293 id=293 data-nosnippet>293</a>            imports.add(<span class="string">"glib::prelude::*"</span>);
-<a href=#294 id=294 data-nosnippet>294</a>            <span class="kw">if </span>!<span class="kw-2">*</span>nullable {
+<a href=#294 id=294 data-nosnippet>294</a>            <span class="kw">if </span>!nullable {
 <a href=#295 id=295 data-nosnippet>295</a>                <span class="comment">// TODO: support non-nullable setter if found any
 <a href=#296 id=296 data-nosnippet>296</a>                </span><span class="macro">warn!</span>(
 <a href=#297 id=297 data-nosnippet>297</a>                    <span class="string">"Non nullable setter for property generated as nullable \"{type_name}.{name}\""
@@ -336,122 +336,105 @@
 <a href=#336 id=336 data-nosnippet>336</a>
 <a href=#337 id=337 data-nosnippet>337</a>    <span class="kw">let </span>notify_signal = <span class="kw">if </span>notifiable {
 <a href=#338 id=338 data-nosnippet>338</a>        <span class="kw">let </span><span class="kw-2">mut </span>used_types: Vec&lt;String&gt; = Vec::with_capacity(<span class="number">4</span>);
-<a href=#339 id=339 data-nosnippet>339</a>        <span class="kw">let </span>trampoline = trampolines::analyze(
-<a href=#340 id=340 data-nosnippet>340</a>            env,
-<a href=#341 id=341 data-nosnippet>341</a>            <span class="kw-2">&amp;</span>library::Signal {
-<a href=#342 id=342 data-nosnippet>342</a>                name: <span class="macro">format!</span>(<span class="string">"notify::{name}"</span>),
-<a href=#343 id=343 data-nosnippet>343</a>                parameters: Vec::new(),
-<a href=#344 id=344 data-nosnippet>344</a>                ret: library::Parameter {
-<a href=#345 id=345 data-nosnippet>345</a>                    name: String::new(),
-<a href=#346 id=346 data-nosnippet>346</a>                    typ: env
-<a href=#347 id=347 data-nosnippet>347</a>                        .library
-<a href=#348 id=348 data-nosnippet>348</a>                        .find_type(library::INTERNAL_NAMESPACE, <span class="string">"none"</span>)
-<a href=#349 id=349 data-nosnippet>349</a>                        .unwrap(),
-<a href=#350 id=350 data-nosnippet>350</a>                    c_type: <span class="string">"none"</span>.into(),
-<a href=#351 id=351 data-nosnippet>351</a>                    instance_parameter: <span class="bool-val">false</span>,
-<a href=#352 id=352 data-nosnippet>352</a>                    direction: library::ParameterDirection::Return,
-<a href=#353 id=353 data-nosnippet>353</a>                    transfer: library::Transfer::None,
-<a href=#354 id=354 data-nosnippet>354</a>                    caller_allocates: <span class="bool-val">false</span>,
-<a href=#355 id=355 data-nosnippet>355</a>                    nullable: library::Nullable(<span class="bool-val">false</span>),
-<a href=#356 id=356 data-nosnippet>356</a>                    array_length: <span class="prelude-val">None</span>,
-<a href=#357 id=357 data-nosnippet>357</a>                    is_error: <span class="bool-val">false</span>,
-<a href=#358 id=358 data-nosnippet>358</a>                    doc: <span class="prelude-val">None</span>,
-<a href=#359 id=359 data-nosnippet>359</a>                    scope: library::ParameterScope::None,
-<a href=#360 id=360 data-nosnippet>360</a>                    closure: <span class="prelude-val">None</span>,
-<a href=#361 id=361 data-nosnippet>361</a>                    destroy: <span class="prelude-val">None</span>,
-<a href=#362 id=362 data-nosnippet>362</a>                },
-<a href=#363 id=363 data-nosnippet>363</a>                is_action: <span class="bool-val">false</span>,
-<a href=#364 id=364 data-nosnippet>364</a>                is_detailed: <span class="bool-val">false</span>, <span class="comment">/* well, technically this *is* an instance of a detailed
-<a href=#365 id=365 data-nosnippet>365</a>                                     * signal, but we "pre-detailed" it */
-<a href=#366 id=366 data-nosnippet>366</a>                </span>version: prop_version,
-<a href=#367 id=367 data-nosnippet>367</a>                deprecated_version: prop.deprecated_version,
-<a href=#368 id=368 data-nosnippet>368</a>                doc: <span class="prelude-val">None</span>,
-<a href=#369 id=369 data-nosnippet>369</a>                doc_deprecated: <span class="prelude-val">None</span>,
-<a href=#370 id=370 data-nosnippet>370</a>            },
-<a href=#371 id=371 data-nosnippet>371</a>            type_tid,
-<a href=#372 id=372 data-nosnippet>372</a>            generate_trait,
-<a href=#373 id=373 data-nosnippet>373</a>            is_fundamental,
-<a href=#374 id=374 data-nosnippet>374</a>            <span class="kw-2">&amp;</span>[],
-<a href=#375 id=375 data-nosnippet>375</a>            obj,
-<a href=#376 id=376 data-nosnippet>376</a>            <span class="kw-2">&amp;mut </span>used_types,
-<a href=#377 id=377 data-nosnippet>377</a>            prop_version,
-<a href=#378 id=378 data-nosnippet>378</a>        );
-<a href=#379 id=379 data-nosnippet>379</a>
-<a href=#380 id=380 data-nosnippet>380</a>        <span class="kw">if </span>trampoline.is_ok() {
-<a href=#381 id=381 data-nosnippet>381</a>            imports.add_used_types(<span class="kw-2">&amp;</span>used_types);
-<a href=#382 id=382 data-nosnippet>382</a>            <span class="kw">if </span>generate_trait {
-<a href=#383 id=383 data-nosnippet>383</a>                imports.add(<span class="string">"glib::prelude::*"</span>);
-<a href=#384 id=384 data-nosnippet>384</a>            }
-<a href=#385 id=385 data-nosnippet>385</a>            imports.add(<span class="string">"glib::signal::{connect_raw, SignalHandlerId}"</span>);
-<a href=#386 id=386 data-nosnippet>386</a>            imports.add(<span class="string">"std::boxed::Box as Box_"</span>);
-<a href=#387 id=387 data-nosnippet>387</a>
-<a href=#388 id=388 data-nosnippet>388</a>            <span class="prelude-val">Some</span>(signals::Info {
-<a href=#389 id=389 data-nosnippet>389</a>                connect_name: <span class="macro">format!</span>(<span class="string">"connect_{name_for_func}_notify"</span>),
-<a href=#390 id=390 data-nosnippet>390</a>                signal_name: <span class="macro">format!</span>(<span class="string">"notify::{name}"</span>),
-<a href=#391 id=391 data-nosnippet>391</a>                trampoline,
-<a href=#392 id=392 data-nosnippet>392</a>                action_emit_name: <span class="prelude-val">None</span>,
-<a href=#393 id=393 data-nosnippet>393</a>                version: prop_version,
-<a href=#394 id=394 data-nosnippet>394</a>                deprecated_version: prop.deprecated_version,
-<a href=#395 id=395 data-nosnippet>395</a>                doc_hidden: <span class="bool-val">false</span>,
-<a href=#396 id=396 data-nosnippet>396</a>                is_detailed: <span class="bool-val">false</span>, <span class="comment">// see above comment
-<a href=#397 id=397 data-nosnippet>397</a>                </span>generate_doc: obj.generate_doc,
-<a href=#398 id=398 data-nosnippet>398</a>                cfg_condition,
-<a href=#399 id=399 data-nosnippet>399</a>            })
-<a href=#400 id=400 data-nosnippet>400</a>        } <span class="kw">else </span>{
-<a href=#401 id=401 data-nosnippet>401</a>            <span class="prelude-val">None
-<a href=#402 id=402 data-nosnippet>402</a>        </span>}
-<a href=#403 id=403 data-nosnippet>403</a>    } <span class="kw">else </span>{
-<a href=#404 id=404 data-nosnippet>404</a>        <span class="prelude-val">None
-<a href=#405 id=405 data-nosnippet>405</a>    </span>};
-<a href=#406 id=406 data-nosnippet>406</a>
-<a href=#407 id=407 data-nosnippet>407</a>    (getter, setter, notify_signal)
-<a href=#408 id=408 data-nosnippet>408</a>}
-<a href=#409 id=409 data-nosnippet>409</a>
-<a href=#410 id=410 data-nosnippet>410</a><span class="doccomment">/// Returns (the list of get functions to check, the desired get function name).
-<a href=#411 id=411 data-nosnippet>411</a></span><span class="kw">fn </span>get_func_name(prop_name: <span class="kw-2">&amp;</span>str, is_bool_getter: bool) -&gt; (Vec&lt;String&gt;, String) {
-<a href=#412 id=412 data-nosnippet>412</a>    <span class="kw">let </span>get_rename_res = getter_rules::try_rename_getter_suffix(prop_name, is_bool_getter);
-<a href=#413 id=413 data-nosnippet>413</a>    <span class="kw">match </span>get_rename_res {
-<a href=#414 id=414 data-nosnippet>414</a>        <span class="prelude-val">Ok</span>(new_name) =&gt; {
-<a href=#415 id=415 data-nosnippet>415</a>            <span class="kw">let </span>new_name = new_name.unwrap();
-<a href=#416 id=416 data-nosnippet>416</a>            <span class="kw">let </span><span class="kw-2">mut </span>check_get_func_names = <span class="macro">vec!</span>[
-<a href=#417 id=417 data-nosnippet>417</a>                <span class="macro">format!</span>(<span class="string">"get_{prop_name}"</span>),
-<a href=#418 id=418 data-nosnippet>418</a>                prop_name.to_string(),
-<a href=#419 id=419 data-nosnippet>419</a>                <span class="macro">format!</span>(<span class="string">"get_{new_name}"</span>),
-<a href=#420 id=420 data-nosnippet>420</a>                new_name.clone(),
-<a href=#421 id=421 data-nosnippet>421</a>            ];
-<a href=#422 id=422 data-nosnippet>422</a>
-<a href=#423 id=423 data-nosnippet>423</a>            <span class="kw">if </span>is_bool_getter {
-<a href=#424 id=424 data-nosnippet>424</a>                check_get_func_names.push(<span class="macro">format!</span>(<span class="string">"is_{prop_name}"</span>));
-<a href=#425 id=425 data-nosnippet>425</a>                check_get_func_names.push(<span class="macro">format!</span>(<span class="string">"is_{new_name}"</span>));
-<a href=#426 id=426 data-nosnippet>426</a>            }
-<a href=#427 id=427 data-nosnippet>427</a>            (check_get_func_names, new_name)
-<a href=#428 id=428 data-nosnippet>428</a>        }
-<a href=#429 id=429 data-nosnippet>429</a>        <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; {
-<a href=#430 id=430 data-nosnippet>430</a>            <span class="kw">let </span><span class="kw-2">mut </span>check_get_func_names = <span class="macro">vec!</span>[<span class="macro">format!</span>(<span class="string">"get_{prop_name}"</span>), prop_name.to_string()];
-<a href=#431 id=431 data-nosnippet>431</a>
-<a href=#432 id=432 data-nosnippet>432</a>            <span class="comment">// Name is reserved
-<a href=#433 id=433 data-nosnippet>433</a>            </span><span class="kw">let </span>get_func_name = <span class="kw">if </span>is_bool_getter {
-<a href=#434 id=434 data-nosnippet>434</a>                <span class="kw">let </span>get_func_name = <span class="macro">format!</span>(<span class="string">"is_{prop_name}"</span>);
-<a href=#435 id=435 data-nosnippet>435</a>                check_get_func_names.push(get_func_name.clone());
-<a href=#436 id=436 data-nosnippet>436</a>                get_func_name
-<a href=#437 id=437 data-nosnippet>437</a>            } <span class="kw">else </span>{
-<a href=#438 id=438 data-nosnippet>438</a>                <span class="macro">format!</span>(<span class="string">"get_{prop_name}"</span>)
-<a href=#439 id=439 data-nosnippet>439</a>            };
-<a href=#440 id=440 data-nosnippet>440</a>            (check_get_func_names, get_func_name)
-<a href=#441 id=441 data-nosnippet>441</a>        }
-<a href=#442 id=442 data-nosnippet>442</a>    }
-<a href=#443 id=443 data-nosnippet>443</a>}
-<a href=#444 id=444 data-nosnippet>444</a>
-<a href=#445 id=445 data-nosnippet>445</a><span class="kw">pub fn </span>get_property_ref_modes(
-<a href=#446 id=446 data-nosnippet>446</a>    env: <span class="kw-2">&amp;</span>Env,
-<a href=#447 id=447 data-nosnippet>447</a>    prop: <span class="kw-2">&amp;</span>library::Property,
-<a href=#448 id=448 data-nosnippet>448</a>) -&gt; (RefMode, RefMode, library::Nullable) {
-<a href=#449 id=449 data-nosnippet>449</a>    <span class="kw">let </span>get_out_ref_mode = RefMode::of(env, prop.typ, library::ParameterDirection::Return);
-<a href=#450 id=450 data-nosnippet>450</a>    <span class="kw">let </span><span class="kw-2">mut </span>set_in_ref_mode = RefMode::of(env, prop.typ, library::ParameterDirection::In);
-<a href=#451 id=451 data-nosnippet>451</a>    <span class="kw">if </span>set_in_ref_mode == RefMode::ByRefMut {
-<a href=#452 id=452 data-nosnippet>452</a>        set_in_ref_mode = RefMode::ByRef;
-<a href=#453 id=453 data-nosnippet>453</a>    }
-<a href=#454 id=454 data-nosnippet>454</a>    <span class="kw">let </span>nullable = library::Nullable(set_in_ref_mode.is_ref());
-<a href=#455 id=455 data-nosnippet>455</a>    (get_out_ref_mode, set_in_ref_mode, nullable)
-<a href=#456 id=456 data-nosnippet>456</a>}
+<a href=#339 id=339 data-nosnippet>339</a>        <span class="kw">let </span>tid = env
+<a href=#340 id=340 data-nosnippet>340</a>            .library
+<a href=#341 id=341 data-nosnippet>341</a>            .find_type(library::INTERNAL_NAMESPACE, <span class="string">"none"</span>)
+<a href=#342 id=342 data-nosnippet>342</a>            .unwrap();
+<a href=#343 id=343 data-nosnippet>343</a>        <span class="kw">let </span>trampoline = trampolines::analyze(
+<a href=#344 id=344 data-nosnippet>344</a>            env,
+<a href=#345 id=345 data-nosnippet>345</a>            <span class="kw-2">&amp;</span>library::Signal {
+<a href=#346 id=346 data-nosnippet>346</a>                name: <span class="macro">format!</span>(<span class="string">"notify::{name}"</span>),
+<a href=#347 id=347 data-nosnippet>347</a>                parameters: Vec::new(),
+<a href=#348 id=348 data-nosnippet>348</a>                ret: library::Parameter::none(tid),
+<a href=#349 id=349 data-nosnippet>349</a>                is_action: <span class="bool-val">false</span>,
+<a href=#350 id=350 data-nosnippet>350</a>                is_detailed: <span class="bool-val">false</span>, <span class="comment">/* well, technically this *is* an instance of a detailed
+<a href=#351 id=351 data-nosnippet>351</a>                                     * signal, but we "pre-detailed" it */
+<a href=#352 id=352 data-nosnippet>352</a>                </span>version: prop_version,
+<a href=#353 id=353 data-nosnippet>353</a>                deprecated_version: prop.deprecated_version,
+<a href=#354 id=354 data-nosnippet>354</a>                doc: <span class="prelude-val">None</span>,
+<a href=#355 id=355 data-nosnippet>355</a>                doc_deprecated: <span class="prelude-val">None</span>,
+<a href=#356 id=356 data-nosnippet>356</a>            },
+<a href=#357 id=357 data-nosnippet>357</a>            type_tid,
+<a href=#358 id=358 data-nosnippet>358</a>            generate_trait,
+<a href=#359 id=359 data-nosnippet>359</a>            is_fundamental,
+<a href=#360 id=360 data-nosnippet>360</a>            <span class="kw-2">&amp;</span>[],
+<a href=#361 id=361 data-nosnippet>361</a>            obj,
+<a href=#362 id=362 data-nosnippet>362</a>            <span class="kw-2">&amp;mut </span>used_types,
+<a href=#363 id=363 data-nosnippet>363</a>            prop_version,
+<a href=#364 id=364 data-nosnippet>364</a>        );
+<a href=#365 id=365 data-nosnippet>365</a>
+<a href=#366 id=366 data-nosnippet>366</a>        <span class="kw">if </span>trampoline.is_ok() {
+<a href=#367 id=367 data-nosnippet>367</a>            imports.add_used_types(<span class="kw-2">&amp;</span>used_types);
+<a href=#368 id=368 data-nosnippet>368</a>            <span class="kw">if </span>generate_trait {
+<a href=#369 id=369 data-nosnippet>369</a>                imports.add(<span class="string">"glib::prelude::*"</span>);
+<a href=#370 id=370 data-nosnippet>370</a>            }
+<a href=#371 id=371 data-nosnippet>371</a>            imports.add(<span class="string">"glib::signal::{connect_raw, SignalHandlerId}"</span>);
+<a href=#372 id=372 data-nosnippet>372</a>            imports.add(<span class="string">"std::boxed::Box as Box_"</span>);
+<a href=#373 id=373 data-nosnippet>373</a>
+<a href=#374 id=374 data-nosnippet>374</a>            <span class="prelude-val">Some</span>(signals::Info {
+<a href=#375 id=375 data-nosnippet>375</a>                connect_name: <span class="macro">format!</span>(<span class="string">"connect_{name_for_func}_notify"</span>),
+<a href=#376 id=376 data-nosnippet>376</a>                signal_name: <span class="macro">format!</span>(<span class="string">"notify::{name}"</span>),
+<a href=#377 id=377 data-nosnippet>377</a>                trampoline,
+<a href=#378 id=378 data-nosnippet>378</a>                action_emit_name: <span class="prelude-val">None</span>,
+<a href=#379 id=379 data-nosnippet>379</a>                version: prop_version,
+<a href=#380 id=380 data-nosnippet>380</a>                deprecated_version: prop.deprecated_version,
+<a href=#381 id=381 data-nosnippet>381</a>                doc_hidden: <span class="bool-val">false</span>,
+<a href=#382 id=382 data-nosnippet>382</a>                is_detailed: <span class="bool-val">false</span>, <span class="comment">// see above comment
+<a href=#383 id=383 data-nosnippet>383</a>                </span>generate_doc: obj.generate_doc,
+<a href=#384 id=384 data-nosnippet>384</a>                cfg_condition,
+<a href=#385 id=385 data-nosnippet>385</a>            })
+<a href=#386 id=386 data-nosnippet>386</a>        } <span class="kw">else </span>{
+<a href=#387 id=387 data-nosnippet>387</a>            <span class="prelude-val">None
+<a href=#388 id=388 data-nosnippet>388</a>        </span>}
+<a href=#389 id=389 data-nosnippet>389</a>    } <span class="kw">else </span>{
+<a href=#390 id=390 data-nosnippet>390</a>        <span class="prelude-val">None
+<a href=#391 id=391 data-nosnippet>391</a>    </span>};
+<a href=#392 id=392 data-nosnippet>392</a>
+<a href=#393 id=393 data-nosnippet>393</a>    (getter, setter, notify_signal)
+<a href=#394 id=394 data-nosnippet>394</a>}
+<a href=#395 id=395 data-nosnippet>395</a>
+<a href=#396 id=396 data-nosnippet>396</a><span class="doccomment">/// Returns (the list of get functions to check, the desired get function name).
+<a href=#397 id=397 data-nosnippet>397</a></span><span class="kw">fn </span>get_func_name(prop_name: <span class="kw-2">&amp;</span>str, is_bool_getter: bool) -&gt; (Vec&lt;String&gt;, String) {
+<a href=#398 id=398 data-nosnippet>398</a>    <span class="kw">let </span>get_rename_res = getter_rules::try_rename_getter_suffix(prop_name, is_bool_getter);
+<a href=#399 id=399 data-nosnippet>399</a>    <span class="kw">match </span>get_rename_res {
+<a href=#400 id=400 data-nosnippet>400</a>        <span class="prelude-val">Ok</span>(new_name) =&gt; {
+<a href=#401 id=401 data-nosnippet>401</a>            <span class="kw">let </span>new_name = new_name.unwrap();
+<a href=#402 id=402 data-nosnippet>402</a>            <span class="kw">let </span><span class="kw-2">mut </span>check_get_func_names = <span class="macro">vec!</span>[
+<a href=#403 id=403 data-nosnippet>403</a>                <span class="macro">format!</span>(<span class="string">"get_{prop_name}"</span>),
+<a href=#404 id=404 data-nosnippet>404</a>                prop_name.to_string(),
+<a href=#405 id=405 data-nosnippet>405</a>                <span class="macro">format!</span>(<span class="string">"get_{new_name}"</span>),
+<a href=#406 id=406 data-nosnippet>406</a>                new_name.clone(),
+<a href=#407 id=407 data-nosnippet>407</a>            ];
+<a href=#408 id=408 data-nosnippet>408</a>
+<a href=#409 id=409 data-nosnippet>409</a>            <span class="kw">if </span>is_bool_getter {
+<a href=#410 id=410 data-nosnippet>410</a>                check_get_func_names.push(<span class="macro">format!</span>(<span class="string">"is_{prop_name}"</span>));
+<a href=#411 id=411 data-nosnippet>411</a>                check_get_func_names.push(<span class="macro">format!</span>(<span class="string">"is_{new_name}"</span>));
+<a href=#412 id=412 data-nosnippet>412</a>            }
+<a href=#413 id=413 data-nosnippet>413</a>            (check_get_func_names, new_name)
+<a href=#414 id=414 data-nosnippet>414</a>        }
+<a href=#415 id=415 data-nosnippet>415</a>        <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; {
+<a href=#416 id=416 data-nosnippet>416</a>            <span class="kw">let </span><span class="kw-2">mut </span>check_get_func_names = <span class="macro">vec!</span>[<span class="macro">format!</span>(<span class="string">"get_{prop_name}"</span>), prop_name.to_string()];
+<a href=#417 id=417 data-nosnippet>417</a>
+<a href=#418 id=418 data-nosnippet>418</a>            <span class="comment">// Name is reserved
+<a href=#419 id=419 data-nosnippet>419</a>            </span><span class="kw">let </span>get_func_name = <span class="kw">if </span>is_bool_getter {
+<a href=#420 id=420 data-nosnippet>420</a>                <span class="kw">let </span>get_func_name = <span class="macro">format!</span>(<span class="string">"is_{prop_name}"</span>);
+<a href=#421 id=421 data-nosnippet>421</a>                check_get_func_names.push(get_func_name.clone());
+<a href=#422 id=422 data-nosnippet>422</a>                get_func_name
+<a href=#423 id=423 data-nosnippet>423</a>            } <span class="kw">else </span>{
+<a href=#424 id=424 data-nosnippet>424</a>                <span class="macro">format!</span>(<span class="string">"get_{prop_name}"</span>)
+<a href=#425 id=425 data-nosnippet>425</a>            };
+<a href=#426 id=426 data-nosnippet>426</a>            (check_get_func_names, get_func_name)
+<a href=#427 id=427 data-nosnippet>427</a>        }
+<a href=#428 id=428 data-nosnippet>428</a>    }
+<a href=#429 id=429 data-nosnippet>429</a>}
+<a href=#430 id=430 data-nosnippet>430</a>
+<a href=#431 id=431 data-nosnippet>431</a><span class="kw">pub fn </span>get_property_ref_modes(env: <span class="kw-2">&amp;</span>Env, prop: <span class="kw-2">&amp;</span>library::Property) -&gt; (RefMode, RefMode, bool) {
+<a href=#432 id=432 data-nosnippet>432</a>    <span class="kw">let </span>get_out_ref_mode = RefMode::of(env, prop.typ, library::ParameterDirection::Return);
+<a href=#433 id=433 data-nosnippet>433</a>    <span class="kw">let </span><span class="kw-2">mut </span>set_in_ref_mode = RefMode::of(env, prop.typ, library::ParameterDirection::In);
+<a href=#434 id=434 data-nosnippet>434</a>    <span class="kw">if </span>set_in_ref_mode == RefMode::ByRefMut {
+<a href=#435 id=435 data-nosnippet>435</a>        set_in_ref_mode = RefMode::ByRef;
+<a href=#436 id=436 data-nosnippet>436</a>    }
+<a href=#437 id=437 data-nosnippet>437</a>    <span class="kw">let </span>nullable = set_in_ref_mode.is_ref();
+<a href=#438 id=438 data-nosnippet>438</a>    (get_out_ref_mode, set_in_ref_mode, nullable)
+<a href=#439 id=439 data-nosnippet>439</a>}
 </code></pre></div></section></main></body></html>

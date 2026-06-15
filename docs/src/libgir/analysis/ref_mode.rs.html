@@ -94,11 +94,11 @@
 <a href=#94 id=94 data-nosnippet>94</a>        immutable: bool,
 <a href=#95 id=95 data-nosnippet>95</a>        self_in_trait: bool,
 <a href=#96 id=96 data-nosnippet>96</a>    ) -&gt; <span class="self">Self </span>{
-<a href=#97 id=97 data-nosnippet>97</a>        <span class="kw">let </span>ref_mode = <span class="self">Self</span>::of(env, par.typ, par.direction);
+<a href=#97 id=97 data-nosnippet>97</a>        <span class="kw">let </span>ref_mode = <span class="self">Self</span>::of(env, par.typ(), par.direction());
 <a href=#98 id=98 data-nosnippet>98</a>        <span class="kw">match </span>ref_mode {
-<a href=#99 id=99 data-nosnippet>99</a>            <span class="self">Self</span>::ByRefMut <span class="kw">if </span>!is_mut_ptr(<span class="kw-2">&amp;</span>par.c_type) =&gt; <span class="self">Self</span>::ByRef,
+<a href=#99 id=99 data-nosnippet>99</a>            <span class="self">Self</span>::ByRefMut <span class="kw">if </span>!is_mut_ptr(par.c_type()) =&gt; <span class="self">Self</span>::ByRef,
 <a href=#100 id=100 data-nosnippet>100</a>            <span class="self">Self</span>::ByRefMut <span class="kw">if </span>immutable =&gt; <span class="self">Self</span>::ByRefImmut,
-<a href=#101 id=101 data-nosnippet>101</a>            <span class="self">Self</span>::ByRef <span class="kw">if </span>self_in_trait &amp;&amp; !is_mut_ptr(<span class="kw-2">&amp;</span>par.c_type) =&gt; <span class="self">Self</span>::ByRefConst,
+<a href=#101 id=101 data-nosnippet>101</a>            <span class="self">Self</span>::ByRef <span class="kw">if </span>self_in_trait &amp;&amp; !is_mut_ptr(par.c_type()) =&gt; <span class="self">Self</span>::ByRefConst,
 <a href=#102 id=102 data-nosnippet>102</a>            ref_mode =&gt; ref_mode,
 <a href=#103 id=103 data-nosnippet>103</a>        }
 <a href=#104 id=104 data-nosnippet>104</a>    }

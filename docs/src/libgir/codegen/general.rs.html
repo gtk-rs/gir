@@ -1041,7 +1041,7 @@
 <a href=#1041 id=1041 data-nosnippet>1041</a>            &amp;&amp; f.status.need_generate()
 <a href=#1042 id=1042 data-nosnippet>1042</a>            &amp;&amp; f.name == <span class="string">"new"
 <a href=#1043 id=1043 data-nosnippet>1043</a>            </span><span class="comment">// Cannot generate Default implementation for Option&lt;&gt;
-<a href=#1044 id=1044 data-nosnippet>1044</a>            </span>&amp;&amp; f.ret.parameter.as_ref().is_some_and(|x| !<span class="kw-2">*</span>x.lib_par.nullable)
+<a href=#1044 id=1044 data-nosnippet>1044</a>            </span>&amp;&amp; f.ret.parameter.as_ref().is_some_and(|x| !x.lib_par.is_nullable())
 <a href=#1045 id=1045 data-nosnippet>1045</a>            <span class="comment">// Cannot generate Default implementation for Result&lt;&gt;
 <a href=#1046 id=1046 data-nosnippet>1046</a>            </span>&amp;&amp; f.outs.mode != Mode::Throws(ThrowFunctionReturnStrategy::ReturnResult)
 <a href=#1047 id=1047 data-nosnippet>1047</a>    }) {

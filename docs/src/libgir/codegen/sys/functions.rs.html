@@ -253,7 +253,7 @@
 <a href=#253 id=253 data-nosnippet>253</a>            .or(version);
 <a href=#254 id=254 data-nosnippet>254</a>
 <a href=#255 id=255 data-nosnippet>255</a>        version_condition(w, env, <span class="prelude-val">None</span>, version, commented, <span class="number">1</span>)<span class="question-mark">?</span>;
-<a href=#256 id=256 data-nosnippet>256</a>        <span class="kw">let </span>name = func.c_identifier.as_ref().unwrap();
+<a href=#256 id=256 data-nosnippet>256</a>        <span class="kw">let </span>name = <span class="kw-2">&amp;</span>func.c_identifier;
 <a href=#257 id=257 data-nosnippet>257</a>        generate_cfg_configure(w, <span class="kw-2">&amp;</span>configured_functions, commented)<span class="question-mark">?</span>;
 <a href=#258 id=258 data-nosnippet>258</a>        <span class="macro">writeln!</span>(w, <span class="string">"    {comment}pub fn {name}{sig};"</span>)<span class="question-mark">?</span>;
 <a href=#259 id=259 data-nosnippet>259</a>    }
@@ -275,60 +275,58 @@
 <a href=#275 id=275 data-nosnippet>275</a>        <span class="macro">writeln!</span>(
 <a href=#276 id=276 data-nosnippet>276</a>            w,
 <a href=#277 id=277 data-nosnippet>277</a>            <span class="string">"{}pub type {} = Option&lt;unsafe extern \"C\" fn{}&gt;;"</span>,
-<a href=#278 id=278 data-nosnippet>278</a>            comment,
-<a href=#279 id=279 data-nosnippet>279</a>            func.c_identifier.as_ref().unwrap(),
-<a href=#280 id=280 data-nosnippet>280</a>            sig
-<a href=#281 id=281 data-nosnippet>281</a>        )<span class="question-mark">?</span>;
-<a href=#282 id=282 data-nosnippet>282</a>    }
-<a href=#283 id=283 data-nosnippet>283</a>    <span class="kw">if </span>!callbacks.is_empty() {
-<a href=#284 id=284 data-nosnippet>284</a>        <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
-<a href=#285 id=285 data-nosnippet>285</a>    }
-<a href=#286 id=286 data-nosnippet>286</a>
-<a href=#287 id=287 data-nosnippet>287</a>    <span class="prelude-val">Ok</span>(())
-<a href=#288 id=288 data-nosnippet>288</a>}
-<a href=#289 id=289 data-nosnippet>289</a>
-<a href=#290 id=290 data-nosnippet>290</a><span class="kw">pub fn </span>function_signature(env: <span class="kw-2">&amp;</span>Env, func: <span class="kw-2">&amp;</span>library::Function, bare: bool) -&gt; (bool, String) {
-<a href=#291 id=291 data-nosnippet>291</a>    <span class="kw">let </span>(<span class="kw-2">mut </span>commented, ret_str) = function_return_value(env, func);
-<a href=#292 id=292 data-nosnippet>292</a>
-<a href=#293 id=293 data-nosnippet>293</a>    <span class="kw">let </span><span class="kw-2">mut </span>parameter_strs: Vec&lt;String&gt; = Vec::new();
-<a href=#294 id=294 data-nosnippet>294</a>    <span class="kw">for </span>par <span class="kw">in </span><span class="kw-2">&amp;</span>func.parameters {
-<a href=#295 id=295 data-nosnippet>295</a>        <span class="kw">let </span>(c, par_str) = function_parameter(env, par, bare);
-<a href=#296 id=296 data-nosnippet>296</a>        parameter_strs.push(par_str);
-<a href=#297 id=297 data-nosnippet>297</a>        <span class="kw">if </span>c {
-<a href=#298 id=298 data-nosnippet>298</a>            commented = <span class="bool-val">true</span>;
-<a href=#299 id=299 data-nosnippet>299</a>        }
-<a href=#300 id=300 data-nosnippet>300</a>    }
-<a href=#301 id=301 data-nosnippet>301</a>
-<a href=#302 id=302 data-nosnippet>302</a>    (
-<a href=#303 id=303 data-nosnippet>303</a>        commented,
-<a href=#304 id=304 data-nosnippet>304</a>        <span class="macro">format!</span>(<span class="string">"({}){}"</span>, parameter_strs.join(<span class="string">", "</span>), ret_str),
-<a href=#305 id=305 data-nosnippet>305</a>    )
-<a href=#306 id=306 data-nosnippet>306</a>}
-<a href=#307 id=307 data-nosnippet>307</a>
-<a href=#308 id=308 data-nosnippet>308</a><span class="kw">fn </span>function_return_value(env: <span class="kw-2">&amp;</span>Env, func: <span class="kw-2">&amp;</span>library::Function) -&gt; (bool, String) {
-<a href=#309 id=309 data-nosnippet>309</a>    <span class="kw">if </span>func.ret.typ == Default::default() {
-<a href=#310 id=310 data-nosnippet>310</a>        <span class="kw">return </span>(<span class="bool-val">false</span>, String::new());
-<a href=#311 id=311 data-nosnippet>311</a>    }
-<a href=#312 id=312 data-nosnippet>312</a>    <span class="kw">let </span>ffi_type = ffi_type(env, func.ret.typ, <span class="kw-2">&amp;</span>func.ret.c_type);
-<a href=#313 id=313 data-nosnippet>313</a>    <span class="kw">let </span>commented = ffi_type.is_err();
-<a href=#314 id=314 data-nosnippet>314</a>    (commented, <span class="macro">format!</span>(<span class="string">" -&gt; {}"</span>, ffi_type.into_string()))
-<a href=#315 id=315 data-nosnippet>315</a>}
-<a href=#316 id=316 data-nosnippet>316</a>
-<a href=#317 id=317 data-nosnippet>317</a><span class="kw">fn </span>function_parameter(env: <span class="kw-2">&amp;</span>Env, par: <span class="kw-2">&amp;</span>library::Parameter, bare: bool) -&gt; (bool, String) {
-<a href=#318 id=318 data-nosnippet>318</a>    <span class="kw">if let </span>library::Type::Basic(library::Basic::VarArgs) = env.library.type_(par.typ) {
-<a href=#319 id=319 data-nosnippet>319</a>        <span class="kw">return </span>(<span class="bool-val">false</span>, <span class="string">"..."</span>.into());
-<a href=#320 id=320 data-nosnippet>320</a>    }
-<a href=#321 id=321 data-nosnippet>321</a>    <span class="kw">let </span>ffi_type = ffi_type(env, par.typ, <span class="kw-2">&amp;</span>par.c_type);
-<a href=#322 id=322 data-nosnippet>322</a>    <span class="kw">let </span>commented = ffi_type.is_err();
-<a href=#323 id=323 data-nosnippet>323</a>    <span class="kw">let </span>res = <span class="kw">if </span>bare {
-<a href=#324 id=324 data-nosnippet>324</a>        ffi_type.into_string()
-<a href=#325 id=325 data-nosnippet>325</a>    } <span class="kw">else </span>{
-<a href=#326 id=326 data-nosnippet>326</a>        <span class="macro">format!</span>(
-<a href=#327 id=327 data-nosnippet>327</a>            <span class="string">"{}: {}"</span>,
-<a href=#328 id=328 data-nosnippet>328</a>            nameutil::mangle_keywords(<span class="kw-2">&amp;*</span>par.name),
-<a href=#329 id=329 data-nosnippet>329</a>            ffi_type.into_string()
-<a href=#330 id=330 data-nosnippet>330</a>        )
-<a href=#331 id=331 data-nosnippet>331</a>    };
-<a href=#332 id=332 data-nosnippet>332</a>    (commented, res)
-<a href=#333 id=333 data-nosnippet>333</a>}
+<a href=#278 id=278 data-nosnippet>278</a>            comment, func.c_identifier, sig
+<a href=#279 id=279 data-nosnippet>279</a>        )<span class="question-mark">?</span>;
+<a href=#280 id=280 data-nosnippet>280</a>    }
+<a href=#281 id=281 data-nosnippet>281</a>    <span class="kw">if </span>!callbacks.is_empty() {
+<a href=#282 id=282 data-nosnippet>282</a>        <span class="macro">writeln!</span>(w)<span class="question-mark">?</span>;
+<a href=#283 id=283 data-nosnippet>283</a>    }
+<a href=#284 id=284 data-nosnippet>284</a>
+<a href=#285 id=285 data-nosnippet>285</a>    <span class="prelude-val">Ok</span>(())
+<a href=#286 id=286 data-nosnippet>286</a>}
+<a href=#287 id=287 data-nosnippet>287</a>
+<a href=#288 id=288 data-nosnippet>288</a><span class="kw">pub fn </span>function_signature(env: <span class="kw-2">&amp;</span>Env, func: <span class="kw-2">&amp;</span>library::Function, bare: bool) -&gt; (bool, String) {
+<a href=#289 id=289 data-nosnippet>289</a>    <span class="kw">let </span>(<span class="kw-2">mut </span>commented, ret_str) = function_return_value(env, func);
+<a href=#290 id=290 data-nosnippet>290</a>
+<a href=#291 id=291 data-nosnippet>291</a>    <span class="kw">let </span><span class="kw-2">mut </span>parameter_strs: Vec&lt;String&gt; = Vec::new();
+<a href=#292 id=292 data-nosnippet>292</a>    <span class="kw">for </span>par <span class="kw">in </span><span class="kw-2">&amp;</span>func.parameters {
+<a href=#293 id=293 data-nosnippet>293</a>        <span class="kw">let </span>(c, par_str) = function_parameter(env, par, bare);
+<a href=#294 id=294 data-nosnippet>294</a>        parameter_strs.push(par_str);
+<a href=#295 id=295 data-nosnippet>295</a>        <span class="kw">if </span>c {
+<a href=#296 id=296 data-nosnippet>296</a>            commented = <span class="bool-val">true</span>;
+<a href=#297 id=297 data-nosnippet>297</a>        }
+<a href=#298 id=298 data-nosnippet>298</a>    }
+<a href=#299 id=299 data-nosnippet>299</a>
+<a href=#300 id=300 data-nosnippet>300</a>    (
+<a href=#301 id=301 data-nosnippet>301</a>        commented,
+<a href=#302 id=302 data-nosnippet>302</a>        <span class="macro">format!</span>(<span class="string">"({}){}"</span>, parameter_strs.join(<span class="string">", "</span>), ret_str),
+<a href=#303 id=303 data-nosnippet>303</a>    )
+<a href=#304 id=304 data-nosnippet>304</a>}
+<a href=#305 id=305 data-nosnippet>305</a>
+<a href=#306 id=306 data-nosnippet>306</a><span class="kw">fn </span>function_return_value(env: <span class="kw-2">&amp;</span>Env, func: <span class="kw-2">&amp;</span>library::Function) -&gt; (bool, String) {
+<a href=#307 id=307 data-nosnippet>307</a>    <span class="kw">if </span>func.ret.typ() == Default::default() {
+<a href=#308 id=308 data-nosnippet>308</a>        <span class="kw">return </span>(<span class="bool-val">false</span>, String::new());
+<a href=#309 id=309 data-nosnippet>309</a>    }
+<a href=#310 id=310 data-nosnippet>310</a>    <span class="kw">let </span>ffi_type = ffi_type(env, func.ret.typ(), func.ret.c_type());
+<a href=#311 id=311 data-nosnippet>311</a>    <span class="kw">let </span>commented = ffi_type.is_err();
+<a href=#312 id=312 data-nosnippet>312</a>    (commented, <span class="macro">format!</span>(<span class="string">" -&gt; {}"</span>, ffi_type.into_string()))
+<a href=#313 id=313 data-nosnippet>313</a>}
+<a href=#314 id=314 data-nosnippet>314</a>
+<a href=#315 id=315 data-nosnippet>315</a><span class="kw">fn </span>function_parameter(env: <span class="kw-2">&amp;</span>Env, par: <span class="kw-2">&amp;</span>library::Parameter, bare: bool) -&gt; (bool, String) {
+<a href=#316 id=316 data-nosnippet>316</a>    <span class="kw">if let </span>library::Type::Basic(library::Basic::VarArgs) = env.library.type_(par.typ()) {
+<a href=#317 id=317 data-nosnippet>317</a>        <span class="kw">return </span>(<span class="bool-val">false</span>, <span class="string">"..."</span>.into());
+<a href=#318 id=318 data-nosnippet>318</a>    }
+<a href=#319 id=319 data-nosnippet>319</a>    <span class="kw">let </span>ffi_type = ffi_type(env, par.typ(), par.c_type());
+<a href=#320 id=320 data-nosnippet>320</a>    <span class="kw">let </span>commented = ffi_type.is_err();
+<a href=#321 id=321 data-nosnippet>321</a>    <span class="kw">let </span>res = <span class="kw">if </span>bare {
+<a href=#322 id=322 data-nosnippet>322</a>        ffi_type.into_string()
+<a href=#323 id=323 data-nosnippet>323</a>    } <span class="kw">else </span>{
+<a href=#324 id=324 data-nosnippet>324</a>        <span class="macro">format!</span>(
+<a href=#325 id=325 data-nosnippet>325</a>            <span class="string">"{}: {}"</span>,
+<a href=#326 id=326 data-nosnippet>326</a>            nameutil::mangle_keywords(par.name()),
+<a href=#327 id=327 data-nosnippet>327</a>            ffi_type.into_string()
+<a href=#328 id=328 data-nosnippet>328</a>        )
+<a href=#329 id=329 data-nosnippet>329</a>    };
+<a href=#330 id=330 data-nosnippet>330</a>    (commented, res)
+<a href=#331 id=331 data-nosnippet>331</a>}
 </code></pre></div></section></main></body></html>
