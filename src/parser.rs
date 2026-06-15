@@ -302,11 +302,43 @@ impl Library {
         }
 
         for field in elem.fields() {
-            if let gir_parser::ClassField::Field(field) = field {
-                match self.read_field(ns_id, field) {
+            match field {
+                gir_parser::ClassField::Field(field) => match self.read_field(ns_id, field) {
                     Ok(f) => fields.push(f),
                     Err(e) => error!("Skipping field \"{}\": {e}", field.name()),
+                },
+                gir_parser::ClassField::Union(union) => {
+                    match self.read_union(ns_id, union, Some(&name), Some(&c_type)) {
+                        Ok(mut u) => {
+                            let field_name = if let Some(field_name) = union.name() {
+                                field_name.into()
+                            } else {
+                                let n = format!("u{union_count}");
+                                union_count += 1;
+                                n
+                            };
+
+                            u = Union {
+                                name: format!("{name}_{field_name}"),
+                                c_type: Some(format!("{c_type}_{field_name}")),
+                                ..u
+                            };
+
+                            let u_doc = u.doc.clone();
+                            let ctype = u.c_type.clone();
+
+                            fields.push(Field {
+                                name: field_name,
+                                typ: Type::union(self, u, ns_id),
+                                doc: u_doc,
+                                c_type: ctype,
+                                ..Field::default()
+                            });
+                        }
+                        Err(e) => error!("Skipping union field: {e}"),
+                    }
                 }
+                _ => {}
             }
         }
 
@@ -318,36 +350,6 @@ impl Library {
                 Ok(f) => vfns.push(f),
                 Err(e) => error!("Skipping virtual method \"{}\": {e}", virtual_method.name()),
             }
-        }
-
-        for field in elem.fields() {
-            let gir_parser::ClassField::Union(union) = field else {
-                continue;
-            };
-            let mut u = self.read_union(ns_id, union, Some(&name), Some(&c_type))?;
-            let field_name = if let Some(field_name) = union.name() {
-                field_name.into()
-            } else {
-                format!("u{union_count}")
-            };
-
-            u = Union {
-                name: format!("{name}_{field_name}"),
-                c_type: Some(format!("{c_type}_{field_name}")),
-                ..u
-            };
-
-            let u_doc = u.doc.clone();
-            let ctype = u.c_type.clone();
-
-            fields.push(Field {
-                name: field_name,
-                typ: Type::union(self, u, ns_id),
-                doc: u_doc,
-                c_type: ctype,
-                ..Field::default()
-            });
-            union_count += 1;
         }
 
         let parent = elem.parent().map(|s| self.find_or_stub_type(ns_id, s));
@@ -413,45 +415,6 @@ impl Library {
             .map(|d| d.text())
             .map(ToOwned::to_owned);
         let mut union_count = 1;
-        for field in elem.fields() {
-            let gir_parser::RecordField::Union(union) = field else {
-                continue;
-            };
-            let mut u = self.read_union(ns_id, union, Some(record_name), Some(c_type))?;
-            let field_name = if let Some(field_name) = union.name() {
-                field_name.into()
-            } else {
-                format!("u{union_count}")
-            };
-
-            u = Union {
-                name: format!(
-                    "{}{}_{}",
-                    parent_name_prefix.map_or_else(String::new, |s| { format!("{s}_") }),
-                    record_name,
-                    field_name
-                ),
-                c_type: Some(format!(
-                    "{}{}_{}",
-                    parent_ctype_prefix.map_or_else(String::new, |s| { format!("{s}_") }),
-                    c_type,
-                    field_name
-                )),
-                ..u
-            };
-
-            let u_doc = u.doc.clone();
-            let ctype = u.c_type.clone();
-
-            fields.push(Field {
-                name: field_name,
-                typ: Type::union(self, u, ns_id),
-                doc: u_doc,
-                c_type: ctype,
-                ..Field::default()
-            });
-            union_count += 1;
-        }
 
         for callable in elem.callables() {
             let result = match callable {
@@ -481,36 +444,79 @@ impl Library {
         }
 
         for field in elem.fields() {
-            let gir_parser::RecordField::Field(field) = field else {
-                continue;
-            };
-            let mut f = match self.read_field(ns_id, field) {
-                Ok(f) => f,
-                Err(e) => {
-                    error!("Skipping field \"{}\": {e}", field.name());
-                    continue;
-                }
-            };
-            // Workaround for bitfields
-            if c_type == "GDate" {
-                if f.name == "julian_days" {
+            match field {
+                gir_parser::RecordField::Field(field) => {
+                    let mut f = match self.read_field(ns_id, field) {
+                        Ok(f) => f,
+                        Err(e) => {
+                            error!("Skipping field \"{}\": {e}", field.name());
+                            continue;
+                        }
+                    };
+                    // Workaround for bitfields
+                    if c_type == "GDate" {
+                        if f.name == "julian_days" {
+                            fields.push(f);
+                        } else if f.name == "julian" {
+                            f.name = "flags_dmy".into();
+                            f.typ = TypeId::tid_uint32();
+                            f.c_type = Some("guint".into());
+                            f.bits = None;
+                            fields.push(f);
+                        }
+                        continue;
+                    }
+                    // Workaround for wrong GValue c:type
+                    if c_type == "GValue" && f.name == "data" {
+                        f.c_type = Some("GValue_data".into());
+                    }
                     fields.push(f);
-                } else if f.name == "julian" {
-                    f.name = "flags_dmy".into();
-                    f.typ = TypeId::tid_uint32();
-                    f.c_type = Some("guint".into());
-                    f.bits = None;
-                    fields.push(f);
-                } else {
-                    // Skip
                 }
-                continue;
+                gir_parser::RecordField::Union(union) => {
+                    match self.read_union(ns_id, union, Some(record_name), Some(c_type)) {
+                        Ok(mut u) => {
+                            let field_name = if let Some(field_name) = union.name() {
+                                field_name.into()
+                            } else {
+                                let n = format!("u{union_count}");
+                                union_count += 1;
+                                n
+                            };
+
+                            u = Union {
+                                name: format!(
+                                    "{}{}_{}",
+                                    parent_name_prefix
+                                        .map_or_else(String::new, |s| { format!("{s}_") }),
+                                    record_name,
+                                    field_name
+                                ),
+                                c_type: Some(format!(
+                                    "{}{}_{}",
+                                    parent_ctype_prefix
+                                        .map_or_else(String::new, |s| { format!("{s}_") }),
+                                    c_type,
+                                    field_name
+                                )),
+                                ..u
+                            };
+
+                            let u_doc = u.doc.clone();
+                            let ctype = u.c_type.clone();
+
+                            fields.push(Field {
+                                name: field_name,
+                                typ: Type::union(self, u, ns_id),
+                                doc: u_doc,
+                                c_type: ctype,
+                                ..Field::default()
+                            });
+                        }
+                        Err(e) => error!("Skipping union field: {e}"),
+                    }
+                }
+                _ => {}
             }
-            // Workaround for wrong GValue c:type
-            if c_type == "GValue" && f.name == "data" {
-                f.c_type = Some("GValue_data".into());
-            }
-            fields.push(f);
         }
 
         let typ = Type::Record(Record {
@@ -580,58 +586,57 @@ impl Library {
         let mut struct_count = 1;
 
         for field in elem.fields() {
-            let gir_parser::UnionField::Record(record) = field else {
-                continue;
-            };
-            let Some(Type::Record(mut r)) =
-                self.read_record(ns_id, record, parent_name_prefix, parent_ctype_prefix)?
-            else {
-                continue;
-            };
-
-            let field_name = if let Some(field_name) = record.name() {
-                field_name.into()
-            } else {
-                format!("s{struct_count}")
-            };
-
-            r = Record {
-                name: format!(
-                    "{}{}_{}",
-                    parent_name_prefix.map_or_else(String::new, |s| { format!("{s}_") }),
-                    name,
-                    field_name
-                ),
-                c_type: format!(
-                    "{}{}_{}",
-                    parent_ctype_prefix.map_or_else(String::new, |s| { format!("{s}_") }),
-                    c_type,
-                    field_name
-                ),
-                ..r
-            };
-
-            let r_doc = r.doc.clone();
-            let ctype = r.c_type.clone();
-
-            fields.push(Field {
-                name: field_name,
-                typ: Type::record(self, r, ns_id),
-                doc: r_doc,
-                c_type: Some(ctype),
-                ..Field::default()
-            });
-
-            struct_count += 1;
-        }
-
-        for field in elem.fields() {
-            if let gir_parser::UnionField::Field(field) = field {
-                match self.read_field(ns_id, field) {
+            match field {
+                gir_parser::UnionField::Field(field) => match self.read_field(ns_id, field) {
                     Ok(f) => fields.push(f),
                     Err(e) => error!("Skipping field \"{}\": {e}", field.name()),
+                },
+                gir_parser::UnionField::Record(record) => {
+                    match self.read_record(ns_id, record, parent_name_prefix, parent_ctype_prefix) {
+                        Ok(Some(Type::Record(mut r))) => {
+                            let field_name = if let Some(field_name) = record.name() {
+                                field_name.into()
+                            } else {
+                                let n = format!("s{struct_count}");
+                                struct_count += 1;
+                                n
+                            };
+
+                            r = Record {
+                                name: format!(
+                                    "{}{}_{}",
+                                    parent_name_prefix
+                                        .map_or_else(String::new, |s| { format!("{s}_") }),
+                                    name,
+                                    field_name
+                                ),
+                                c_type: format!(
+                                    "{}{}_{}",
+                                    parent_ctype_prefix
+                                        .map_or_else(String::new, |s| { format!("{s}_") }),
+                                    c_type,
+                                    field_name
+                                ),
+                                ..r
+                            };
+
+                            let r_doc = r.doc.clone();
+                            let ctype = r.c_type.clone();
+
+                            fields.push(Field {
+                                name: field_name,
+                                typ: Type::record(self, r, ns_id),
+                                doc: r_doc,
+                                c_type: Some(ctype),
+                                ..Field::default()
+                            });
+                        }
+                        Ok(_) => {}
+                        Err(e) => error!("Skipping record field: {e}"),
+                    }
                 }
-            };
+                _ => {}
+            }
         }
 
         for callable in elem.callables() {
