@@ -29,9 +29,13 @@ impl Library {
             let dir: &Path = dir.as_ref();
             let file_name = make_file_name(dir, &libs[libs.len() - 1]);
             trace!("Reading GIR file {}", file_name.display());
-            let Ok(mut repo) = Repository::from_path(&file_name) else {
-                warn!("Failed to parse GIR file {}", file_name.display());
-                continue;
+            let mut repo = match Repository::from_path(&file_name) {
+                Ok(repo) => repo,
+                Err(gir_parser::ParserError::IO(_)) => continue,
+                Err(e) => {
+                    warn!("Failed to parse GIR file {}: {e}", file_name.display());
+                    continue;
+                }
             };
             self.read_repository(dirs, &mut repo, libs)?;
             return Ok(());
