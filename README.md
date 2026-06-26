@@ -1,6 +1,6 @@
 # GIR
 
-`GIR` is a project that helps for generating safe Rust bindings for GObject based libraries. The generated bindings consists of two parts: FFI (the unsafe 1:1 C API calls from Rust) and the safe high-level safe Rust API.
+`GIR` is a project that helps for generating safe Rust bindings for GObject based libraries. The generated bindings consists of two parts: FFI (the unsafe 1:1 C API calls from Rust) and the high-level, safe Rust API.
 
 ## How to use
 
