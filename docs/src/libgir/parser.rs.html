@@ -40,7 +40,7 @@
 <a href=#40 id=40 data-nosnippet>40</a>            <span class="self">self</span>.read_repository(dirs, <span class="kw-2">&amp;mut </span>repo, libs)<span class="question-mark">?</span>;
 <a href=#41 id=41 data-nosnippet>41</a>            <span class="kw">return </span><span class="prelude-val">Ok</span>(());
 <a href=#42 id=42 data-nosnippet>42</a>        }
-<a href=#43 id=43 data-nosnippet>43</a>        <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"Couldn't find `{}`..."</span>, <span class="kw-2">&amp;</span>libs[libs.len() - <span class="number">1</span>]))
+<a href=#43 id=43 data-nosnippet>43</a>        <span class="prelude-val">Err</span>(<span class="macro">format!</span>(<span class="string">"Couldn't find `{}`..."</span>, libs[libs.len() - <span class="number">1</span>]))
 <a href=#44 id=44 data-nosnippet>44</a>    }
 <a href=#45 id=45 data-nosnippet>45</a>
 <a href=#46 id=46 data-nosnippet>46</a>    <span class="kw">fn </span>read_repository&lt;P: AsRef&lt;Path&gt;&gt;(

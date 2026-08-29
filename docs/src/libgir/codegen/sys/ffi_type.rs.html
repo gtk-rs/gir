@@ -239,7 +239,7 @@
 <a href=#239 id=239 data-nosnippet>239</a>                } <span class="kw">else </span>{
 <a href=#240 id=240 data-nosnippet>240</a>                    <span class="prelude-val">Ok</span>(<span class="macro">format!</span>(
 <a href=#241 id=241 data-nosnippet>241</a>                        <span class="string">"{}::{}"</span>,
-<a href=#242 id=242 data-nosnippet>242</a>                        <span class="kw-2">&amp;</span>env.namespaces[env.namespaces.glib_ns_id].crate_name, name
+<a href=#242 id=242 data-nosnippet>242</a>                        env.namespaces[env.namespaces.glib_ns_id].crate_name, name
 <a href=#243 id=243 data-nosnippet>243</a>                    )
 <a href=#244 id=244 data-nosnippet>244</a>                    .into())
 <a href=#245 id=245 data-nosnippet>245</a>                }
@@ -250,7 +250,7 @@
 <a href=#250 id=250 data-nosnippet>250</a>        <span class="kw">let </span>name_with_prefix = <span class="kw">if </span>type_id.ns_id == namespaces::MAIN {
 <a href=#251 id=251 data-nosnippet>251</a>            name.into()
 <a href=#252 id=252 data-nosnippet>252</a>        } <span class="kw">else </span>{
-<a href=#253 id=253 data-nosnippet>253</a>            <span class="macro">format!</span>(<span class="string">"{}::{}"</span>, <span class="kw-2">&amp;</span>env.namespaces[type_id.ns_id].crate_name, name)
+<a href=#253 id=253 data-nosnippet>253</a>            <span class="macro">format!</span>(<span class="string">"{}::{}"</span>, env.namespaces[type_id.ns_id].crate_name, name)
 <a href=#254 id=254 data-nosnippet>254</a>        };
 <a href=#255 id=255 data-nosnippet>255</a>        <span class="kw">if </span>env
 <a href=#256 id=256 data-nosnippet>256</a>            .type_status_sys(<span class="kw-2">&amp;</span>type_id.full_name(<span class="kw-2">&amp;</span>env.library))

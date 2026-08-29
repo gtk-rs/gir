@@ -582,14 +582,14 @@
 <a href=#582 id=582 data-nosnippet>582</a>                <span class="kw">if </span><span class="self">self</span>.direction == ParameterDirection::In {
 <a href=#583 id=583 data-nosnippet>583</a>                    rust_type = rust_type.map_any(|rust_type| {
 <a href=#584 id=584 data-nosnippet>584</a>                        RustType::new_with_uses(
-<a href=#585 id=585 data-nosnippet>585</a>                            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"impl Into&lt;{}&gt;"</span>, <span class="kw-2">&amp;</span>rust_type.as_str()),
+<a href=#585 id=585 data-nosnippet>585</a>                            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"impl Into&lt;{}&gt;"</span>, rust_type.as_str()),
 <a href=#586 id=586 data-nosnippet>586</a>                            <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>rust_type.as_str()],
 <a href=#587 id=587 data-nosnippet>587</a>                        )
 <a href=#588 id=588 data-nosnippet>588</a>                    });
 <a href=#589 id=589 data-nosnippet>589</a>                } <span class="kw">else </span>{
 <a href=#590 id=590 data-nosnippet>590</a>                    rust_type = rust_type.map_any(|<span class="kw">_</span>| {
 <a href=#591 id=591 data-nosnippet>591</a>                        RustType::new_with_uses(
-<a href=#592 id=592 data-nosnippet>592</a>                            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"Result&lt;{}, {}&gt;"</span>, <span class="kw-2">&amp;</span>ok_type, <span class="kw-2">&amp;</span>err_type),
+<a href=#592 id=592 data-nosnippet>592</a>                            <span class="kw-2">&amp;</span><span class="macro">format!</span>(<span class="string">"Result&lt;{}, {}&gt;"</span>, ok_type, err_type),
 <a href=#593 id=593 data-nosnippet>593</a>                            <span class="kw-2">&amp;</span>[ok_type, err_type],
 <a href=#594 id=594 data-nosnippet>594</a>                        )
 <a href=#595 id=595 data-nosnippet>595</a>                    });

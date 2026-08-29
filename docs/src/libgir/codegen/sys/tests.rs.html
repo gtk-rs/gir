@@ -114,7 +114,7 @@
 <a href=#114 id=114 data-nosnippet>114</a>        .constants
 <a href=#115 id=115 data-nosnippet>115</a>        .iter()
 <a href=#116 id=116 data-nosnippet>116</a>        .filter_map(|constant| {
-<a href=#117 id=117 data-nosnippet>117</a>            <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">"{}.{}"</span>, <span class="kw-2">&amp;</span>ns.name, constant.name);
+<a href=#117 id=117 data-nosnippet>117</a>            <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">"{}.{}"</span>, ns.name, constant.name);
 <a href=#118 id=118 data-nosnippet>118</a>            <span class="kw">if </span>env.type_status_sys(<span class="kw-2">&amp;</span>full_name).ignored() {
 <a href=#119 id=119 data-nosnippet>119</a>                <span class="kw">return </span><span class="prelude-val">None</span>;
 <a href=#120 id=120 data-nosnippet>120</a>            }
@@ -145,7 +145,7 @@
 <a href=#145 id=145 data-nosnippet>145</a>        } <span class="kw">else </span>{
 <a href=#146 id=146 data-nosnippet>146</a>            <span class="kw">continue</span>;
 <a href=#147 id=147 data-nosnippet>147</a>        };
-<a href=#148 id=148 data-nosnippet>148</a>        <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">"{}.{}"</span>, <span class="kw-2">&amp;</span>ns.name, typ.get_name());
+<a href=#148 id=148 data-nosnippet>148</a>        <span class="kw">let </span>full_name = <span class="macro">format!</span>(<span class="string">"{}.{}"</span>, ns.name, typ.get_name());
 <a href=#149 id=149 data-nosnippet>149</a>        <span class="kw">if </span>env.type_status_sys(<span class="kw-2">&amp;</span>full_name).ignored() {
 <a href=#150 id=150 data-nosnippet>150</a>            <span class="kw">continue</span>;
 <a href=#151 id=151 data-nosnippet>151</a>        }
@@ -553,7 +553,7 @@
 <a href=#553 id=553 data-nosnippet>553</a>            w,
 <a href=#554 id=554 data-nosnippet>554</a>            <span class="string">"    (\"{name}\", \"{value}\"),"</span>,
 <a href=#555 id=555 data-nosnippet>555</a>            name = cconst.name,
-<a href=#556 id=556 data-nosnippet>556</a>            value = <span class="kw-2">&amp;</span>general::escape_string(<span class="kw-2">&amp;</span>cconst.value)
+<a href=#556 id=556 data-nosnippet>556</a>            value = general::escape_string(<span class="kw-2">&amp;</span>cconst.value)
 <a href=#557 id=557 data-nosnippet>557</a>        )<span class="question-mark">?</span>;
 <a href=#558 id=558 data-nosnippet>558</a>    }
 <a href=#559 id=559 data-nosnippet>559</a>    <span class="macro">writeln!</span>(
