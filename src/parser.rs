@@ -60,7 +60,7 @@ impl Library {
                 })
             });
         }
-        Err(format!("Couldn't find `{}`...", &libs[libs.len() - 1]))
+        Err(format!("Couldn't find `{}`...", libs[libs.len() - 1]))
     }
 
     fn read_repository<P: AsRef<Path>>(

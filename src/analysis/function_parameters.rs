@@ -467,13 +467,7 @@ fn detect_length<'a>(
         return None;
     }
 
-    parameters.get(pos - 1).and_then(|p| {
-        if has_length(env, p.typ) {
-            Some(p)
-        } else {
-            None
-        }
-    })
+    parameters.get(pos - 1).filter(|&p| has_length(env, p.typ))
 }
 
 fn is_length(par: &library::Parameter) -> bool {

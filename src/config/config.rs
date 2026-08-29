@@ -360,13 +360,7 @@ impl Config {
     }
 
     pub fn filter_version(&self, version: Option<Version>) -> Option<Version> {
-        version.and_then(|v| {
-            if v > self.min_cfg_version {
-                Some(v)
-            } else {
-                None
-            }
-        })
+        version.filter(|&v| v > self.min_cfg_version)
     }
 
     pub fn find_ext_library(&self, namespace: &Namespace) -> Option<&ExternalLibrary> {

@@ -110,7 +110,7 @@ fn analyze_fields(
     for field in fields {
         // See IsIncomplete for &[Field].
         if is_bitfield && field.bits.is_some() {
-            truncated = Some(format!("field {} has incomplete type", &field.name));
+            truncated = Some(format!("field {} has incomplete type", field.name));
             break;
         }
         is_bitfield = field.bits.is_some();
@@ -142,7 +142,7 @@ fn field_ffi_type(env: &Env, field: &Field) -> Result {
     if field.is_incomplete(&env.library) {
         return Err(TypeError::Ignored(format!(
             "field {} has incomplete type",
-            &field.name
+            field.name
         )));
     }
     if let Some(ref c_type) = field.c_type {
@@ -158,7 +158,7 @@ fn field_ffi_type(env: &Env, field: &Field) -> Result {
     } else {
         Err(TypeError::Ignored(format!(
             "field {} has empty c:type",
-            &field.name
+            field.name
         )))
     }
 }

@@ -114,7 +114,7 @@ fn prepare_cconsts(env: &Env) -> Vec<CConstant> {
         .constants
         .iter()
         .filter_map(|constant| {
-            let full_name = format!("{}.{}", &ns.name, constant.name);
+            let full_name = format!("{}.{}", ns.name, constant.name);
             if env.type_status_sys(&full_name).ignored() {
                 return None;
             }
@@ -145,7 +145,7 @@ fn prepare_cconsts(env: &Env) -> Vec<CConstant> {
         } else {
             continue;
         };
-        let full_name = format!("{}.{}", &ns.name, typ.get_name());
+        let full_name = format!("{}.{}", ns.name, typ.get_name());
         if env.type_status_sys(&full_name).ignored() {
             continue;
         }
@@ -553,7 +553,7 @@ const RUST_CONSTANTS: &[(&str, &str)] = &["#
             w,
             "    (\"{name}\", \"{value}\"),",
             name = cconst.name,
-            value = &general::escape_string(&cconst.value)
+            value = general::escape_string(&cconst.value)
         )?;
     }
     writeln!(

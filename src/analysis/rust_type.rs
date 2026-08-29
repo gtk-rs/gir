@@ -582,14 +582,14 @@ impl<'env> RustTypeBuilder<'env> {
                 if self.direction == ParameterDirection::In {
                     rust_type = rust_type.map_any(|rust_type| {
                         RustType::new_with_uses(
-                            &format!("impl Into<{}>", &rust_type.as_str()),
+                            &format!("impl Into<{}>", rust_type.as_str()),
                             &[&rust_type.as_str()],
                         )
                     });
                 } else {
                     rust_type = rust_type.map_any(|_| {
                         RustType::new_with_uses(
-                            &format!("Result<{}, {}>", &ok_type, &err_type),
+                            &format!("Result<{}, {}>", ok_type, err_type),
                             &[ok_type, err_type],
                         )
                     });

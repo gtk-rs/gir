@@ -226,27 +226,18 @@ impl Library {
         for (ns_id, ns) in self.namespaces.iter().enumerate() {
             for type_ in &ns.types {
                 let type_ = type_.as_ref().unwrap(); // Always contains something
-                let name;
-                let type_struct;
-                let c_class_type;
 
-                match type_ {
-                    Type::Class(klass) => {
-                        name = &klass.name;
-                        type_struct = &klass.type_struct;
-                        c_class_type = &klass.c_class_type;
-                    }
+                let (name, type_struct, c_class_type) = match type_ {
+                    Type::Class(klass) => (&klass.name, &klass.type_struct, &klass.c_class_type),
 
                     Type::Interface(iface) => {
-                        name = &iface.name;
-                        type_struct = &iface.type_struct;
-                        c_class_type = &iface.c_class_type;
+                        (&iface.name, &iface.type_struct, &iface.c_class_type)
                     }
 
                     _ => {
                         continue;
                     }
-                }
+                };
 
                 if let Some(type_struct) = type_struct {
                     let type_struct_tid = self.find_type(ns_id as u16, type_struct);
@@ -344,7 +335,7 @@ impl Library {
                                 actions.push((tid, fid, Action::SetCType(array_c_type)));
                                 continue;
                             }
-                            error!("Field `{}::{}` is missing c:type", name, &field.name);
+                            error!("Field `{}::{}` is missing c:type", name, field.name);
                         }
                     }
                     _ => {}

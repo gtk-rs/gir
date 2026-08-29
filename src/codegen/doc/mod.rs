@@ -375,7 +375,7 @@ fn create_object_doc(w: &mut dyn Write, env: &Env, info: &analysis::object::Info
 
         if !implements.is_empty() {
             writeln!(w, "\n# Implements\n")?;
-            writeln!(w, "{}", &implements.join(", "))?;
+            writeln!(w, "{}", implements.join(", "))?;
         }
         Ok(())
     })?;
@@ -1065,7 +1065,7 @@ fn get_type_trait_for_implements(env: &Env, tid: TypeId) -> String {
     } else if let Some(symbol) = env.symbols.borrow().by_tid(tid) {
         let mut symbol = symbol.clone();
         symbol.make_trait(&trait_name);
-        format!("[`trait@{}`]", &symbol.full_rust_name())
+        format!("[`trait@{}`]", symbol.full_rust_name())
     } else {
         error!("Type {} doesn't have crate", tid.full_name(&env.library));
         format!("`{trait_name}`")

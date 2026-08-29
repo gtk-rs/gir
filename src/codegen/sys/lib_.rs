@@ -542,14 +542,14 @@ fn generate_from_fields(
             w,
             "pub {kind} {name} {{",
             kind = fields.kind,
-            name = &fields.name
+            name = fields.name
         )?;
         for field in &fields.fields {
             writeln!(
                 w,
                 "\tpub {field_name}: {field_type},",
-                field_name = &field.name,
-                field_type = &field.typ
+                field_name = field.name,
+                field_type = field.typ
             )?;
         }
         if let Some(ref reason) = fields.truncated {
@@ -563,7 +563,7 @@ fn generate_from_fields(
     writeln!(
         w,
         "impl ::std::fmt::Debug for {name} {{",
-        name = &fields.name
+        name = fields.name
     )?;
     writeln!(
         w,
@@ -572,7 +572,7 @@ fn generate_from_fields(
     writeln!(
         w,
         "\t\tf.debug_struct(&format!(\"{name} @ {{self:p}}\"))",
-        name = &fields.name
+        name = fields.name
     )?;
     for field in fields.fields.iter().filter(|f| f.debug) {
         // TODO: We should generate debug for field manually if automatic one is not
@@ -580,8 +580,8 @@ fn generate_from_fields(
         writeln!(
             w,
             "\t\t .field(\"{field_name}\", {field_get})",
-            field_name = &field.name,
-            field_get = &field.access_str()
+            field_name = field.name,
+            field_get = field.access_str()
         )?;
     }
     writeln!(w, "\t\t .finish()")?;

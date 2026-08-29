@@ -239,7 +239,7 @@ fn fix_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
                 } else {
                     Ok(format!(
                         "{}::{}",
-                        &env.namespaces[env.namespaces.glib_ns_id].crate_name, name
+                        env.namespaces[env.namespaces.glib_ns_id].crate_name, name
                     )
                     .into())
                 }
@@ -250,7 +250,7 @@ fn fix_name(env: &Env, type_id: library::TypeId, name: &str) -> Result {
         let name_with_prefix = if type_id.ns_id == namespaces::MAIN {
             name.into()
         } else {
-            format!("{}::{}", &env.namespaces[type_id.ns_id].crate_name, name)
+            format!("{}::{}", env.namespaces[type_id.ns_id].crate_name, name)
         };
         if env
             .type_status_sys(&type_id.full_name(&env.library))

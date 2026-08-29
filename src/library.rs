@@ -329,7 +329,7 @@ impl TypeId {
     pub fn full_name(self, library: &Library) -> String {
         let ns_name = &library.namespace(self.ns_id).name;
         let type_ = &library.type_(self);
-        format!("{}.{}", ns_name, &type_.get_name())
+        format!("{}.{}", ns_name, type_.get_name())
     }
 
     pub fn tid_none() -> TypeId {

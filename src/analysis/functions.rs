@@ -1302,7 +1302,7 @@ pub fn finish_function_name(mut func_name: &str) -> String {
         let len = func_name.len() - "_async".len();
         func_name = &func_name[0..len];
     }
-    format!("{}_finish", &func_name)
+    format!("{}_finish", func_name)
 }
 
 pub fn find_index_to_ignore<'a>(

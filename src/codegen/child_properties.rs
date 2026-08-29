@@ -54,7 +54,7 @@ fn generate_func(
     if add_doc_alias {
         doc_alias(
             w,
-            &format!("{}.{}", &prop.child_name, &prop.name),
+            &format!("{}.{}", prop.child_name, prop.name),
             comment_prefix,
             indent,
         )?;

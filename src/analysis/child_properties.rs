@@ -178,7 +178,7 @@ fn analyze_property(
         let owner_name = RustType::try_new(env, type_tid).into_string();
         error!(
             "Bad type `{}` of child property `{}` for `{}`",
-            &prop.type_name, name, owner_name
+            prop.type_name, name, owner_name
         );
         None
     }
