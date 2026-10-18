@@ -109,6 +109,24 @@ async def regenerate_crate_docs(conf, crate_dir, base_gir_args):
     return logs
 
 
+# A crate directory can be described by multiple `Gir*.toml` files (e.g. glib
+# has both `Gir.toml` and `Gir_GObject.toml`). Running their tasks concurrently
+# makes `gir` and `rustdoc-stripper` run on the same sources and doc file
+# at the same time, so tasks sharing a crate directory are serialized.
+_crate_locks = {}
+
+
+def crate_lock(crate_dir):
+    if crate_dir not in _crate_locks:
+        _crate_locks[crate_dir] = asyncio.Lock()
+    return _crate_locks[crate_dir]
+
+
+async def run_exclusive(crate_dir, coro):
+    async with crate_lock(crate_dir):
+        return await coro
+
+
 def regen_crates(path, conf):
     processes = []
     if path.is_dir():
@@ -126,7 +144,7 @@ def regen_crates(path, conf):
             if is_sys_crate:
                 return processes
 
-            processes.append(regenerate_crate_docs(conf, path.parent, args))
+            processes.append(run_exclusive(path.parent, regenerate_crate_docs(conf, path.parent, args)))
         else:
             if is_sys_crate:
                 args.extend(["-m", "sys"])
@@ -136,7 +154,7 @@ def regen_crates(path, conf):
                     conf, args
                 )
 
-            processes.append(regenerate_crate(path, args))
+            processes.append(run_exclusive(path.parent, regenerate_crate(path, args)))
 
     else:
         raise Exception("`{}` is not a valid Gir*.toml file".format(path))
