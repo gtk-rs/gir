@@ -194,7 +194,9 @@ pub fn analyze<F: Borrow<library::Function>>(
         let name = nameutil::mangle_keywords(&*func.name).into_owned();
         let signature_params = Signature::new(func);
         let mut not_version = None;
+        // An inherent method already takes precedence over the parent's trait method.
         if func.kind == library::FunctionKind::Method
+            && in_trait
             && let Some(deps) = deps
         {
             let (has, version) = signature_params.has_in_deps(env, &name, deps);
