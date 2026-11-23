@@ -350,13 +350,12 @@ fn analyze_callbacks(
 
         let func_name = &func.c_identifier;
         let mut destructors_to_update = Vec::new();
-        for pos in 0..parameters.c_parameters.len() {
+        for (pos, par) in parameters.c_parameters.iter().enumerate() {
             // If it is a user data parameter, we ignore it.
             if cross_user_data_check.values().any(|p| *p == pos) || user_data_indexes.contains(&pos)
             {
                 continue;
             }
-            let par = &parameters.c_parameters[pos];
             assert!(
                 !par.is_instance_parameter || pos == 0,
                 "Wrong instance parameter in {}",
